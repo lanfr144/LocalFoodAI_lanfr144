@@ -1,5 +1,4 @@
 # Sprint 2
-**STATUS**: DONE
 
 **Sprint Tag**: Sprint_2
 **Story Points**: 1000

@@ -8,7 +8,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Authenticate
 base_url = 'https://192.168.130.161/taiga/api/v1'
 auth_url = f'{base_url}/auth'
-auth = requests.post(auth_url, json={'type': 'normal', 'username': 'lanfr1904@outlook.com', 'password': 'BTSai123'}, verify=False).json()
+auth = requests.post(auth_url, json={'type': 'normal', 'username': 'FrancoisLange', 'password': 'BTSai123'}, verify=False).json()
 headers = {'Authorization': f'Bearer {auth["auth_token"]}', 'Content-Type': 'application/json'}
 proj_id = 21
 

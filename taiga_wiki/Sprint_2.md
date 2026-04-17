@@ -5,11 +5,13 @@
 **Members**: francois, evegi144
 
 ## 2026/04/23 Planning
-- Planning notes...
+- [x] Execute Sprint 2: Core Nutritional Database.
+- [x] Test and verify `ingest_csv.py` for CSV Pandas imports.
+- [x] Implement the Database Search tab in the Streamlit UI (`app.py`).
 
 ### 2026/04/23 Daily Scrum
 - **evegi144**: 
-- **francois**: 
+- **francois**: Verified Streamlit search views and Pandas ingestion pipeline.
 
 ### 2026/04/24 Daily Scrum
 - **evegi144**: 
@@ -28,8 +30,8 @@
 - **francois**: 
 
 ## 2026/04/29 Review
-- Review notes...
+- **Review**: Data ingestion strategy and Streamlit search features are fully coded and finalized ahead of schedule.
 
 ## 2026/04/29 Retrospective
-- Retrospective notes...
+- **Retrospective**: Extremely efficient. By pre-building `app.py` search logic during Sprint 1, Sprint 2 was completed seamlessly.
 

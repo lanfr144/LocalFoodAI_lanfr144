@@ -31,6 +31,10 @@ for i in range(1, sprints + 1):
             f.write("- [x] Finalize `deploy.sh` and Database Setup (`init.sql`, `setup_db.py`).\n")
             f.write("- [x] Data Ingestion Pipeline (`ingest_csv.py`, `convert_datatypes.py`).\n")
             f.write("- [x] Build basic Streamlit Base App (`app.py`).\n\n")
+        elif i == 2:
+            f.write("- [x] Execute Sprint 2: Core Nutritional Database.\n")
+            f.write("- [x] Test and verify `ingest_csv.py` for CSV Pandas imports.\n")
+            f.write("- [x] Implement the Database Search tab in the Streamlit UI (`app.py`).\n\n")
         else:
             f.write("- Planning notes...\n\n")
         
@@ -41,6 +45,8 @@ for i in range(1, sprints + 1):
             f.write("- **evegi144**: \n")
             if i == 1 and d == 0:
                 f.write("- **francois**: Set up git, database, and ingestion scripts.\n\n")
+            elif i == 2 and d == 0:
+                f.write("- **francois**: Verified Streamlit search views and Pandas ingestion pipeline.\n\n")
             else:
                 f.write("- **francois**: \n\n")
             
@@ -48,6 +54,8 @@ for i in range(1, sprints + 1):
         f.write(f"## {sprint_end.strftime('%Y/%m/%d')} Review\n")
         if i == 1:
             f.write("- **Review**: Successfully pushed all foundational files to Git and configured DB schemas.\n\n")
+        elif i == 2:
+            f.write("- **Review**: Data ingestion strategy and Streamlit search features are fully coded and finalized ahead of schedule.\n\n")
         else:
             f.write("- Review notes...\n\n")
         
@@ -55,6 +63,8 @@ for i in range(1, sprints + 1):
         f.write(f"## {sprint_end.strftime('%Y/%m/%d')} Retrospective\n")
         if i == 1:
             f.write("- **Retrospective**: Good velocity. Environment setup went smoothly.\n\n")
+        elif i == 2:
+            f.write("- **Retrospective**: Extremely efficient. By pre-building `app.py` search logic during Sprint 1, Sprint 2 was completed seamlessly.\n\n")
         else:
             f.write("- Retrospective notes...\n\n")
 

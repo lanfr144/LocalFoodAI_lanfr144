@@ -34,7 +34,8 @@ def ingest_file(filename, conn):
         "allergens", "traces"
     ]
     
-    chunk_size = 50000 
+    # Reduced chunk size to 1000 to prevent 'max_allowed_packet' and PyMySQL memory crash
+    chunk_size = 1000 
     total_processed = 0
 
     # Using chunking to stream into MySQL efficiently

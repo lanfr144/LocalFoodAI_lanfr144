@@ -10,14 +10,12 @@ def run_db_setup():
     print("Welcome to Local Food AI Initial Setup.")
     print("WARNING: This will configure your MySQL server. You must know the MySQL root password.\n")
     
-    root_password = getpass.getpass("Enter the MySQL 'root' password: ")
-    
-    # Prompt for the new user passwords (so they aren't stored anywhere!)
-    print("\nPlease define the passwords for the service accounts:")
-    owner_pass = getpass.getpass("  1. Enter password for 'db_owner': ")
-    reader_pass = getpass.getpass("  2. Enter password for 'db_reader' (Used by Web UI): ")
-    loader_pass = getpass.getpass("  3. Enter password for 'db_loader' (Used by Scripts): ")
-    app_auth_pass = getpass.getpass("  4. Enter password for 'db_app_auth' (Used for User Login): ")
+    # Automatically fetch passwords for secure CI/CD deployment or fallback for exam/local setup
+    root_password = os.environ.get("MYSQL_ROOT_PASSWORD", "")
+    owner_pass = os.environ.get("DB_OWNER_PASS", "BTSai123")
+    reader_pass = os.environ.get("DB_READER_PASS", "BTSai123")
+    loader_pass = os.environ.get("DB_LOADER_PASS", "BTSai123")
+    app_auth_pass = os.environ.get("DB_AUTH_PASS", "BTSai123")
 
     print("\nConnecting as root to configure server...")
     try:

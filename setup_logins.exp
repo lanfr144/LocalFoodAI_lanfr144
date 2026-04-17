@@ -1,0 +1,17 @@
+#!/usr/bin/expect -f
+set timeout -1
+
+spawn mysql_config_editor set --login-path=app_reader --host=127.0.0.1 --user=db_reader --password
+expect "Enter password:"
+send "BTSai123\r"
+expect eof
+
+spawn mysql_config_editor set --login-path=app_auth --host=127.0.0.1 --user=db_app_auth --password
+expect "Enter password:"
+send "BTSai123\r"
+expect eof
+
+spawn mysql_config_editor set --login-path=app_loader --host=127.0.0.1 --user=db_loader --password
+expect "Enter password:"
+send "BTSai123\r"
+expect eof

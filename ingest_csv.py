@@ -11,8 +11,7 @@ def get_loader_connection():
             host=conf.get('host', '127.0.0.1'),
             user=conf.get('user'),
             password=conf.get('password'),
-            database='food_db',
-            local_infile=True
+            database='food_db'
         )
     except Exception as e:
         print(f"❌ Failed to connect to MySQL via app_loader: {e}")

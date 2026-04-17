@@ -4,32 +4,32 @@
 **Story Points**: 1000
 **Members**: francois, evegi144
 
-## Sprint Planning Sprint_8 2026/06/04
+## 2026/06/04 Planning
 - Planning notes...
 
-### Daily Scrum 2026/06/04
+### 2026/06/04 Daily Scrum
 - **evegi144**: 
 - **francois**: 
 
-### Daily Scrum 2026/06/05
+### 2026/06/05 Daily Scrum
 - **evegi144**: 
 - **francois**: 
 
-### Daily Scrum 2026/06/06
+### 2026/06/06 Daily Scrum
 - **evegi144**: 
 - **francois**: 
 
-### Daily Scrum 2026/06/07
+### 2026/06/07 Daily Scrum
 - **evegi144**: 
 - **francois**: 
 
-### Daily Scrum 2026/06/08
+### 2026/06/08 Daily Scrum
 - **evegi144**: 
 - **francois**: 
 
-## Sprint Reviews Sprint_8 2026/06/10
+## 2026/06/10 Review
 - Review notes...
 
-## Sprint Retrospective Sprint_8 2026/06/10
+## 2026/06/10 Retrospective
 - Retrospective notes...
 

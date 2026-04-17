@@ -24,7 +24,7 @@ for i in range(1, sprints + 1):
         f.write(f"**Members**: francois, evegi144\n\n")
         
         # Sprint Planning
-        f.write(f"## Sprint Planning {sprint_str} {sprint_start.strftime('%Y/%m/%d')}\n")
+        f.write(f"## {sprint_start.strftime('%Y/%m/%d')} Planning\n")
         if i == 1:
             f.write("- [x] Initialize Git Repo and configure AI History context.\n")
             f.write("- [x] Setup Taiga Wiki and Backlog generation.\n")
@@ -37,7 +37,7 @@ for i in range(1, sprints + 1):
         # Daily Scrums
         for d in range(5):
             day_date = sprint_start + timedelta(days=d)
-            f.write(f"### Daily Scrum {day_date.strftime('%Y/%m/%d')}\n")
+            f.write(f"### {day_date.strftime('%Y/%m/%d')} Daily Scrum\n")
             f.write("- **evegi144**: \n")
             if i == 1 and d == 0:
                 f.write("- **francois**: Set up git, database, and ingestion scripts.\n\n")
@@ -45,14 +45,14 @@ for i in range(1, sprints + 1):
                 f.write("- **francois**: \n\n")
             
         # Sprint Review
-        f.write(f"## Sprint Reviews {sprint_str} {sprint_end.strftime('%Y/%m/%d')}\n")
+        f.write(f"## {sprint_end.strftime('%Y/%m/%d')} Review\n")
         if i == 1:
             f.write("- **Review**: Successfully pushed all foundational files to Git and configured DB schemas.\n\n")
         else:
             f.write("- Review notes...\n\n")
         
         # Sprint Retrospective
-        f.write(f"## Sprint Retrospective {sprint_str} {sprint_end.strftime('%Y/%m/%d')}\n")
+        f.write(f"## {sprint_end.strftime('%Y/%m/%d')} Retrospective\n")
         if i == 1:
             f.write("- **Retrospective**: Good velocity. Environment setup went smoothly.\n\n")
         else:

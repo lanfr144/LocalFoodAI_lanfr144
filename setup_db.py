@@ -21,8 +21,9 @@ def run_db_setup():
 
     print("\nConnecting as root to configure server...")
     try:
+        # Connect using the local unix socket which allows seamless auth_socket root login on Ubuntu
         conn = pymysql.connect(
-            host='127.0.0.1',  # Local host execution context
+            unix_socket='/var/run/mysqld/mysqld.sock', 
             user='root',
             password=root_password,
             autocommit=True

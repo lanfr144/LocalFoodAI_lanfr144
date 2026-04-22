@@ -70,15 +70,38 @@ def run_db_setup():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;
     """)
-    # 2. Products Table (Dynamic Drop)
-    # We drop the strict schema completely. `ingest_csv.py` will use pandas to automatically 
-    # generate the table with 100% of the CSV columns dynamically defined as TEXT fields.
+
+    # 2. Plates Table (For storing custom combos)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS food_db.plates (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        plate_name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES food_db.users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB;
+    """)
+
+    # 3. Plate Items Table (Linking products to a plate natively)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS food_db.plate_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        plate_id INT NOT NULL,
+        product_code VARCHAR(50) NOT NULL,
+        quantity_grams DOUBLE NOT NULL,
+        FOREIGN KEY (plate_id) REFERENCES food_db.plates(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB;
+    """)
+
+    # 4. Products Table (Dynamic Drop for Pandas logic)
     cursor.execute("DROP TABLE IF EXISTS food_db.products;")
     
-    # Table Context Grants (SoD)
+    # Table Context Grants (PoLP)
+    # The authenticated app process can handle credentials and now read/write custom plates!
     cursor.execute("GRANT SELECT, INSERT, UPDATE ON food_db.users TO 'db_app_auth'@'%';")
-    # Note: Reader/Loader grants on products table will be handled or applied at the database level
-    # since the table won't exist until pandas creates it. Granting at db-level for these specific users.
+    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plates TO 'db_app_auth'@'%';")
+    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plate_items TO 'db_app_auth'@'%';")
+    
     cursor.execute("GRANT SELECT ON food_db.* TO 'db_reader'@'%';")
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, INDEX ON food_db.* TO 'db_loader'@'%';")
     cursor.execute("FLUSH PRIVILEGES;")

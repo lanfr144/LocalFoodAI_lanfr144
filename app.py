@@ -3,7 +3,42 @@ import pymysql
 import myloginpath
 import ollama
 import bcrypt
+import requests
+import json
 
+def local_web_search(query: str) -> str:
+    """Search the internet anonymously for nutritional information not found in the database. Returns markdown."""
+    try:
+        req = requests.get(f'http://127.0.0.1:8080/search', params={'q': query, 'format': 'json'})
+        if req.status_code == 200:
+            data = req.json()
+            results = data.get('results', [])
+            if not results:
+                return f"No results found on the web for '{query}'."
+            # Extract top 3 results
+            snippets = [f"Source: {r.get('url')}\nContent: {r.get('content')}" for r in results[:3]]
+            return "\n\n".join(snippets)
+        return "Search engine returned an error."
+    except Exception as e:
+        return f"Local search engine unreachable: {e}"
+
+search_tool_schema = {
+    'type': 'function',
+    'function': {
+        'name': 'local_web_search',
+        'description': 'Search the internet anonymously for nutritional information or recent food facts not found in the database.',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'query': {
+                    'type': 'string',
+                    'description': 'The detailed search query to send to the external search engine.',
+                },
+            },
+            'required': ['query'],
+        },
+    },
+}
 # -------------------------------------------------------------------
 # Database Connections (PoLP & SoD)
 # -------------------------------------------------------------------
@@ -124,17 +159,48 @@ with tab_chat:
     if prompt := st.chat_input("Ask about the food items..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
-        sys_prompt = "You are a helpful data analyst AI. Answer strictly using local data contexts."
+        sys_prompt = "You are a helpful data analyst AI. Answer strictly using local data contexts. If you need external data, use the local_web_search tool!"
         
-        with st.spinner("Analyzing locally..."):
+        with st.spinner("Analyzing the dataset locally..."):
             try:
-                response = ollama.chat(model='mistral', messages=[
-                    {'role': 'system', 'content': sys_prompt},
-                    {'role': 'user', 'content': prompt}
-                ])
+                # Compile complete conversational history
+                temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
+                
+                # Primary AI inference
+                response = ollama.chat(
+                    model='mistral', 
+                    messages=temp_messages,
+                    tools=[search_tool_schema]
+                )
+                
+                # Check if Mistral decided it needs to search the web
+                if response.get('message', {}).get('tool_calls'):
+                    for tool in response['message']['tool_calls']:
+                        if tool['function']['name'] == 'local_web_search':
+                            query_arg = tool['function']['arguments'].get('query')
+                            st.info(f"🔍 AI is autonomously searching the web for: '{query_arg}'")
+                            
+                            # Execute the local web search against SearXNG
+                            search_data = local_web_search(query_arg)
+                            
+                            # Append the tool's thought and the raw search results to the session memory
+                            st.session_state.messages.append(response['message'])
+                            st.session_state.messages.append({
+                                'role': 'tool', 
+                                'content': search_data, 
+                                'name': 'local_web_search'
+                            })
+                            
+                            # Feed the web data back into Mistral for the final summarization
+                            temp_messages = [{"role": "system", "content": sys_prompt}] + st.session_state.messages
+                            response = ollama.chat(
+                                model='mistral',
+                                messages=temp_messages
+                            )
+                
                 ai_reply = response['message']['content']
             except Exception as e:
-                ai_reply = f"Hold on! Could not reach Ollama Engine. Error: {e}"
+                ai_reply = f"Hold on! Engine execution fault: {e}"
 
         st.session_state.messages.append({"role": "assistant", "content": ai_reply})
         st.chat_message("assistant").write(ai_reply)

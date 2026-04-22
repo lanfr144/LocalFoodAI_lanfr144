@@ -128,7 +128,7 @@ with tab_chat:
         
         with st.spinner("Analyzing locally..."):
             try:
-                response = ollama.chat(model='llama3', messages=[
+                response = ollama.chat(model='mistral', messages=[
                     {'role': 'system', 'content': sys_prompt},
                     {'role': 'user', 'content': prompt}
                 ])

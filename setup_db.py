@@ -70,22 +70,17 @@ def run_db_setup():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;
     """)
-    # 2. Products Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS food_db.products (
-        code VARCHAR(50) PRIMARY KEY, url TEXT, creator VARCHAR(255), created_t VARCHAR(50), 
-        created_datetime VARCHAR(50), last_modified_t VARCHAR(50), last_modified_datetime VARCHAR(50), 
-        product_name TEXT, generic_name TEXT, quantity VARCHAR(255), packaging TEXT, brands TEXT, 
-        categories TEXT, origins TEXT, labels TEXT, stores TEXT, countries TEXT, ingredients_text TEXT, 
-        allergens TEXT, traces TEXT, 
-        FULLTEXT INDEX ft_idx_search (product_name, ingredients_text)
-    ) ENGINE=InnoDB;
-    """)
+    # 2. Products Table (Dynamic Drop)
+    # We drop the strict schema completely. `ingest_csv.py` will use pandas to automatically 
+    # generate the table with 100% of the CSV columns dynamically defined as TEXT fields.
+    cursor.execute("DROP TABLE IF EXISTS food_db.products;")
     
     # Table Context Grants (SoD)
     cursor.execute("GRANT SELECT, INSERT, UPDATE ON food_db.users TO 'db_app_auth'@'%';")
-    cursor.execute("GRANT SELECT ON food_db.products TO 'db_reader'@'%';")
-    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products TO 'db_loader'@'%';")
+    # Note: Reader/Loader grants on products table will be handled or applied at the database level
+    # since the table won't exist until pandas creates it. Granting at db-level for these specific users.
+    cursor.execute("GRANT SELECT ON food_db.* TO 'db_reader'@'%';")
+    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, INDEX ON food_db.* TO 'db_loader'@'%';")
     cursor.execute("FLUSH PRIVILEGES;")
 
     print("\n✅ Database, Users, and Tables created successfully!")

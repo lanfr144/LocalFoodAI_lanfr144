@@ -46,7 +46,7 @@ export PATH="$PWD/venv/bin:$PATH"
 echo ""
 echo "[5/6] Installing Python dependencies via pip inside venv..."
 pip install --upgrade pip
-pip install pandas pymysql myloginpath streamlit ollama bcrypt
+pip install pandas pymysql myloginpath streamlit ollama bcrypt requests
 
 echo ""
 echo "=========================================================="

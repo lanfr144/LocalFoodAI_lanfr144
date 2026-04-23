@@ -69,7 +69,7 @@ def create_indexes(engine):
             
             print("  Building B-TREE Indexes on core macros...")
             # We attempt to index key macros if they exist
-            macro_cols = ['energy-kcal_100g', 'fat_100g', 'carbohydrates_100g', 'proteins_100g']
+            macro_cols = ['energy-kcal_100g', 'fat_100g', 'carbohydrates_100g', 'proteins_100g', 'sugars_100g', 'sodium_100g', 'iron_100g', 'calcium_100g', 'vitamin-c_100g']
             for col in macro_cols:
                 # Convert TEXT to DOUBLE for numerical indexing and querying
                 # We catch errors if the column doesn't exist to be safe

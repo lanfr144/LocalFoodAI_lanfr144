@@ -92,18 +92,18 @@ def register_user(username, password, email):
             cursor.execute("INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s)", (username, hashed, email))
             conn.commit()
         conn.close()
-        send_email(email, "Welcome to Local Food AI", f"Hello {username}, your account was securely created!")
+        send_email(email, "Welcome to Local Food AI", f"Hello {username}, your account was securely created!", to_name=username.title())
         return True
     except pymysql.err.IntegrityError:
         return False
 
-def send_email(to_email, subject, body):
+def send_email(to_email, subject, body, to_name="User"):
     try:
         msg = EmailMessage()
         msg.set_content(body)
         msg['Subject'] = subject
-        msg['From'] = "security@localfoodai.com"
-        msg['To'] = to_email
+        msg['From'] = '"Clinical Food AI System" <security@localfoodai.com>'
+        msg['To'] = f'"{to_name}" <{to_email}>'
         s = smtplib.SMTP('localhost', 25)
         s.send_message(msg)
         s.quit()
@@ -122,7 +122,7 @@ def reset_password(username, email):
             cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hashed, user['id']))
             conn.commit()
             conn.close()
-            send_email(email, "Password Reset", f"Your new temporary password is: {new_pass}")
+            send_email(email, "Password Reset", f"Your new temporary password is: {new_pass}", to_name=username.title())
             return True
     return False
 
@@ -258,7 +258,11 @@ with tab_chat:
         st.chat_message("assistant").write(ai_reply)
 
 def highlight_medical_warnings(row):
-    if '⚠️' in str(row.get('Medical Warning', '')): return ['background-color: rgba(255, 0, 0, 0.4); color: white;'] * len(row)
+    try:
+        val = str(row.get('Medical Warning', ''))
+        if '⚠️' in val: return ['background-color: rgba(255, 0, 0, 0.4); color: white;'] * len(row)
+        if '💚' in val: return ['background-color: rgba(0, 255, 0, 0.3); color: white;'] * len(row)
+    except: pass
     return [''] * len(row)
 
 with tab_explore:
@@ -284,7 +288,8 @@ with tab_explore:
                     l_str = "" if limit_rc == "All" else f"LIMIT {limit_rc}"
                     query = f"""
                         SELECT code, product_name, generic_name, brands, allergens, ingredients_text,
-                               proteins_100g, fat_100g, carbohydrates_100g, sugars_100g, sodium_100g, energy_kcal_100g
+                               proteins_100g, fat_100g, carbohydrates_100g, sugars_100g, sodium_100g, energy_kcal_100g,
+                               `vitamin-c_100g`, iron_100g, calcium_100g
                         FROM products 
                         WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
                         AND (proteins_100g >= %s OR proteins_100g IS NULL)
@@ -313,17 +318,26 @@ with tab_explore:
                                 
                                 # Disease Analytics
                                 if cat == 'illness':
-                                    if val == 'diabetes' and pd.notnull(row['sugars_100g']) and float(row['sugars_100g']) > 10.0:
+                                    if val == 'diabetes' and pd.notnull(row.get('sugars_100g')) and float(row['sugars_100g']) > 10.0:
                                         warns.append("⚠️ High Sugar (Diabetes)")
-                                    if (val == 'hypertension' or val == 'high bp') and pd.notnull(row['sodium_100g']) and float(row['sodium_100g']) > 1.5:
+                                    if (val == 'hypertension' or val == 'high bp') and pd.notnull(row.get('sodium_100g')) and float(row['sodium_100g']) > 1.5:
                                         warns.append("⚠️ High Salt (Hypertension)")
+                                    if val == 'scurvy' and pd.notnull(row.get('vitamin-c_100g')) and float(row['vitamin-c_100g']) > 0.005:
+                                        warns.append("💚 High Vitamin C (Scurvy Recommended)")
+                                    if val == 'anemia' and pd.notnull(row.get('iron_100g')) and float(row['iron_100g']) > 0.002:
+                                        warns.append("💚 High Iron (Anemia Recommended)")
                                         
                                 # Condition Analytics
                                 if cat == 'condition':
-                                    if val == 'pregnant' and ('cru' in ing_text or 'raw' in ing_text or 'viande crue' in ing_text):
-                                        warns.append("⚠️ Raw Foods (Pregnancy Toxoplasmosis)")
-                                    if val == 'low fat' and pd.notnull(row['fat_100g']) and float(row['fat_100g']) > 20.0:
+                                    if val == 'pregnant':
+                                        if ('cru' in ing_text or 'raw' in ing_text or 'viande crue' in ing_text):
+                                            warns.append("⚠️ Raw Foods (Pregnancy Toxoplasmosis)")
+                                        if pd.notnull(row.get('iron_100g')) and float(row['iron_100g']) > 0.002:
+                                            warns.append("💚 Med-High Iron (Pregnancy Health)")
+                                    if val == 'low fat' and pd.notnull(row.get('fat_100g')) and float(row['fat_100g']) > 20.0:
                                         warns.append("⚠️ High Fat")
+                                    if val == 'osteoporosis' and pd.notnull(row.get('calcium_100g')) and float(row['calcium_100g']) > 0.1:
+                                        warns.append("💚 High Calcium (Bone Health)")
                                         
                                 # Dietary Analytics (Best-Effort Keyword Filters)
                                 if cat == 'diet':

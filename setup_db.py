@@ -67,7 +67,39 @@ def run_db_setup():
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(100) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NULL,
+        search_limit VARCHAR(10) DEFAULT '50',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;
+    """)
+
+    # Gracefully add email and search_limit to existing tables if script is re-run
+    try:
+        cursor.execute("ALTER TABLE food_db.users ADD COLUMN email VARCHAR(255) NULL;")
+    except Warning:
+        pass
+    except Exception as e:
+        if 'Duplicate column name' not in str(e):
+            print(f"Skipped altering users (Email): {e}")
+            
+    try:
+        cursor.execute("ALTER TABLE food_db.users ADD COLUMN search_limit VARCHAR(10) DEFAULT '50';")
+    except Warning:
+        pass
+    except Exception as e:
+        if 'Duplicate column name' not in str(e):
+            print(f"Skipped altering users (Limit): {e}")
+
+    # 1.5 Medical Profiles Table (EAV Migration)
+    # We drop the old schema to clear constraints, allowing the dynamic structure to take over
+    cursor.execute("DROP TABLE IF EXISTS food_db.user_profiles;")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS food_db.user_health_profiles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        illness_health_condition_diet_dislikes_name VARCHAR(100) NOT NULL DEFAULT 'None',
+        illness_health_condition_diet_dislikes_value VARCHAR(255) NOT NULL DEFAULT 'None',
+        FOREIGN KEY (user_id) REFERENCES food_db.users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB;
     """)
 
@@ -98,7 +130,8 @@ def run_db_setup():
     
     # Table Context Grants (PoLP)
     # The authenticated app process can handle credentials and now read/write custom plates!
-    cursor.execute("GRANT SELECT, INSERT, UPDATE ON food_db.users TO 'db_app_auth'@'%';")
+    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.users TO 'db_app_auth'@'%';")
+    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.user_health_profiles TO 'db_app_auth'@'%';")
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plates TO 'db_app_auth'@'%';")
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plate_items TO 'db_app_auth'@'%';")
     

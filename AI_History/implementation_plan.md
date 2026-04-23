@@ -1,20 +1,33 @@
-# Local Food AI - Implementation & Verification Plan
+# Premium UI Overhaul & "My Plate" Combinations Plan
 
-## Goal Description
-The objective is to update the project documentation and establish a robust Scrum backlog that flawlessly aligns the user's specific "Local Food AI" requirements with their existing `Streamlit` plus `MySQL` structural decisions mapping.
+Now that our backend is perfectly scaled, we need to focus heavily on the **Frontend Experience** to completely conquer User Stories `#5, #6, #7,` and `#8`. The goal is to evolve the currently simple Streamlit layout into a stunning, glassmorphic, premium "Web Application" feel, while unlocking the ability to save custom food combinations.
+
+## User Review Required
+
+Because Streamlit natively lacks advanced multi-table relational persistence, we must add new tables to MySQL to save a user's food lists permanently across sessions. **Are you okay with me modifying `setup_db.py` to add `plates` and `plate_items` tables, and does the proposed Premium UI style match your vision?**
 
 ## Proposed Changes
-### Project Context Update
-#### [MODIFY] [PROJECT_CONTEXT.md](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/PROJECT_CONTEXT.md)
-- Replaced the generic concept with the concrete "Local Food AI" vision statement.
-- Expanded the existing Tech Stack to include user accounts, privacy guarantees, and Git repository constraints.
-- Bridged the original CSV/MySQL/Pandas expectation with the new "Nutritional Database search" features.
-- Replaced the generic roadmap with a detailed 6-Sprint plan adapted for Streamlit and MySQL.
 
-### Scrum Planning Artifacts
-- Created `task.md` outlining the Sprint breakdown.
+### 1. Database Persistence ("My Plates")
+We will add two cleanly structured tables right after the `users` table logic:
+- **`plates`**: Stores `id`, `user_id` (foreign key), and `plate_name`.
+- **`plate_items`**: Stores `id`, `plate_id` (foreign key), `product_code`, and `grams`.
+*This solves Story #8 perfectly without breaking existing data.*
 
-## Verification Plan
-### Manual Verification
-- The user reviews `PROJECT_CONTEXT.md` to confirm the synthesis between the old environment and the new requirements is accurate.
-- The user approves the 6-Sprint plan before execution begins on Sprint 1 (Git repo & Docker/Deploy setup).
+### 2. Premium Aesthetics & Logic Overhaul
+**Premium CSS Styling:** I will inject a massive `<style>` block to enforce a **curated dark mode**, smooth gradients, glassmorphic container aesthetics, modern typography *(e.g., Google's 'Inter')*, and micro-animations on interactive elements to ensure the project looks like an absolute state-of-the-art enterprise app.
+
+**Nutritional Search Filters (Story #6):** 
+I will add sleek Streamlit sliders and multi-select dropdowns to the "Raw Data Search" tab. Instead of just searching by name, you will be able to say: *"Show me foods with > 20g Protein and < 5g Sugar, sorted by energy."*
+
+**My Plate Tab (Story #7):** 
+I will build a dedicated 3rd Tab called "🍽️ My Plates" where users can:
+- Create named plates (e.g., "Post-Workout Meal").
+- Add searched foods directly to their active plate.
+- Define the gram quantity for each item.
+- The app will dynamically sum up the combined macro totals (Proteins, Carbs, Fats) across the entire plate locally using a Pandas aggregation over the grabbed SQL data!
+
+## Open Questions
+
+1. **Macro Priorities:** Are there specific macro nutrients (like Energy, Proteins, Fat, Sugars, Salt) that you want explicitly highlighted when viewing a "Combined Nutritional Value Overview" of a Plate, or should I attempt to dynamically graph as many as possible?
+2. **Visual Theme:** Do you prefer a vibrant "Cyberpunk Dark Mode" or a more elegant "Sleek Dark Medical/Scientific" aesthetic with softer blues and greens?

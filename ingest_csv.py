@@ -31,7 +31,8 @@ def ingest_file(filename, engine):
     total_processed = 0
 
     # Read dynamically without filtering. Setting low_memory=False to let pandas parse column types flexibly
-    for chunk in pd.read_csv(filename, sep='\t', dtype=str, chunksize=chunk_size, on_bad_lines='skip', low_memory=False):
+    # Forced utf-8 encoding to prevent French accent corruption on Windows OS defaults
+    for chunk in pd.read_csv(filename, sep='\t', dtype=str, chunksize=chunk_size, on_bad_lines='skip', low_memory=False, encoding='utf-8'):
         try:
             # Drop duplicates by code natively
             if 'code' in chunk.columns:

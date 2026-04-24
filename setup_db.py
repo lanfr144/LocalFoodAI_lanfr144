@@ -125,11 +125,9 @@ def run_db_setup():
     ) ENGINE=InnoDB;
     """)
 
-    # 4. Products Table (Dynamic Drop for Pandas logic using Horizontal Partitioning)
-    cursor.execute("DROP TABLE IF EXISTS food_db.products_1;")
-    cursor.execute("DROP TABLE IF EXISTS food_db.products_2;")
-    cursor.execute("DROP TABLE IF EXISTS food_db.products_3;")
-    cursor.execute("DROP TABLE IF EXISTS food_db.products_4;")
+    # 4. Products Table (Dynamic Drop for partitioned logic)
+    for i in range(1, 101): # Drop up to 100 partitions just in case
+        cursor.execute(f"DROP TABLE IF EXISTS food_db.products_{i};")
     cursor.execute("DROP VIEW IF EXISTS food_db.products;")
     
     # Table Context Grants (PoLP)

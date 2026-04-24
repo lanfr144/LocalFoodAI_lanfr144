@@ -38,6 +38,7 @@ def ingest_file(filename, engine):
             if 'code' in chunk.columns:
                 df = chunk.drop_duplicates(subset=['code'])
             else:
+                df = chunk
             # Eliminate completely empty columns to save storage
             df.dropna(axis=1, how='all', inplace=True)
             

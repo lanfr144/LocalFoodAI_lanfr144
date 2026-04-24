@@ -139,11 +139,8 @@ def run_db_setup():
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plates TO 'db_app_auth'@'%';")
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plate_items TO 'db_app_auth'@'%';")
     
-    # Give the app read privileges on the partitioned products tables
-    cursor.execute("GRANT SELECT ON food_db.products_1 TO 'db_app_auth'@'%';")
-    cursor.execute("GRANT SELECT ON food_db.products_2 TO 'db_app_auth'@'%';")
-    cursor.execute("GRANT SELECT ON food_db.products_3 TO 'db_app_auth'@'%';")
-    cursor.execute("GRANT SELECT ON food_db.products_4 TO 'db_app_auth'@'%';")
+    # Give the app read privileges on the whole database (including the products view when created)
+    cursor.execute("GRANT SELECT ON food_db.* TO 'db_app_auth'@'%';")
     
     cursor.execute("GRANT SELECT ON food_db.* TO 'db_reader'@'%';")
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, INDEX, CREATE VIEW ON food_db.* TO 'db_loader'@'%';")

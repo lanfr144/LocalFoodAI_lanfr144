@@ -46,7 +46,7 @@ def ingest_file(filename, engine):
             cols = list(df.columns)
             if 'code' in cols: cols.remove('code')
             
-            p_chunk_size = 8 # Safe size for TEXT columns
+            p_chunk_size = 4 # Extreme safe size for TEXT columns to stay under 8126 byte row limit
             chunks = [cols[i:i + p_chunk_size] for i in range(0, len(cols), p_chunk_size)]
             
             for i, col_chunk in enumerate(chunks):

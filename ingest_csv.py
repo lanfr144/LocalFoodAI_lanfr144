@@ -38,17 +38,22 @@ def ingest_file(filename, engine):
             if 'code' in chunk.columns:
                 df = chunk.drop_duplicates(subset=['code'])
             else:
-            # Only keep the minimum columns required by our clinical analytical schema!
-            target_cols = [
-                'code', 'product_name', 'generic_name', 'brands', 'allergens', 'ingredients_text',
-                'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'sodium_100g', 'energy-kcal_100g',
-                'vitamin-c_100g', 'iron_100g', 'calcium_100g'
-            ]
-            # Use intersection in case some CSV chunks lack certain columns
-            exist_cols = [c for c in target_cols if c in df.columns]
-            df = df[exist_cols]
+            # Eliminate completely empty columns to save storage
+            df.dropna(axis=1, how='all', inplace=True)
             
-            df.to_sql('products', con=engine, if_exists='append', index=False)
+            # Segment the dataframe into chunks of 50 columns each to bypass InnoDB constraints
+            cols = list(df.columns)
+            if 'code' in cols: cols.remove('code')
+            
+            chunk_size = 50
+            chunks = [cols[i:i + chunk_size] for i in range(0, len(cols), chunk_size)]
+            
+            for i, col_chunk in enumerate(chunks):
+                # Ensure 'code' maps across every single table
+                table_name = f'products_{i+1}'
+                df_slice = df[['code'] + col_chunk].copy()
+                df_slice.to_sql(table_name, con=engine, if_exists='append', index=False)
+
             total_processed += len(df)
             print(f"   Successfully appended {total_processed} rows (Dynamic schema)...", end="\r")
         except BaseException as e:
@@ -65,21 +70,27 @@ def create_indexes(engine):
     # B-TREE and FULLTEXT INDEXES created post-ingestion for extreme speed
     try:
         with engine.begin() as connection:
-            print("  Building Primary Key on `code`...")
-            connection.execute(text("ALTER TABLE products MODIFY code VARCHAR(50);"))
-            connection.execute(text("ALTER TABLE products ADD PRIMARY KEY (code);"))
-
-            print("  Building Fulltext Indexes...")
-            connection.execute(text("CREATE FULLTEXT INDEX ft_idx_search ON products(product_name, ingredients_text, brands);"))
-            
-            print("  Building B-TREE Indexes on core macros...")
-            macro_cols = ['energy-kcal_100g', 'fat_100g', 'carbohydrates_100g', 'proteins_100g', 'sugars_100g', 'sodium_100g', 'iron_100g', 'calcium_100g', 'vitamin-c_100g']
-            for col in macro_cols:
+            print("  Building Core Architecture on Partitions...")
+            # Enforce Primary Keys on the first 4 partitions
+            for i in range(1, 5):
                 try:
-                    connection.execute(text(f"ALTER TABLE products MODIFY `{col}` DOUBLE;"))
-                    connection.execute(text(f"CREATE INDEX idx_{col.replace('-', '_')} ON products(`{col}`);"))
-                except:
-                    pass
+                    connection.execute(text(f"ALTER TABLE products_{i} MODIFY code VARCHAR(50);"))
+                    connection.execute(text(f"ALTER TABLE products_{i} ADD PRIMARY KEY (code);"))
+                except: pass
+
+            print("  Building Dynamic MySQL View...")
+            # We build a massive Join View so the app doesn't need to know about the segments
+            try:
+                connection.execute(text("""
+                CREATE VIEW products AS
+                SELECT p1.*, 
+                       p2.energy_100g, p2.`energy-kcal_100g`, p2.proteins_100g, p2.fat_100g, p2.carbohydrates_100g, p2.sugars_100g, p2.salt_100g, p2.sodium_100g, p2.fiber_100g,
+                       p3.iron_100g, p3.calcium_100g, p3.`vitamin-c_100g`, p3.`vitamin-d_100g`
+                FROM products_1 p1
+                LEFT JOIN products_2 p2 ON p1.code = p2.code
+                LEFT JOIN products_3 p3 ON p1.code = p3.code
+                """))
+            except: pass
         print("✅ Indexing Complete!")
     except Exception as e:
         print(f"❌ Indexing encountered an issue: {e}")

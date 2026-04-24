@@ -2,11 +2,14 @@ import bcrypt
 import pymysql
 import sys
 
+import myloginpath
+
 def get_db_connection():
+    conf = myloginpath.parse('app_auth')
     return pymysql.connect(
-        host='127.0.0.1',
-        user='db_app_auth',
-        password='BTSai123_app_auth',
+        host=conf.get('host', '127.0.0.1'),
+        user=conf.get('user', 'db_app_auth'),
+        password=conf.get('password'),
         database='food_db',
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=True

@@ -125,8 +125,12 @@ def run_db_setup():
     ) ENGINE=InnoDB;
     """)
 
-    # 4. Products Table (Dynamic Drop for Pandas logic)
-    cursor.execute("DROP TABLE IF EXISTS food_db.products;")
+    # 4. Products Table (Dynamic Drop for Pandas logic using Horizontal Partitioning)
+    cursor.execute("DROP TABLE IF EXISTS food_db.products_1;")
+    cursor.execute("DROP TABLE IF EXISTS food_db.products_2;")
+    cursor.execute("DROP TABLE IF EXISTS food_db.products_3;")
+    cursor.execute("DROP TABLE IF EXISTS food_db.products_4;")
+    cursor.execute("DROP VIEW IF EXISTS food_db.products;")
     
     # Table Context Grants (PoLP)
     # The authenticated app process can handle credentials and now read/write custom plates!
@@ -135,8 +139,14 @@ def run_db_setup():
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plates TO 'db_app_auth'@'%';")
     cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plate_items TO 'db_app_auth'@'%';")
     
+    # Give the app read privileges on the partitioned products tables
+    cursor.execute("GRANT SELECT ON food_db.products_1 TO 'db_app_auth'@'%';")
+    cursor.execute("GRANT SELECT ON food_db.products_2 TO 'db_app_auth'@'%';")
+    cursor.execute("GRANT SELECT ON food_db.products_3 TO 'db_app_auth'@'%';")
+    cursor.execute("GRANT SELECT ON food_db.products_4 TO 'db_app_auth'@'%';")
+    
     cursor.execute("GRANT SELECT ON food_db.* TO 'db_reader'@'%';")
-    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, INDEX ON food_db.* TO 'db_loader'@'%';")
+    cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, INDEX, CREATE VIEW ON food_db.* TO 'db_loader'@'%';")
     cursor.execute("FLUSH PRIVILEGES;")
 
     print("\n✅ Database, Users, and Tables created successfully!")

@@ -98,17 +98,24 @@ def register_user(username, password, email):
         return False
 
 def send_email(to_email, subject, body, to_name="User"):
-    try:
-        msg = EmailMessage()
-        msg.set_content(body)
-        msg['Subject'] = subject
-        msg['From'] = '"Clinical Food AI System" <security@localfoodai.com>'
-        msg['To'] = f'"{to_name}" <{to_email}>'
-        s = smtplib.SMTP('localhost', 25)
-        s.send_message(msg)
-        s.quit()
-    except Exception:
-        print(f"Mock SMTP -> Sent to {to_email} | Subject: {subject}")
+    msg = EmailMessage()
+    msg.set_content(body)
+    msg['Subject'] = subject
+    msg['From'] = '"Clinical Food AI System" <security@localfoodai.com>'
+    msg['To'] = f'"{to_name}" <{to_email}>'
+    
+    import time
+    for attempt in range(5):
+        try:
+            s = smtplib.SMTP('localhost', 25)
+            s.send_message(msg)
+            s.quit()
+            return True
+        except Exception as e:
+            if attempt == 4:
+                return f"SMTP Delivery Failed: {str(e)}"
+            time.sleep(2)
+    return "Unknown Error Occurred"
 
 def reset_password(username, email):
     conn = get_db_connection('app_auth')
@@ -122,8 +129,10 @@ def reset_password(username, email):
             cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hashed, user['id']))
             conn.commit()
             conn.close()
-            send_email(email, "Password Reset", f"Your new temporary password is: {new_pass}", to_name=username.title())
-            return True
+            status = send_email(email, "Password Reset", f"Your new temporary password is: {new_pass}", to_name=username.title())
+            if status is True:
+                return True
+            return status
     return False
 
 # UI Theming
@@ -211,8 +220,11 @@ with st.sidebar:
             f_user = st.text_input("Username", key="f_user")
             f_email = st.text_input("Registered Email", key="f_email")
             if st.button("Send Reset Link"):
-                if reset_password(f_user, f_email): st.success("Password reset emailed.")
-                else: st.error("Failed.")
+                status = reset_password(f_user, f_email)
+                if status is True: 
+                    st.success("Password reset emailed.")
+                else: 
+                    st.error(f"Failed: {status}")
 
 if not st.session_state["authenticated_user"]:
     st.title("🍔 Food AI Medical Explorer")
@@ -287,9 +299,7 @@ with tab_explore:
                 with conn_reader.cursor() as cursor:
                     l_str = "" if limit_rc == "All" else f"LIMIT {limit_rc}"
                     query = f"""
-                        SELECT code, product_name, generic_name, brands, allergens, ingredients_text,
-                               proteins_100g, fat_100g, carbohydrates_100g, sugars_100g, sodium_100g, energy_kcal_100g,
-                               `vitamin-c_100g`, iron_100g, calcium_100g
+                        SELECT *
                         FROM products 
                         WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
                         AND (proteins_100g >= %s OR proteins_100g IS NULL)
@@ -305,6 +315,25 @@ with tab_explore:
                         # Fetch EAV Medical Profile
                         eav_profile = get_eav_profile(st.session_state["authenticated_user"])
                         df = pd.DataFrame(results)
+                        
+                        st.markdown("### 🛠️ Dynamic Column Display")
+                        default_columns = [
+                            'code', 'product_name', 'generic_name', 'brands', 'allergens', 'ingredients_text',
+                            'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'sodium_100g', 'energy-kcal_100g',
+                            'vitamin-c_100g', 'iron_100g', 'calcium_100g'
+                        ]
+                        all_fetched_cols = list(df.columns)
+                        valid_defaults = [c for c in default_columns if c in all_fetched_cols]
+                        
+                        if "selected_columns" not in st.session_state or st.button("Reset Default Columns"):
+                            st.session_state["selected_columns"] = valid_defaults
+                            st.rerun()
+                            
+                        chosen_cols = st.multiselect("Customize Dataset View", all_fetched_cols, default=st.session_state["selected_columns"], key="multi_cols")
+                        st.session_state["selected_columns"] = chosen_cols
+                        
+                        # Filter dataframe gracefully, but we retain a copy for background analytics
+                        df_display = df[chosen_cols].copy()
                         warnings_col = []
                         
                         for idx, row in df.iterrows():
@@ -339,27 +368,49 @@ with tab_explore:
                                     if val == 'osteoporosis' and pd.notnull(row.get('calcium_100g')) and float(row['calcium_100g']) > 0.1:
                                         warns.append("💚 High Calcium (Bone Health)")
                                         
-                                # Dietary Analytics (Best-Effort Keyword Filters)
-                                if cat == 'diet':
-                                    if val in ['vegan', 'kosher', 'halal']:
-                                        if val not in ing_text:
-                                            warns.append(f"⚠️ Cannot verify {val.title()} compliance. Please check manual label.")
-                                        if val == 'vegan' and ('lait' in ing_text or 'milk' in ing_text or 'oeuf' in ing_text or 'egg' in ing_text or 'meat' in ing_text or 'viande' in ing_text):
-                                            warns.append("⚠️ Contains Animal Products (Not Vegan)")
-                                        if val == 'halal' and ('porc' in ing_text or 'gelatin' in ing_text or 'vin' in ing_text or 'wine' in ing_text):
+                            if eav_data:
+                                ing_text = str(row.get('ingredients_text', '')).lower()
+                                all_text = str(row.get('allergens', '')).lower()
+                                for e in eav_data:
+                                    cat = str(e['name']).lower()
+                                    val = str(e['value']).lower()
+                                    
+                                    # Clinical Trace Checks...
+                                    if cat == 'condition' and val == 'pregnant':
+                                        if float(row.get('iron_100g', 0) or 0) < 0.003:
+                                            warns.append("⚠️ Low Iron (Pregnancy Risk)")
+                                        else:
+                                            warns.append("💚 Recommended (High Iron)")
+                                    
+                                    if cat == 'illness' and val == 'osteoporosis':
+                                        if float(row.get('calcium_100g', 0) or 0) < 0.120:
+                                            warns.append("⚠️ Low Calcium (Osteoporosis Risk)")
+                                        else:
+                                            warns.append("💚 Recommended (High Calcium)")
+                                            
+                                    if cat == 'illness' and val == 'scurvy':
+                                        if float(row.get('vitamin-c_100g', 0) or 0) < 0.010:
+                                            warns.append("⚠️ Low Vitamin C (Scurvy Risk)")
+                                        else:
+                                            warns.append("💚 Recommended (High Vitamin C)")
+                                            
+                                    if cat == 'diet' and val in ['vegan', 'vegetarian']:
+                                        if any(x in ing_text for x in ['meat', 'beef', 'chicken', 'fish', 'gelatin', 'whey']):
+                                            warns.append("⚠️ Contains Animal Products")
+                                    if cat == 'diet' and val == 'halal':
+                                        if any(x in ing_text for x in ['pork', 'pig', 'wine', 'alcohol', 'beer']):
                                             warns.append("⚠️ Probable Haram Ingredients (e.g. Pork/Wine)")
                                             
-                                # Simple Exclusion List Analytics
-                                if cat in ['dislike', 'allergy']:
-                                    if val in ing_text or val in all_text:
-                                        warns.append(f"⚠️ Contains: {val.upper()}")
-                                        
+                                    if cat in ['dislike', 'allergy']:
+                                        if val in ing_text or val in all_text:
+                                            warns.append(f"⚠️ Contains: {val.upper()}")
+                                            
                             warnings_col.append(" | ".join(list(set(warns))) if warns else "✅ Safe for Profile")
                             
-                        df.insert(0, 'Medical Warning', warnings_col)
-                        styled_df = df.style.apply(highlight_medical_warnings, axis=1)
+                        df_display.insert(0, 'Medical Warning', warnings_col)
+                        styled_df = df_display.style.apply(highlight_medical_warnings, axis=1)
 
-                        st.success(f"Analysed {len(results)} records utilizing dynamic EAV parameters.")
+                        st.success(f"Analysed {len(results)} records utilizing dynamic Partitions!")
                         st.dataframe(styled_df, use_container_width=True)
                     else:
                         st.warning("No products found matching those strict terms.")
@@ -416,7 +467,14 @@ with tab_planner:
     
     if st.button("Generate Professional Menu"):
         with st.spinner("AI is formulating..."):
-            sys_prompt = f"Dietitian planner. {diet_pref}, {target_cal}kcal, {meal_count} meals. Notes: {extra_notes}. OUTPUT AS STRICT MARKDOWN TABLE."
+            sys_prompt = f"""You are a professional Dietitian planner. Target: {target_cal}kcal over {meal_count} meals. 
+            Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
+            CRITICAL INSTRUCTIONS:
+            - ALWAYS output exactly as a strict Markdown table including Columns: | Meal | Food | Calories | Salt | Fat | Iron |
+            - DO NOT output | separated text outside of standard strict markdown block ` ```markdown ` or standard rendering.
+            - Convert ALL cooking measurements to Grams (g). Use these equivalents STRICTLY:
+              1 tbsp = 15g, 1 tsp = 5g, 1 cup = 200g, 1 mustard glass = 100g. 1 cl of liquid = 10g.
+            """
             response = ollama.chat(model='mistral', messages=[{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate menu'}])
             st.markdown(response['message']['content'])
 

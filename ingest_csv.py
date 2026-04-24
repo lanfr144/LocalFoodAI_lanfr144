@@ -1,7 +1,7 @@
 import pandas as pd
 import myloginpath
 import urllib.parse
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import os
 import sys
 
@@ -38,8 +38,16 @@ def ingest_file(filename, engine):
             if 'code' in chunk.columns:
                 df = chunk.drop_duplicates(subset=['code'])
             else:
-                df = chunk
-                
+            # Only keep the minimum columns required by our clinical analytical schema!
+            target_cols = [
+                'code', 'product_name', 'generic_name', 'brands', 'allergens', 'ingredients_text',
+                'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'sodium_100g', 'energy-kcal_100g',
+                'vitamin-c_100g', 'iron_100g', 'calcium_100g'
+            ]
+            # Use intersection in case some CSV chunks lack certain columns
+            exist_cols = [c for c in target_cols if c in df.columns]
+            df = df[exist_cols]
+            
             df.to_sql('products', con=engine, if_exists='append', index=False)
             total_processed += len(df)
             print(f"   Successfully appended {total_processed} rows (Dynamic schema)...", end="\r")
@@ -58,24 +66,18 @@ def create_indexes(engine):
     try:
         with engine.begin() as connection:
             print("  Building Primary Key on `code`...")
-            # We must make `code` the primary key if pandas just made it a TEXT field
-            # But MySQL cannot have a TEXT field as PRIMARY KEY without a length constraint.
-            # Convert code to VARCHAR(50) first.
-            connection.execute(urllib.parse.unquote("ALTER TABLE products MODIFY code VARCHAR(50);"))
-            connection.execute(urllib.parse.unquote("ALTER TABLE products ADD PRIMARY KEY (code);"))
+            connection.execute(text("ALTER TABLE products MODIFY code VARCHAR(50);"))
+            connection.execute(text("ALTER TABLE products ADD PRIMARY KEY (code);"))
 
             print("  Building Fulltext Indexes...")
-            connection.execute(urllib.parse.unquote("CREATE FULLTEXT INDEX ft_idx_search ON products(product_name, ingredients_text, brands);"))
+            connection.execute(text("CREATE FULLTEXT INDEX ft_idx_search ON products(product_name, ingredients_text, brands);"))
             
             print("  Building B-TREE Indexes on core macros...")
-            # We attempt to index key macros if they exist
             macro_cols = ['energy-kcal_100g', 'fat_100g', 'carbohydrates_100g', 'proteins_100g', 'sugars_100g', 'sodium_100g', 'iron_100g', 'calcium_100g', 'vitamin-c_100g']
             for col in macro_cols:
-                # Convert TEXT to DOUBLE for numerical indexing and querying
-                # We catch errors if the column doesn't exist to be safe
                 try:
-                    connection.execute(urllib.parse.unquote(f"ALTER TABLE products MODIFY `{col}` DOUBLE;"))
-                    connection.execute(urllib.parse.unquote(f"CREATE INDEX idx_{col.replace('-', '_')} ON products(`{col}`);"))
+                    connection.execute(text(f"ALTER TABLE products MODIFY `{col}` DOUBLE;"))
+                    connection.execute(text(f"CREATE INDEX idx_{col.replace('-', '_')} ON products(`{col}`);"))
                 except:
                     pass
         print("✅ Indexing Complete!")

@@ -15,13 +15,13 @@ fi
 
 echo "🚀 Starting database wipe and reset..."
 # Automatically run the new DB setup to drop the rigid table
-python3 setup_db.py
+venv/bin/python3 setup_db.py
 
 echo "🚀 Triggering background ingestion process via nohup..."
 echo "All outputs will be saved to ingestion_process.log"
 
 # Run securely in background
-nohup python3 -u ingest_csv.py > ingestion_process.log 2>&1 &
+nohup venv/bin/python3 -u ingest_csv.py > ingestion_process.log 2>&1 &
 BG_PID=$!
 
 echo "✅ Process started in the background (PID: $BG_PID)"

@@ -242,7 +242,7 @@ with st.sidebar:
     else:
         tab1, tab2, tab3 = st.tabs(["Login", "Register", "Reset"])
         with tab1:
-            l_user = st.text_input("Username", key="l_user")
+            l_user = st.text_input("Username", key="l_user").strip()
             l_pass = st.text_input("Password", type="password", key="l_pass")
             if st.button("Login"):
                 if verify_login(l_user, l_pass):

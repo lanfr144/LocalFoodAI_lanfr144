@@ -1,0 +1,38 @@
+version: '3.5'
+services:
+  zabbix-server:
+    image: zabbix/zabbix-server-mysql:ubuntu-7.0-latest
+    ports:
+      - "10051:10051"
+    environment:
+      - DB_SERVER_HOST=192.168.130.170 # Use the unified MySQL DB
+      - MYSQL_USER=zabbix
+      - MYSQL_PASSWORD=zabbix_pwd
+      - ZBX_SNMPTRAPPER=1
+    restart: always
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-mysql:ubuntu-7.0-latest
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - DB_SERVER_HOST=192.168.130.170
+      - MYSQL_USER=zabbix
+      - MYSQL_PASSWORD=zabbix_pwd
+      - ZBX_SERVER_HOST=zabbix-server
+      - PHP_TZ=Europe/Paris
+    depends_on:
+      - zabbix-server
+    restart: always
+
+  zabbix-agent:
+    image: zabbix/zabbix-agent:ubuntu-7.0-latest
+    environment:
+      - ZBX_HOSTNAME=Zabbix server
+      - ZBX_SERVER_HOST=zabbix-server
+    privileged: true
+    pid: "host"
+    volumes:
+      - /var/run:/var/run
+    restart: always

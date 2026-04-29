@@ -4,3 +4,4 @@ myloginpath
 streamlit
 ollama
 bcrypt
+pysnmp

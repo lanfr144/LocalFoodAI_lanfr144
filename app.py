@@ -10,6 +10,7 @@ import smtplib
 from email.message import EmailMessage
 import pandas as pd
 from unit_converter import UnitConverter
+from snmp_notifier import notifier
 
 def local_web_search(query: str) -> str:
     try:
@@ -245,9 +246,12 @@ with st.sidebar:
             l_pass = st.text_input("Password", type="password", key="l_pass")
             if st.button("Login"):
                 if verify_login(l_user, l_pass):
+                    notifier.send_alert(f"User Login Success: {l_user}")
                     st.session_state["authenticated_user"] = l_user
                     st.rerun()
-                else: st.error("Invalid login.")
+                else:
+                    notifier.send_alert(f"User Login Failed: {l_user}")
+                    st.error("Invalid login.")
         with tab2:
             r_user = st.text_input("Username", key="r_user")
             r_email = st.text_input("Email Address", key="r_email")
@@ -347,6 +351,7 @@ with tab_explore:
     limit_rc = cols[4].selectbox("Limit Results", opts, index=idx)
     
     if st.button("Search Database") and sq and conn_reader:
+        notifier.send_alert(f"Medical DB Search Executed: {sq}")
         with st.spinner("Processing massive clinical query..."):
             try:
                 with conn_reader.cursor() as cursor:

@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.types import VARCHAR, TEXT, DOUBLE
 import os
 import sys
+from snmp_notifier import notifier
 
 def get_loader_engine():
     try:
@@ -80,9 +81,13 @@ def ingest_file(filename, engine):
 
             total_processed += len(df)
             print(f"   Successfully appended {total_processed} rows into grouped tables...", end="\r")
+            if total_processed % 50000 == 0:
+                notifier.send_alert(f"Ingestion Milestone: {total_processed} rows processed")
         except BaseException as e:
+            notifier.send_alert(f"Ingestion Exception: {str(e)}")
             print(f"\n   [Warning] Chunk skipped due to error: {e}")
             
+    notifier.send_alert(f"Ingestion Finished: {filename}")
     print(f"\n✅ Finished importing {filename}.")
     return True
 

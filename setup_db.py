@@ -125,10 +125,32 @@ def run_db_setup():
     ) ENGINE=InnoDB;
     """)
 
-    # 4. Products Table (Dynamic Drop for partitioned logic)
+    # 4. Products Table (Unified)
     for i in range(1, 101): # Drop up to 100 partitions just in case
         cursor.execute(f"DROP TABLE IF EXISTS food_db.products_{i};")
     cursor.execute("DROP VIEW IF EXISTS food_db.products;")
+    cursor.execute("DROP TABLE IF EXISTS food_db.products;")
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS food_db.products (
+        code VARCHAR(50) PRIMARY KEY,
+        product_name TEXT NULL,
+        generic_name TEXT NULL,
+        brands TEXT NULL,
+        allergens TEXT NULL,
+        ingredients_text TEXT NULL,
+        proteins_100g DOUBLE NULL,
+        fat_100g DOUBLE NULL,
+        carbohydrates_100g DOUBLE NULL,
+        sugars_100g DOUBLE NULL,
+        sodium_100g DOUBLE NULL,
+        `energy-kcal_100g` DOUBLE NULL,
+        `vitamin-c_100g` DOUBLE NULL,
+        iron_100g DOUBLE NULL,
+        calcium_100g DOUBLE NULL,
+        FULLTEXT idx_search (product_name, ingredients_text)
+    ) ENGINE=InnoDB;
+    """)
     
     # Table Context Grants (PoLP)
     # The authenticated app process can handle credentials and now read/write custom plates!

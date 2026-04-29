@@ -135,8 +135,11 @@ def run_db_setup():
     ]
     cursor.execute("DROP VIEW IF EXISTS food_db.products;")
     cursor.execute("DROP TABLE IF EXISTS food_db.products;")
+    
+    cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
     for t in tables:
         cursor.execute(f"DROP TABLE IF EXISTS {t};")
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
         
     cursor.execute("""
     CREATE TABLE food_db.products_core (

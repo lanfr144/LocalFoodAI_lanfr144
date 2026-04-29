@@ -32,8 +32,11 @@ def ingest_file(filename, engine):
 
     required_columns = [
         'code', 'product_name', 'generic_name', 'brands', 'allergens', 'ingredients_text',
-        'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'sodium_100g', 
-        'energy-kcal_100g', 'vitamin-c_100g', 'iron_100g', 'calcium_100g'
+        'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'sodium_100g', 'salt_100g',
+        'energy-kcal_100g', 'vitamin-a_100g', 'vitamin-d_100g', 'vitamin-e_100g', 'vitamin-k_100g',
+        'vitamin-c_100g', 'vitamin-b1_100g', 'vitamin-b2_100g', 'vitamin-pp_100g', 'vitamin-b6_100g',
+        'vitamin-b9_100g', 'vitamin-b12_100g', 'calcium_100g', 'iron_100g', 'magnesium_100g',
+        'zinc_100g', 'potassium_100g', 'cholesterol_100g', 'fiber_100g'
     ]
 
     for chunk in pd.read_csv(filename, sep='\t', dtype=str, chunksize=chunk_size, on_bad_lines='skip', low_memory=False, encoding='utf-8'):

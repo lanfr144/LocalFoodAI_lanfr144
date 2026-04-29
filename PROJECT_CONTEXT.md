@@ -1,76 +1,39 @@
 # Project Context: Local Food AI
 
 ## 🎯 Vision Statement
-A local food AI that provides full nutritional value information on any food and can generate complete menu proposals based on the user's specification. The system is designed with a strict privacy-first focus, ensuring no user data leaves the server, and fits within specific hardware limits.
+A strictly local, privacy-first Food AI that acts as a clinical dietitian. It provides complete nutritional analysis, recipe formulation, and menu planning based on dynamic user health profiles (e.g., pregnancy, kidney disease, specific diets). No user data leaves the server.
 
 ## 🏗️ Architecture & Tech Stack
+- **Server Environment**: Ubuntu 24.04 VM (`192.168.130.170`). 
+- **Containerization**: Docker & Kubernetes scripts available in `docker/` and `k8s/`.
+- **LLM Engine**: Ollama running locally (`mistral:latest`).
+- **Database**: MySQL 8.0 with `mysql_config_editor` login paths (`app_reader`, `app_auth`).
+- **Frontend Web Interface**: Streamlit (`app.py`).
 
-### Remote Environment
-- **Server**: Ubuntu 24.04 VM at `192.168.130.170` (8 vCPUs, 30 GB RAM, no dedicated GPU). Accessed via SSH as `francois` or `root`.
-- **Containerization**: Docker (for backend/frontend) or native deployment.
-- **LLM Engine**: Ollama (for running lightweight, quantized local language models like `mistral` or `llama3-8b`).
-- **Database Server**: MySQL (for user data, saved lists, and nutritional database).
+## 💾 Database Design: Grouped Vertical Partitioning
+To bypass InnoDB row limits and optimize for massive data ingestion (~24GB OpenFoodFacts), the database is vertically partitioned:
+1. `products_core` (Base data, FULLTEXT indexing)
+2. `products_allergens`
+3. `products_macros` (Strict `DOUBLE` datatypes)
+4. `products_vitamins`
+5. `products_minerals`
 
-### Frontend Web Interface
-- **Framework**: Streamlit (Python)
-- **Purpose**: To provide an interactive chat interface for the AI, search functionality for food nutrition, user account management, and food combination calculators.
+**CRITICAL NOTE**: The frontend and AI RAG tools interact with a unified `VIEW` named `products` that elegantly `LEFT JOIN`s these partitions.
 
-### Local Environment
-- **Workspace**: `c:\Users\lanfr144\Documents\DOPRO1\Antigravity\Food`
-- **OS**: Windows
+## 🧠 AI Capabilities & RAG Tools
+The Ollama `mistral` model is fully integrated with Streamlit using **Tool Calling**:
+- **Tool**: `search_nutrition_db`. The AI can autonomously execute SQL queries against the local database to pull exact nutritional macros.
+- **Tool**: `local_web_search`. The AI can anonymously search the web if the DB lacks recipe ideas.
+- **Dynamic Profiling**: The Streamlit app extracts the user's EAV health profile and securely injects it into the AI's `sys_prompt`. The AI dynamically acts as a specialized dietitian for that precise condition (e.g., automatically flagging raw meats as forbidden for pregnancy).
 
-### Python Environment
-Python will be used for scripting, data manipulation, and interacting with the LLM and the Database. Required libraries:
-- `streamlit`: To build the web application.
-- `ollama`: For querying local models.
-- `pandas`: For data processing (e.g., ingesting nutrition CSVs).
-- `mysql-connector-python` or `SQLAlchemy`: For database access.
-- **Web Search Tool**: (e.g., DuckDuckGo API wrapper) for the AI to dynamically gather external information anonymously.
+## 🚀 Key Features
+1. **Dynamic Tabular Analytics**: In the Clinical Search tab, users can click "Ask AI to Evaluate This Table" to grade database rows against their specific illnesses/diets.
+2. **Plate Builder & Unit Converter**: `unit_converter.py` parses natural language strings (e.g., "1.5 cups") and converts them to metric grams based on product density.
+3. **AI Meal Planner**: Multi-turn RAG loop where the AI queries the database for verified foods before outputting a strict Markdown menu table.
 
-## 🔐 Core Requirements & Privacy
-- **User Accounts**: Secure login and registration system.
-- **Data Privacy**: No user data leaves the server.
-- **Repository**: Public Git repository at `https://git.btshub.lu` named `LocalFoodAI_<your IAM>`. Contains a strict `.gitignore`. Teacher (`evegi144`) added as collaborator.
-- **Ease of Use**: Anyone should be able to clone the repo and run it easily (via Docker/scripts).
-
-## 🚀 Key Features (User Stories)
-1. **Nutritional Information**: View complete macros, minerals, vitamins, etc., for any food.
-2. **Food Combinations**: Enter quantities for multiple foods to get a combined nutritional overview. Store and edit these in named lists.
-3. **Nutrient Search**: Search for specific nutrients and sort foods containing them.
-4. **AI Menu Proposals**: Get AI-generated menu proposals based on nutritional goals and constraints (e.g., allergies).
-5. **AI Nutrition Chat**: Freely chat with the AI about nutrition.
-6. **Anonymous Web Search**: The AI can perform local background web searches for missing information.
-
-## 🚀 Installation Prerequisites & Deployment
-### Server Prerequisites (Ubuntu 24.04 Native)
-- `gcc` and `build-essential`.
-- `python3-venv`, `python3-dev`, and `python3-pip`.
-- `mysql-server` and `curl`.
-
-### Automated Deployment (`deploy.sh`)
-Executing this file on a naked server will automatically:
-1. Fetch and install all apt-level system prerequisites.
-2. Install Ollama natively.
-3. Push custom configurations (`my.cnf`) to MySQL server and configure the local virtual environment.
-4. Pip-install the project dependencies.
-
-## 💾 Database Configuration & Data Loading
-### 1. Initial MySQL Setup
-- `init.sql` script loads into MySQL to create the database, users, and tables for User Profiles, Food Combos, and the Nutrition Data.
-
-### 2. Data Import (CSV)
-- A nutritional database `.csv` ingestion script (using `pandas`) populates the MySQL tables.
-
-### 3. Search Capabilities
-- The MySQL database must be optimized for text/context queries to support the AI's Retrieval-Augmented Generation (RAG).
-
-## 📝 Roadmap & Next Steps (Sprints)
-- [ ] **Sprint 1 (Foundation)**: Initialize Git repository (`LocalFoodAI_<IAM>`), setup `.gitignore`, finalize `deploy.sh`, initialize MySQL (`init.sql`), and build Streamlit user login.
-- [ ] **Sprint 2 (Data Core)**: Import food nutritional CSV via Pandas into MySQL. Build Streamlit pages for food search and details.
-- [ ] **Sprint 3 (Combinations)**: Implement Streamlit logic to combine foods by gram amounts and save lists to MySQL.
-- [ ] **Sprint 4 (Local AI)**: Deploy lightweight Ollama models and build the Streamlit chat interface.
-- [ ] **Sprint 5 (Advanced AI)**: Implement RAG for menu proposals and integrate anonymous web search tool.
-- [ ] **Sprint 6 (Polish)**: Thorough testing and perfect the `README.md`.
+## 📝 Roadmap History
+- **Sprint 1-6 [COMPLETED]**: The project has successfully evolved from a foundation into a heavily optimized, vertically partitioned, RAG-integrated medical platform. All code is audited and documentation is finalized in the `docs/` folder.
+- **Future Work**: The system is in a stable state. Any future AI agents modifying this project should strictly adhere to the vertical partitioning structure and use `search_nutrition_db` for data fetching.
 
 ---
-*Generated by Antigravity. Update this file as technical requirements and data schemas evolve.*
+*Generated by Antigravity.*

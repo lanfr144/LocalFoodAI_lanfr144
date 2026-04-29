@@ -13,8 +13,6 @@ def get_loader_engine():
         password = urllib.parse.quote_plus(conf.get('password'))
         host = conf.get('host', '127.0.0.1')
         database = 'food_db'
-        
-        # Build strict SQLAlchemy PyMySQL string
         conn_str = f"mysql+pymysql://{user}:{password}@{host}/{database}?charset=utf8mb4"
         return create_engine(conn_str)
     except Exception as e:
@@ -26,103 +24,76 @@ def ingest_file(filename, engine):
         print(f"File {filename} not found locally.")
         return False
         
-    print(f"\n🚀 Found {filename}! Starting extreme batch ingestion for ALL columns...")
+    print(f"\n🚀 Found {filename}! Starting grouped vertical partition ingestion...")
     
     chunk_size = 10000 
     total_processed = 0
-    is_first_chunk = True
+
+    # Define the groupings
+    groups = {
+        'products_core': ['code', 'product_name', 'generic_name', 'brands', 'ingredients_text'],
+        'products_allergens': ['code', 'allergens'],
+        'products_macros': ['code', 'energy-kcal_100g', 'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'fiber_100g', 'sodium_100g', 'salt_100g', 'cholesterol_100g'],
+        'products_vitamins': ['code', 'vitamin-a_100g', 'vitamin-b1_100g', 'vitamin-b2_100g', 'vitamin-pp_100g', 'vitamin-b6_100g', 'vitamin-b9_100g', 'vitamin-b12_100g', 'vitamin-c_100g', 'vitamin-d_100g', 'vitamin-e_100g', 'vitamin-k_100g'],
+        'products_minerals': ['code', 'calcium_100g', 'iron_100g', 'magnesium_100g', 'potassium_100g', 'zinc_100g']
+    }
+
+    # Pre-calculate what to read
+    all_required_cols = list(set([col for cols in groups.values() for col in cols]))
 
     for chunk in pd.read_csv(filename, sep='\t', dtype=str, chunksize=chunk_size, on_bad_lines='skip', low_memory=False, encoding='utf-8'):
         try:
-            df = chunk.copy()
-            
-            if 'code' not in df.columns:
+            # Drop rows with missing codes
+            if 'code' not in chunk.columns:
                 continue
-
-            # Drop missing codes and local duplicates
-            df.dropna(subset=['code'], inplace=True)
-            df.drop_duplicates(subset=['code'], inplace=True)
+            df = chunk.dropna(subset=['code']).drop_duplicates(subset=['code']).copy()
             
-            # Map datatypes dynamically to avoid InnoDB row size limits
-            # Code is VARCHAR(50), everything else is TEXT (strings) or DOUBLE (if we were casting, but we read as str)
-            # Since we read dtype=str, pandas will default all to TEXT which is perfect for Off-Page storage.
-            sql_dtypes = {col: TEXT() for col in df.columns}
-            sql_dtypes['code'] = VARCHAR(50)
-            
-            if is_first_chunk:
-                # 1. Initialize the target table with the exact schema from the first chunk
-                df.head(0).to_sql('products', con=engine, if_exists='replace', index=False, dtype=sql_dtypes)
+            # Ensure all required columns exist in the chunk (fill with None if missing)
+            for col in all_required_cols:
+                if col not in df.columns:
+                    df[col] = None
+                    
+            for table_name, columns in groups.items():
+                slice_df = df[columns].copy()
                 
-                # 2. Add Primary Key immediately
-                with engine.begin() as conn:
-                    conn.execute(text("ALTER TABLE products ADD PRIMARY KEY (code);"))
-                is_first_chunk = False
+                # Cast datatypes: core and allergens are TEXT, others are DOUBLE
+                if table_name in ['products_core', 'products_allergens']:
+                    sql_dtypes = {col: TEXT() for col in columns if col != 'code'}
+                    sql_dtypes['code'] = VARCHAR(50)
+                else:
+                    # Convert to numeric (double) safely
+                    for col in columns:
+                        if col != 'code':
+                            slice_df[col] = pd.to_numeric(slice_df[col], errors='coerce')
+                    sql_dtypes = {col: DOUBLE() for col in columns if col != 'code'}
+                    sql_dtypes['code'] = VARCHAR(50)
 
-            # Write chunk to a temporary table
-            df.to_sql('temp_products', con=engine, if_exists='replace', index=False, dtype=sql_dtypes)
-            
-            # Use INSERT IGNORE to append to the main table, skipping any global duplicate codes
-            with engine.begin() as connection:
-                # Ensure columns match by explicitly listing them
-                cols = ", ".join([f"`{c}`" for c in df.columns])
-                connection.execute(text(f"INSERT IGNORE INTO products ({cols}) SELECT {cols} FROM temp_products"))
-            
+                # Write to temp table
+                temp_name = f"temp_{table_name}"
+                slice_df.to_sql(temp_name, con=engine, if_exists='replace', index=False, dtype=sql_dtypes)
+                
+                # INSERT IGNORE into final table
+                with engine.begin() as conn:
+                    cols_str = ", ".join([f"`{c}`" for c in columns])
+                    conn.execute(text(f"INSERT IGNORE INTO {table_name} ({cols_str}) SELECT {cols_str} FROM {temp_name}"))
+                    conn.execute(text(f"DROP TABLE IF EXISTS {temp_name}"))
+
             total_processed += len(df)
-            print(f"   Successfully appended {total_processed} rows into unified dynamic schema...", end="\r")
+            print(f"   Successfully appended {total_processed} rows into grouped tables...", end="\r")
         except BaseException as e:
             print(f"\n   [Warning] Chunk skipped due to error: {e}")
             
-    # Cleanup temp table
-    with engine.begin() as connection:
-        connection.execute(text("DROP TABLE IF EXISTS temp_products"))
-        
     print(f"\n✅ Finished importing {filename}.")
     return True
 
-def create_indexes(engine):
-    print("\n🛠️ Creating performance indexes (FULLTEXT and Standard)...")
-    try:
-        with engine.begin() as connection:
-            # Add Fulltext Search on vital textual fields if they exist
-            try:
-                connection.execute(text("ALTER TABLE products ADD FULLTEXT idx_search (product_name, ingredients_text);"))
-                print("  - Added FULLTEXT index on product_name, ingredients_text")
-            except Exception as e:
-                print(f"  - Skipped FULLTEXT idx_search: {e}")
-                
-            try:
-                connection.execute(text("ALTER TABLE products ADD FULLTEXT idx_allergens (allergens);"))
-                print("  - Added FULLTEXT index on allergens")
-            except Exception as e:
-                print(f"  - Skipped FULLTEXT idx_allergens: {e}")
-
-            # Standard indexes for fast exact matches
-            try:
-                connection.execute(text("ALTER TABLE products ADD INDEX idx_brands (brands(50));"))
-                print("  - Added INDEX on brands")
-            except Exception as e:
-                print(f"  - Skipped INDEX idx_brands: {e}")
-                
-            try:
-                connection.execute(text("ALTER TABLE products ADD INDEX idx_generic (generic_name(50));"))
-                print("  - Added INDEX on generic_name")
-            except Exception as e:
-                print(f"  - Skipped INDEX idx_generic: {e}")
-
-        print("✅ Indexing Complete!")
-    except Exception as e:
-        print(f"❌ Indexing encountered an issue: {e}")
-
 if __name__ == "__main__":
-    print("Initiating OpenFoodFacts CSV Unified Dynamic Ingestion Process...")
+    print("Initiating OpenFoodFacts Grouped Vertical Ingestion Process...")
     engine = get_loader_engine()
     
     processed_en = ingest_file('en.openfoodfacts.org.products.csv', engine)
     processed_fr = ingest_file('fr.openfoodfacts.org.products.csv', engine)
     
     if not processed_en and not processed_fr:
-        print("\n❌ Could not find either 'en.openfoodfacts.org.products.csv' or 'fr.openfoodfacts.org.products.csv'.")
-        print("Please download them directly into the root folder and run this script again.")
+        print("\n❌ Could not find CSVs.")
     else:
-        create_indexes(engine)
         print("\n🎉 Full database reload complete! Ready for AI RAG.")

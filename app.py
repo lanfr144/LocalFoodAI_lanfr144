@@ -9,6 +9,7 @@ import random
 import smtplib
 from email.message import EmailMessage
 import pandas as pd
+from unit_converter import UnitConverter
 
 def local_web_search(query: str) -> str:
     try:
@@ -28,6 +29,41 @@ search_tool_schema = {
         'name': 'local_web_search',
         'description': 'Search the internet for info not in DB.',
         'parameters': {'type': 'object', 'properties': {'query': {'type': 'string'}}, 'required': ['query']},
+    },
+}
+
+def search_nutrition_db(query: str) -> str:
+    conn = get_db_connection('app_reader')
+    if not conn: return "Database connection failed."
+    try:
+        with conn.cursor() as cursor:
+            # Query products view via natural language match on core table
+            sql = """
+                SELECT c.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g 
+                FROM food_db.products_core c
+                LEFT JOIN food_db.products_macros m ON c.code = m.code
+                WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+                LIMIT 5
+            """
+            cursor.execute(sql, (query,))
+            results = cursor.fetchall()
+            if not results: return f"No database records found for '{query}'."
+            
+            snippets = []
+            for r in results:
+                snippets.append(f"- {r['product_name']}: Protein {r['proteins_100g']}g, Fat {r['fat_100g']}g, Carbs {r['carbohydrates_100g']}g, Sugars {r['sugars_100g']}g (per 100g)")
+            return "\n".join(snippets)
+    except Exception as e:
+        return f"Database query failed: {e}"
+    finally:
+        conn.close()
+
+db_search_tool_schema = {
+    'type': 'function',
+    'function': {
+        'name': 'search_nutrition_db',
+        'description': 'Search the local medical nutrition database for product macros and ingredients. ALWAYS prioritize this over web search.',
+        'parameters': {'type': 'object', 'properties': {'query': {'type': 'string', 'description': 'The product or food name to search for (e.g. apple, chicken, bread)'}}, 'required': ['query']},
     },
 }
 
@@ -247,11 +283,11 @@ with tab_chat:
     if prompt := st.chat_input("Ask about the food items..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
-        sys_prompt = "You are a helpful data analyst AI. Answer strictly using local data contexts. If you need external data, use the local_web_search tool!"
+        sys_prompt = "You are a helpful medical data analyst AI. ALWAYS query the local database using the search_nutrition_db tool to answer questions about food, macros, and nutrients before answering or searching the web! If it's not in the DB, you can use local_web_search."
         with st.spinner("Analyzing..."):
             try:
                 temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-                response = ollama.chat(model='mistral', messages=temp_messages, tools=[search_tool_schema])
+                response = ollama.chat(model='mistral', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
                 
                 if response.get('message', {}).get('tool_calls'):
                     for tool in response['message']['tool_calls']:
@@ -261,8 +297,15 @@ with tab_chat:
                             search_data = local_web_search(query_arg)
                             st.session_state.messages.append(response['message'])
                             st.session_state.messages.append({'role': 'tool', 'content': search_data, 'name': 'local_web_search'})
-                            temp_messages = [{"role": "system", "content": sys_prompt}] + st.session_state.messages
-                            response = ollama.chat(model='mistral', messages=temp_messages)
+                        elif tool['function']['name'] == 'search_nutrition_db':
+                            query_arg = tool['function']['arguments'].get('query')
+                            st.info(f"🗄️ Database Search triggered for: '{query_arg}'")
+                            db_data = search_nutrition_db(query_arg)
+                            st.session_state.messages.append(response['message'])
+                            st.session_state.messages.append({'role': 'tool', 'content': db_data, 'name': 'search_nutrition_db'})
+                            
+                    temp_messages = [{"role": "system", "content": sys_prompt}] + st.session_state.messages
+                    response = ollama.chat(model='mistral', messages=temp_messages)
                 ai_reply = response['message']['content']
             except Exception as e: ai_reply = f"Hold on! Engine execution fault: {e}"
 
@@ -299,13 +342,21 @@ with tab_explore:
                 with conn_reader.cursor() as cursor:
                     l_str = "" if limit_rc == "All" else f"LIMIT {limit_rc}"
                     query = f"""
-                        SELECT *
-                        FROM products 
-                        WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
-                        AND (proteins_100g >= %s OR proteins_100g IS NULL)
-                        AND (fat_100g >= %s OR fat_100g IS NULL)
-                        AND (carbohydrates_100g >= %s OR carbohydrates_100g IS NULL)
-                        AND (sugars_100g <= %s OR sugars_100g IS NULL)
+                        SELECT c.code, c.product_name, c.generic_name, c.brands, c.ingredients_text,
+                               a.allergens,
+                               m.`energy-kcal_100g`, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g, m.fiber_100g, m.sodium_100g, m.salt_100g, m.cholesterol_100g,
+                               v.`vitamin-a_100g`, v.`vitamin-b1_100g`, v.`vitamin-b2_100g`, v.`vitamin-pp_100g`, v.`vitamin-b6_100g`, v.`vitamin-b9_100g`, v.`vitamin-b12_100g`, v.`vitamin-c_100g`, v.`vitamin-d_100g`, v.`vitamin-e_100g`, v.`vitamin-k_100g`,
+                               min.calcium_100g, min.iron_100g, min.magnesium_100g, min.potassium_100g, min.zinc_100g
+                        FROM food_db.products_core c
+                        LEFT JOIN food_db.products_allergens a ON c.code = a.code
+                        LEFT JOIN food_db.products_macros m ON c.code = m.code
+                        LEFT JOIN food_db.products_vitamins v ON c.code = v.code
+                        LEFT JOIN food_db.products_minerals min ON c.code = min.code
+                        WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+                        AND (m.proteins_100g >= %s OR m.proteins_100g IS NULL)
+                        AND (m.fat_100g >= %s OR m.fat_100g IS NULL)
+                        AND (m.carbohydrates_100g >= %s OR m.carbohydrates_100g IS NULL)
+                        AND (m.sugars_100g <= %s OR m.sugars_100g IS NULL)
                         {l_str}
                     """
                     cursor.execute(query, (sq, min_pro, min_fat, min_carb, max_sug))
@@ -449,13 +500,31 @@ with tab_plate:
                     st.info(f"**Total Protein:** {total_pro:.1f}g | **Total Fat:** {total_fat:.1f}g | **Total Carbs:** {total_carb:.1f}g")
                 
                 st.markdown("---")
-                add_code = st.text_input("Enter exact Product `code`")
-                add_grams = st.number_input("Portion Quantity (Grams)", min_value=1.0, value=100.0)
-                if st.button("Add Item"):
-                    cursor.execute("INSERT INTO plate_items (plate_id, product_code, quantity_grams) VALUES (%s, %s, %s)", 
-                                  (active_p_id, add_code, add_grams))
-                    conn.commit()
-                    st.rerun()
+                st.markdown("#### ➕ Add Food to Plate")
+                add_search = st.text_input("Search Product Name")
+                if add_search:
+                    cursor.execute("SELECT code, product_name FROM food_db.products_core WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE) LIMIT 10", (add_search,))
+                    search_res = cursor.fetchall()
+                    if search_res:
+                        options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
+                        selected_str = st.selectbox("Select Product", list(options.keys()))
+                        selected_product = options[selected_str]
+                        
+                        add_amount_str = st.text_input("Portion Quantity (e.g., '100g', '2 tbsp', '1.5 cups', '1 pinch')", value="100g")
+                        
+                        if st.button("Add Item to Plate"):
+                            # Use UnitConverter to parse
+                            grams = UnitConverter.parse_and_convert(add_amount_str, product_name=selected_product['product_name'])
+                            if grams is not None:
+                                cursor.execute("INSERT INTO plate_items (plate_id, product_code, quantity_grams) VALUES (%s, %s, %s)", 
+                                              (active_p_id, selected_product['code'], grams))
+                                conn.commit()
+                                st.success(f"Added {grams}g of {selected_product['product_name']}!")
+                                st.rerun()
+                            else:
+                                st.error("Could not parse unit. Please use format like '100g' or '1 cup'.")
+                    else:
+                        st.warning("No products found.")
 
 with tab_planner:
     st.subheader("🤖 AI Meal Planner")

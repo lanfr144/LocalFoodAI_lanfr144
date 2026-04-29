@@ -134,6 +134,7 @@ def run_db_setup():
         "food_db.products_minerals"
     ]
     cursor.execute("DROP VIEW IF EXISTS food_db.products;")
+    cursor.execute("DROP TABLE IF EXISTS food_db.products;")
     for t in tables:
         cursor.execute(f"DROP TABLE IF EXISTS {t};")
         

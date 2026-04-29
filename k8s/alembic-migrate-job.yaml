@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alembic-migrate
+  namespace: food-ai
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: alembic
+        image: food-ai-app:latest
+        command: ["alembic", "-c", "/app/alembic.ini", "upgrade", "head"]
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: food-ai-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: LOG_PATH
+          value: "/logs"
+        volumeMounts:
+        - name: logs
+          mountPath: /logs
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc

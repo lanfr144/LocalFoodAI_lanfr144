@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taiga-sync-config
+  namespace: food-ai
+
+data:
+  sync.yaml: |
+    projects:
+      - name: Food AI
+        description: "Portail clinique de données alimentaires"
+        user_stories:
+          - title: "Afficher la liste des produits"
+            description: "Vue Streamlit qui liste les produits importés"
+            sprint: "Sprint 1"
+            tasks:
+              - "Implémenter le backend"
+              - "Créer le composant UI"
+        wiki_pages:
+          - title: "Architecture"
+            content: |
+              # Architecture du projet
+              * MySQL DB
+              * Service d’ingestion
+              * UI Streamlit
+              * Synchronisation Taiga

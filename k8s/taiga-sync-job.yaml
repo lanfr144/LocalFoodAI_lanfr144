@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: taiga-sync-job
+  namespace: food-ai
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: taiga-sync
+          image: food-ai-taiga:latest
+          command: ["python", "taiga_feed.py"]
+          env:
+            - name: TAIGA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: food-ai-secrets
+                  key: TAIGA_TOKEN
+            - name: SYNC_CONFIG
+              value: "/config/sync.yaml"
+          volumeMounts:
+            - name: sync-config
+              mountPath: /config
+      volumes:
+        - name: sync-config
+          configMap:
+            name: taiga-sync-config
+            items:
+              - key: sync.yaml
+                path: sync.yaml

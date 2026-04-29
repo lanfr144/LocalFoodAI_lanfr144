@@ -1,0 +1,5 @@
+# Namespace for Food AI
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: food-ai

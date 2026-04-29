@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-job
+  namespace: food-ai
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: ingest
+        image: food-ai-ingest:latest
+        command: ["python", "ingest_csv.py"]
+        env:
+        - name: LOG_PATH
+          value: "/logs"
+        volumeMounts:
+        - name: csv-data
+          mountPath: /app
+        - name: logs
+          mountPath: /logs
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+      volumes:
+      - name: csv-data
+        persistentVolumeClaim:
+          claimName: csv-data-pvc
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: food-ai-app
+  namespace: food-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: food-ai-app
+  template:
+    metadata:
+      labels:
+        app: food-ai-app
+    spec:
+      containers:
+      - name: app
+        image: food-ai-app:latest
+        ports:
+        - containerPort: 8501
+        env:
+        - name: LOG_PATH
+          value: "/logs"
+        - name: EMAIL_USER
+          valueFrom:
+            secretKeyRef:
+              name: food-ai-secrets
+              key: EMAIL_USER
+        - name: EMAIL_PASS
+          valueFrom:
+            secretKeyRef:
+              name: food-ai-secrets
+              key: EMAIL_PASS
+        volumeMounts:
+        - name: logs
+          mountPath: /logs
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: logs-pvc

@@ -422,16 +422,27 @@ with tab_explore:
                             if eav_data:
                                 ing_text = str(row.get('ingredients_text', '')).lower()
                                 all_text = str(row.get('allergens', '')).lower()
+                                product_name_text = str(row.get('product_name', '')).lower()
+                                
                                 for e in eav_data:
                                     cat = str(e['name']).lower()
                                     val = str(e['value']).lower()
                                     
                                     # Clinical Trace Checks...
-                                    if cat == 'condition' and val == 'pregnant':
-                                        if float(row.get('iron_100g', 0) or 0) < 0.003:
-                                            warns.append("⚠️ Low Iron (Pregnancy Risk)")
-                                        else:
-                                            warns.append("💚 Recommended (High Iron)")
+                                    if cat == 'condition' and (val == 'pregnant' or val == 'pregnancy' or val == 'breastfeeding'):
+                                        # Forbidden / High Risk (Toxoplasmosis & Listeria)
+                                        if any(x in ing_text or x in product_name_text for x in ['cru', 'raw', 'viande crue', 'sushi', 'sashimi', 'poisson cru']):
+                                            warns.append("⚠️ Forbidden: Raw Meat/Fish (Toxoplasmosis/Parasite Risk)")
+                                        if any(x in ing_text or x in product_name_text for x in ['lait cru', 'unpasteurized', 'non pasteurisé']):
+                                            warns.append("⚠️ Forbidden: Unpasteurized Dairy (Listeria Risk)")
+                                        if any(x in ing_text or x in product_name_text for x in ['alcool', 'wine', 'alcohol', 'beer']):
+                                            warns.append("⚠️ Forbidden: Contains Alcohol")
+                                            
+                                        # Recommended (Iron & Calcium)
+                                        if float(row.get('iron_100g', 0) or 0) > 0.003:
+                                            warns.append("💚 Recommended: High Iron (Pregnancy Health)")
+                                        if float(row.get('calcium_100g', 0) or 0) > 0.120:
+                                            warns.append("💚 Recommended: High Calcium (Bone Health / Breastfeeding)")
                                     
                                     if cat == 'illness' and val == 'osteoporosis':
                                         if float(row.get('calcium_100g', 0) or 0) < 0.120:
@@ -446,14 +457,14 @@ with tab_explore:
                                             warns.append("💚 Recommended (High Vitamin C)")
                                             
                                     if cat == 'diet' and val in ['vegan', 'vegetarian']:
-                                        if any(x in ing_text for x in ['meat', 'beef', 'chicken', 'fish', 'gelatin', 'whey']):
+                                        if any(x in ing_text for x in ['meat', 'beef', 'chicken', 'fish', 'gelatin', 'whey', 'pork', 'porc', 'poulet']):
                                             warns.append("⚠️ Contains Animal Products")
                                     if cat == 'diet' and val == 'halal':
-                                        if any(x in ing_text for x in ['pork', 'pig', 'wine', 'alcohol', 'beer']):
+                                        if any(x in ing_text for x in ['pork', 'pig', 'porc', 'wine', 'alcohol', 'beer', 'vin']):
                                             warns.append("⚠️ Probable Haram Ingredients (e.g. Pork/Wine)")
                                             
                                     if cat in ['dislike', 'allergy']:
-                                        if val in ing_text or val in all_text:
+                                        if val in ing_text or val in all_text or val in product_name_text:
                                             warns.append(f"⚠️ Contains: {val.upper()}")
                                             
                             warnings_col.append(" | ".join(list(set(warns))) if warns else "✅ Safe for Profile")

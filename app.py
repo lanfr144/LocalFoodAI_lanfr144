@@ -70,6 +70,10 @@ db_search_tool_schema = {
 def get_db_connection(login_path):
     try:
         conf = myloginpath.parse(login_path)
+        if not conf or not conf.get('user'):
+            st.error(f"⚠️ MySQL configuration missing for `{login_path}`. If you are testing locally on Windows, this app must be run on the Ubuntu server where `mysql_config_editor` is properly configured.")
+            return None
+            
         return pymysql.connect(
             host=conf.get('host', '127.0.0.1'),
             user=conf.get('user'),
@@ -283,7 +287,13 @@ with tab_chat:
     if prompt := st.chat_input("Ask about the food items..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
-        sys_prompt = "You are a helpful medical data analyst AI. ALWAYS query the local database using the search_nutrition_db tool to answer questions about food, macros, and nutrients before answering or searching the web! If it's not in the DB, you can use local_web_search."
+        user_eav = get_eav_profile(st.session_state["authenticated_user"])
+        profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
+        
+        sys_prompt = f"""You are a helpful medical data analyst AI. 
+        The user has the following health profile / conditions: {profile_text}. 
+        You MUST act as a specialized clinical dietitian. Autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and apply these rules to all your answers.
+        ALWAYS query the local database using the search_nutrition_db tool to answer questions about food, macros, and nutrients before answering or searching the web! If it's not in the DB, you can use local_web_search."""
         with st.spinner("Analyzing..."):
             try:
                 temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
@@ -474,6 +484,17 @@ with tab_explore:
 
                         st.success(f"Analysed {len(results)} records utilizing dynamic Partitions!")
                         st.dataframe(styled_df, use_container_width=True)
+                        
+                        if st.button("🤖 Ask AI to Evaluate This Table"):
+                            with st.spinner("AI is dynamically evaluating these records against your profile..."):
+                                user_eav = get_eav_profile(st.session_state["authenticated_user"])
+                                profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
+                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}"
+                                try:
+                                    response = ollama.chat(model='mistral', messages=[{'role': 'user', 'content': eval_prompt}])
+                                    st.info(response['message']['content'])
+                                except Exception as e:
+                                    st.error(f"AI Evaluation Failed: {e}")
                     else:
                         st.warning("No products found matching those strict terms.")
             except Exception as e: st.error(f"SQL/Pandas Error: {e}")
@@ -547,8 +568,13 @@ with tab_planner:
     
     if st.button("Generate Professional Menu"):
         with st.spinner("AI is formulating and interrogating the local database..."):
-            sys_prompt = f"""You are a professional Dietitian planner. Target: {target_cal}kcal over {meal_count} meals. 
+            user_eav = get_eav_profile(st.session_state["authenticated_user"])
+            profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
+            
+            sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal over {meal_count} meals. 
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
+            The user has the following health profile / conditions: {profile_text}. 
+            You MUST autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and ensure the menu perfectly respects their medical requirements!
             CRITICAL INSTRUCTIONS:
             - YOU MUST USE the `search_nutrition_db` tool to find real products and their exact macros before constructing the menu!
             - If you cannot find appropriate products in the local DB, use `local_web_search`.

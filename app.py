@@ -44,6 +44,7 @@ def search_nutrition_db(query: str) -> str:
                 FROM food_db.products_core c
                 LEFT JOIN food_db.products_macros m ON c.code = m.code
                 WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+                AND c.product_name IS NOT NULL AND c.product_name != ''
                 LIMIT 5
             """
             cursor.execute(sql, (query,))
@@ -282,6 +283,17 @@ tab_chat, tab_explore, tab_plate, tab_planner = st.tabs(["💬 AI Chat", "🔬 C
 
 with tab_chat:
     st.subheader("Chat with the Context")
+    with st.expander("ℹ️ How to use this feature (Examples)"):
+        st.markdown("""
+        **Your active conditions (e.g. Pregnant, Diabetic) are automatically sent to the AI in the background. You do not need to type them out.**
+        
+        *Examples:*
+        1. "I am pregnant, diabetic, and have kidney problems. Can I eat sushi?"
+        2. "What is a safe snack to stabilize my blood sugar without hurting my kidneys?"
+        3. "Can I drink milk? I need calcium for the baby."
+        4. "Is it safe to eat a large steak for iron?"
+        5. "What foods are strictly forbidden for me?"
+        """)
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you analyze the food data today?"}]
 
@@ -297,11 +309,12 @@ with tab_chat:
         sys_prompt = f"""You are a helpful medical data analyst AI. 
         The user has the following health profile / conditions: {profile_text}. 
         You MUST act as a specialized clinical dietitian. Autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and apply these rules to all your answers.
-        ALWAYS query the local database using the search_nutrition_db tool to answer questions about food, macros, and nutrients before answering or searching the web! If it's not in the DB, you can use local_web_search."""
+        ALWAYS query the local database using the search_nutrition_db tool to answer questions about food, macros, and nutrients before answering or searching the web! If it's not in the DB, you can use local_web_search.
+        DO NOT hallucinate that a well-known food like sushi has 0 macros just because the database is missing a row. Use your medical knowledge to supplement missing database data and warn the user of biological facts (e.g. Sushi contains raw fish and carbs from rice)."""
         with st.spinner("Analyzing..."):
             try:
                 temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-                response = ollama.chat(model='mistral', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+                response = ollama.chat(model='llama3', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
                 
                 if response.get('message', {}).get('tool_calls'):
                     for tool in response['message']['tool_calls']:
@@ -319,7 +332,7 @@ with tab_chat:
                             st.session_state.messages.append({'role': 'tool', 'content': db_data, 'name': 'search_nutrition_db'})
                             
                     temp_messages = [{"role": "system", "content": sys_prompt}] + st.session_state.messages
-                    response = ollama.chat(model='mistral', messages=temp_messages)
+                    response = ollama.chat(model='llama3', messages=temp_messages)
                 ai_reply = response['message']['content']
             except Exception as e: ai_reply = f"Hold on! Engine execution fault: {e}"
 
@@ -336,6 +349,17 @@ def highlight_medical_warnings(row):
 
 with tab_explore:
     st.subheader("Clinical Data Search")
+    with st.expander("ℹ️ How to use this feature (Examples)"):
+        st.markdown("""
+        **Your active conditions are automatically flagged (⚠️ or 💚) in the search results.**
+        
+        *Example Searches:*
+        1. `Cereal` *(Checks for high sugar & hidden phosphorus)*
+        2. `Cheese` *(Checks for unpasteurized pregnancy risks & high sodium)*
+        3. `Fruit Juice` *(Checks for high sugar spikes)*
+        4. `Deli Meat` *(Checks for Listeria risk & extreme sodium)*
+        5. `White Rice` *(Safe for kidneys but flags high glycemic index)*
+        """)
     sq = st.text_input("Search Product Name or Ingredient")
     cols = st.columns(5)
     min_pro = cols[0].number_input("Min Protein (g)", 0, 1000, 0)
@@ -343,11 +367,18 @@ with tab_explore:
     min_carb = cols[2].number_input("Min Carbs (g)", 0, 1000, 0)
     max_sug = cols[3].number_input("Max Sugar (g)", 0, 1000, 1000)
     
-    # Load dynamically fetched limit as index 
-    opts = [10, 20, 50, 100, "All"]
+    # Load dynamically fetched limit to prevent Pandas Styler crash
+    try:
+        max_cells = pd.options.styler.render.max_elements
+    except AttributeError:
+        max_cells = 262144
+    dynamic_max_rows = max_cells // 15  # Approx 15 columns
+    opts = [10, 20, 50, 100, dynamic_max_rows]
+    
     user_lim_str = get_user_limit(st.session_state["authenticated_user"])
-    user_lim_val = "All" if user_lim_str == "All" else int(user_lim_str)
-    idx = opts.index(user_lim_val) if user_lim_val in opts else 2
+    user_lim_val = dynamic_max_rows if user_lim_str == "All" else int(user_lim_str)
+    if user_lim_val not in opts: user_lim_val = 50
+    idx = opts.index(user_lim_val)
     limit_rc = cols[4].selectbox("Limit Results", opts, index=idx)
     
     if st.button("Search Database") and sq and conn_reader:
@@ -368,6 +399,7 @@ with tab_explore:
                         LEFT JOIN food_db.products_vitamins v ON c.code = v.code
                         LEFT JOIN food_db.products_minerals min ON c.code = min.code
                         WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+                        AND c.product_name IS NOT NULL AND c.product_name != ''
                         AND (m.proteins_100g >= %s OR m.proteins_100g IS NULL)
                         AND (m.fat_100g >= %s OR m.fat_100g IS NULL)
                         AND (m.carbohydrates_100g >= %s OR m.carbohydrates_100g IS NULL)
@@ -496,7 +528,7 @@ with tab_explore:
                                 profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}"
                                 try:
-                                    response = ollama.chat(model='mistral', messages=[{'role': 'user', 'content': eval_prompt}])
+                                    response = ollama.chat(model='llama3', messages=[{'role': 'user', 'content': eval_prompt}])
                                     st.info(response['message']['content'])
                                 except Exception as e:
                                     st.error(f"AI Evaluation Failed: {e}")
@@ -506,6 +538,17 @@ with tab_explore:
 
 with tab_plate:
     st.subheader("🍽️ My Plate Builder")
+    with st.expander("ℹ️ How to use this feature (Examples)"):
+        st.markdown("""
+        **Mix and match ingredients to see if the combined macros exceed your profile's limits.**
+        
+        *Example Plates:*
+        1. `150g White Rice` + `50g Chicken Breast` + `100g Green Beans`
+        2. `200g Potatoes` + `100g Tomatoes` + `100g Beef`
+        3. `100g Spinach Salad` + `50g Feta Cheese`
+        4. `200g Lentils` + `100g Quinoa`
+        5. `100g Apple` + `30g Almonds`
+        """)
     uid = get_user_id(st.session_state["authenticated_user"])
     conn = get_db_connection('app_auth')
     if conn and uid:
@@ -518,10 +561,14 @@ with tab_plate:
                 if st.button("Create Plate"):
                     cursor.execute("INSERT INTO plates (user_id, plate_name) VALUES (%s, %s)", (uid, new_plate_name))
                     conn.commit()
+                    st.session_state["active_plate"] = new_plate_name
                     st.rerun()
 
             if plates:
-                selected_plate = st.selectbox("Select Active Plate", [p['plate_name'] for p in plates])
+                plate_names = [p['plate_name'] for p in plates]
+                default_idx = plate_names.index(st.session_state["active_plate"]) if "active_plate" in st.session_state and st.session_state["active_plate"] in plate_names else 0
+                selected_plate = st.selectbox("Select Active Plate", plate_names, index=default_idx)
+                st.session_state["active_plate"] = selected_plate
                 active_p_id = next(p['id'] for p in plates if p['plate_name'] == selected_plate)
                 
                 cursor.execute("""
@@ -540,7 +587,15 @@ with tab_plate:
                 st.markdown("#### ➕ Add Food to Plate")
                 add_search = st.text_input("Search Product Name")
                 if add_search:
-                    cursor.execute("SELECT code, product_name FROM food_db.products_core WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE) LIMIT 10", (add_search,))
+                    cursor.execute("""
+                        SELECT c.code, c.product_name 
+                        FROM food_db.products_core c
+                        JOIN food_db.products_macros m ON c.code = m.code
+                        WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+                        AND c.product_name IS NOT NULL AND c.product_name != ''
+                        AND m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
+                        LIMIT 10
+                    """, (add_search,))
                     search_res = cursor.fetchall()
                     if search_res:
                         options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
@@ -565,6 +620,17 @@ with tab_plate:
 
 with tab_planner:
     st.subheader("🤖 AI Meal Planner")
+    with st.expander("ℹ️ How to use this feature (Examples)"):
+        st.markdown("""
+        **Your active conditions are automatically applied to the generated menu.**
+        
+        *Example Prompts:*
+        1. "Generate a full day meal plan for me. I am pregnant, diabetic, and have kidney disease."
+        2. "Plan a pregnancy-safe dinner that won't spike my blood sugar."
+        3. "I need a high-iron lunch that is safe for my kidneys."
+        4. "Plan a breakfast without dairy that is kidney-friendly."
+        5. "Give me a 3-day meal prep plan ensuring no raw fish, controlled protein portions, and steady complex carbs."
+        """)
     p_col1, p_col2, p_col3 = st.columns(3)
     target_cal = p_col1.number_input("Target Daily Calories (kcal)", 1000, 5000, 2000, 50)
     diet_pref = p_col2.selectbox("Dietary Preference", ["Omnivore", "Vegetarian", "Vegan", "Keto", "Paleo"])
@@ -583,14 +649,16 @@ with tab_planner:
             CRITICAL INSTRUCTIONS:
             - YOU MUST USE the `search_nutrition_db` tool to find real products and their exact macros before constructing the menu!
             - If you cannot find appropriate products in the local DB, use `local_web_search`.
-            - ALWAYS output exactly as a strict Markdown table including Columns: | Meal | Food | Calories | Salt | Fat | Iron |
-            - DO NOT output | separated text outside of standard strict markdown block ` ```markdown ` or standard rendering.
+            - ALWAYS output exactly as a strict Markdown table including Columns: | Meal | Food | Calories | Salt (mg) | Fat (g) | Iron (mg) |
+            - DO NOT output | separated text outside of standard strict markdown block.
+            - Ensure the sum of the Calories EXACTLY matches the Target Daily Calories ({target_cal}).
+            - You MUST append a final row at the bottom of the table named "Total" that mathematically sums up the Calories, Salt, Fat, and Iron columns.
             - Convert ALL cooking measurements to Grams (g). Use these equivalents STRICTLY:
               1 tbsp = 15g, 1 tsp = 5g, 1 cup = 200g, 1 mustard glass = 100g. 1 cl of liquid = 10g.
             """
             
             temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan. Find real foods from the DB.'}]
-            response = ollama.chat(model='mistral', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+            response = ollama.chat(model='llama3', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
             
             # Simple loop to handle multiple tool calls (up to 3 times to prevent infinite loops)
             for _ in range(3):
@@ -608,7 +676,7 @@ with tab_planner:
                             db_data = search_nutrition_db(query_arg)
                             temp_messages.append({'role': 'tool', 'content': db_data, 'name': 'search_nutrition_db'})
                     
-                    response = ollama.chat(model='mistral', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+                    response = ollama.chat(model='llama3', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
                 else:
                     break
                     

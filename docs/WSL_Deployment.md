@@ -56,7 +56,7 @@ Deploy the Streamlit Application and the Zabbix monitoring stack using Docker Co
 ```bash
 # Deploy Streamlit
 sudo docker build -t food-ai-app:latest -f docker/app/Dockerfile .
-sudo docker run -d --name food_ai --network host -v ~/.mylogin.cnf:/root/.mylogin.cnf:ro food-ai-app:latest
+sudo docker run -d --name food_ai --restart unless-stopped --network host -v ~/.mylogin.cnf:/root/.mylogin.cnf:ro food-ai-app:latest
 
 # Deploy Zabbix
 cd docker/zabbix

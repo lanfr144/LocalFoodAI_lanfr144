@@ -270,6 +270,10 @@ with st.sidebar:
                     st.success("Password reset emailed.")
                 else: 
                     st.error(f"Failed: {status}")
+    
+    st.markdown("---")
+    st.caption("🚀 Version: v1.2.0")
+    st.caption("📅 Last Updated: 2026-04-30")
 
 if not st.session_state["authenticated_user"]:
     st.title("🍔 Food AI Medical Explorer")

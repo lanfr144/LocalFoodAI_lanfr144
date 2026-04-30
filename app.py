@@ -273,7 +273,10 @@ with st.sidebar:
     
     st.markdown("---")
     st.caption("🚀 Version: v1.2.0")
-    st.caption("📅 Last Updated: 2026-04-30")
+    
+    import os, datetime
+    file_time = datetime.datetime.fromtimestamp(os.path.getmtime(__file__)).strftime('%Y-%m-%d %H:%M:%S')
+    st.caption(f"📅 Last Updated: {file_time}")
 
 if not st.session_state["authenticated_user"]:
     st.title("🍔 Food AI Medical Explorer")

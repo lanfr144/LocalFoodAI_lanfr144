@@ -24,9 +24,12 @@ def push_wiki(slug, md_path):
         payload = {'project': proj_id, 'slug': slug, 'content': content}
         r = requests.post(f'{base_url}/wiki', json=payload, headers=headers, verify=False)
         print(f'Created {slug}: {r.status_code}')
+        if r.status_code != 201:
+            print(r.text)
 
 # In Taiga, the home page of the wiki is usually 'home'
-push_wiki('home', 'docs/Scrum_Wiki.md')
-push_wiki('backup-procedure', 'docs/Backup_Procedure.md')
-push_wiki('wsl-deployment', 'docs/WSL_Deployment.md')
-push_wiki('test-cases-sprint8', 'docs/Test_Cases_Sprint8.md')
+push_wiki('26-04-30-plan', 'docs/Scrum_Plan.md')
+push_wiki('26-04-30-daily', 'docs/Scrum_Daily.md')
+push_wiki('26-04-30-review', 'docs/Scrum_Review.md')
+push_wiki('26-04-30-retrospective', 'docs/Scrum_Retro.md')
+push_wiki('26-04-30-artifact', 'docs/Scrum_Artifacts.md')

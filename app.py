@@ -178,6 +178,13 @@ def reset_password(username, email):
     return False
 
 # UI Theming
+def render_version():
+    import os, datetime
+    file_time = datetime.datetime.fromtimestamp(os.path.getmtime(__file__)).strftime('%Y-%m-%d %H:%M:%S')
+    st.markdown("---")
+    st.caption("🚀 Version: v1.3.0")
+    st.caption(f"📅 Last Updated: {file_time}")
+
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
 st.markdown("""
 <style>
@@ -240,6 +247,7 @@ with st.sidebar:
                         c.execute("DELETE FROM user_health_profiles WHERE id = %s", (e['id'],))
                         conn.commit()
                     st.rerun()
+        render_version()
     else:
         tab1, tab2, tab3 = st.tabs(["Login", "Register", "Reset"])
         with tab1:
@@ -270,13 +278,7 @@ with st.sidebar:
                     st.success("Password reset emailed.")
                 else: 
                     st.error(f"Failed: {status}")
-    
-    st.markdown("---")
-    st.caption("🚀 Version: v1.2.0")
-    
-    import os, datetime
-    file_time = datetime.datetime.fromtimestamp(os.path.getmtime(__file__)).strftime('%Y-%m-%d %H:%M:%S')
-    st.caption(f"📅 Last Updated: {file_time}")
+        render_version()
 
 if not st.session_state["authenticated_user"]:
     st.title("🍔 Food AI Medical Explorer")
@@ -288,8 +290,14 @@ conn_reader = get_db_connection('app_reader')
 
 tab_chat, tab_explore, tab_plate, tab_planner = st.tabs(["💬 AI Chat", "🔬 Clinical Search", "🍽️ My Plate Builder", "🤖 AI Meal Planner"])
 
+import re
+
 with tab_chat:
-    st.subheader("Chat with the Context")
+    c1, c2 = st.columns([4, 1])
+    c1.subheader("Chat with the Context")
+    if c2.button("🧹 Clear Chat"):
+        st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you analyze the food data today?"}]
+        st.rerun()
     with st.expander("ℹ️ How to use this feature (Examples)"):
         st.markdown("""
         **Your active conditions (e.g. Pregnant, Diabetic) are automatically sent to the AI in the background. You do not need to type them out.**
@@ -304,12 +312,15 @@ with tab_chat:
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you analyze the food data today?"}]
 
-    for msg in st.session_state.messages:
-        st.chat_message(msg["role"]).write(msg["content"])
-
-    if prompt := st.chat_input("Ask about the food items..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.chat_message("user").write(prompt)
+        
+        # Display chat history, filtering out TOOL_CALLS
+        for msg in st.session_state.messages:
+            if msg["role"] == "tool": continue
+            display_text = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', msg["content"]).strip()
+            if display_text:
+                st.chat_message(msg["role"]).write(display_text)
+        
         user_eav = get_eav_profile(st.session_state["authenticated_user"])
         profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
         
@@ -341,6 +352,7 @@ with tab_chat:
                     temp_messages = [{"role": "system", "content": sys_prompt}] + st.session_state.messages
                     response = ollama.chat(model='llama3', messages=temp_messages)
                 ai_reply = response['message']['content']
+                ai_reply = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', ai_reply).strip()
             except Exception as e: ai_reply = f"Hold on! Engine execution fault: {e}"
 
         st.session_state.messages.append({"role": "assistant", "content": ai_reply})
@@ -375,15 +387,11 @@ with tab_explore:
     max_sug = cols[3].number_input("Max Sugar (g)", 0, 1000, 1000)
     
     # Load dynamically fetched limit to prevent Pandas Styler crash
-    try:
-        max_cells = pd.options.styler.render.max_elements
-    except AttributeError:
-        max_cells = 262144
-    dynamic_max_rows = max_cells // 15  # Approx 15 columns
-    opts = [10, 20, 50, 100, dynamic_max_rows]
+    pd.set_option("styler.render.max_elements", 5000000)
+    opts = [10, 50, 100, 500, 1000]
     
     user_lim_str = get_user_limit(st.session_state["authenticated_user"])
-    user_lim_val = dynamic_max_rows if user_lim_str == "All" else int(user_lim_str)
+    user_lim_val = 1000 if user_lim_str == "All" else int(user_lim_str)
     if user_lim_val not in opts: user_lim_val = 50
     idx = opts.index(user_lim_val)
     limit_rc = cols[4].selectbox("Limit Results", opts, index=idx)
@@ -545,9 +553,14 @@ with tab_explore:
 
 with tab_plate:
     st.subheader("🍽️ My Plate Builder")
-    with st.expander("ℹ️ How to use this feature (Examples)"):
+    with st.expander("ℹ️ How to use this feature (Examples & Logic)"):
         st.markdown("""
-        **Mix and match ingredients to see if the combined macros exceed your profile's limits.**
+        **Plate Builder Logic:**
+        1. Create a New Plate.
+        2. Search for exact food words (e.g. 'chicken', 'egg').
+        3. Add the food with a specific portion (e.g. '150g').
+        4. The system calculates the combined macros.
+        5. Use the 🗑️ buttons to delete incorrect items or entire plates.
         
         *Example Plates:*
         1. `150g White Rice` + `50g Chicken Breast` + `100g Green Beans`
@@ -572,11 +585,18 @@ with tab_plate:
                     st.rerun()
 
             if plates:
+                colA, colB = st.columns([4, 1])
                 plate_names = [p['plate_name'] for p in plates]
                 default_idx = plate_names.index(st.session_state["active_plate"]) if "active_plate" in st.session_state and st.session_state["active_plate"] in plate_names else 0
-                selected_plate = st.selectbox("Select Active Plate", plate_names, index=default_idx)
+                selected_plate = colA.selectbox("Select Active Plate", plate_names, index=default_idx)
                 st.session_state["active_plate"] = selected_plate
                 active_p_id = next(p['id'] for p in plates if p['plate_name'] == selected_plate)
+                
+                if colB.button("🗑️ Delete Plate"):
+                    cursor.execute("DELETE FROM plates WHERE id = %s", (active_p_id,))
+                    conn.commit()
+                    if "active_plate" in st.session_state: del st.session_state["active_plate"]
+                    st.rerun()
                 
                 cursor.execute("""
                     SELECT i.id, i.product_code, i.quantity_grams, p.product_name, p.proteins_100g, p.fat_100g, p.carbohydrates_100g 
@@ -584,7 +604,14 @@ with tab_plate:
                 """, (active_p_id,))
                 items = cursor.fetchall()
                 if items:
-                    st.dataframe(items, use_container_width=True)
+                    for i in items:
+                        c1, c2 = st.columns([5, 1])
+                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {i['product_name']} (Pro: {i['proteins_100g'] or 0}g)</li>", unsafe_allow_html=True)
+                        if c2.button("🗑️", key=f"del_item_{i['id']}"):
+                            cursor.execute("DELETE FROM plate_items WHERE id = %s", (i['id'],))
+                            conn.commit()
+                            st.rerun()
+                            
                     total_pro = sum((float(i['proteins_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
                     total_fat = sum((float(i['fat_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
                     total_carb = sum((float(i['carbohydrates_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
@@ -592,17 +619,18 @@ with tab_plate:
                 
                 st.markdown("---")
                 st.markdown("#### ➕ Add Food to Plate")
-                add_search = st.text_input("Search Product Name")
+                add_search = st.text_input("Search Exact Product Name (e.g. 'chicken', 'egg')")
                 if add_search:
+                    bool_search = " ".join([f"+{w}" for w in add_search.split()])
                     cursor.execute("""
                         SELECT c.code, c.product_name 
                         FROM food_db.products_core c
                         JOIN food_db.products_macros m ON c.code = m.code
-                        WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
+                        WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                         AND c.product_name IS NOT NULL AND c.product_name != ''
                         AND m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
                         LIMIT 10
-                    """, (add_search,))
+                    """, (bool_search,))
                     search_res = cursor.fetchall()
                     if search_res:
                         options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
@@ -655,13 +683,12 @@ with tab_planner:
             You MUST autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and ensure the menu perfectly respects their medical requirements!
             CRITICAL INSTRUCTIONS:
             - YOU MUST USE the `search_nutrition_db` tool to find real products and their exact macros before constructing the menu!
-            - If you cannot find appropriate products in the local DB, use `local_web_search`.
-            - ALWAYS output exactly as a strict Markdown table including Columns: | Meal | Food | Calories | Salt (mg) | Fat (g) | Iron (mg) |
-            - DO NOT output | separated text outside of standard strict markdown block.
-            - Ensure the sum of the Calories EXACTLY matches the Target Daily Calories ({target_cal}).
-            - You MUST append a final row at the bottom of the table named "Total" that mathematically sums up the Calories, Salt, Fat, and Iron columns.
-            - Convert ALL cooking measurements to Grams (g). Use these equivalents STRICTLY:
-              1 tbsp = 15g, 1 tsp = 5g, 1 cup = 200g, 1 mustard glass = 100g. 1 cl of liquid = 10g.
+            - ALWAYS output exactly as a JSON array of objects. DO NOT OUTPUT MARKDOWN. DO NOT OUTPUT ANY TEXT EXCEPT JSON.
+            - JSON Format required:
+            [
+                {{"meal": "Breakfast", "food": "100g Oatmeal with 50g berries", "calories": 300, "salt_mg": 10, "fat_g": 5, "iron_mg": 2}}
+            ]
+            - Ensure the total calories sum up closely to {target_cal}.
             """
             
             temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan. Find real foods from the DB.'}]
@@ -687,6 +714,33 @@ with tab_planner:
                 else:
                     break
                     
-            st.markdown(response['message']['content'])
+            import json
+            raw_text = response['message']['content']
+            raw_text = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', raw_text).strip()
+            
+            try:
+                start_idx = raw_text.find('[')
+                end_idx = raw_text.rfind(']') + 1
+                if start_idx != -1 and end_idx != -1:
+                    json_data = json.loads(raw_text[start_idx:end_idx])
+                    df_plan = pd.DataFrame(json_data)
+                    
+                    total_cals = df_plan['calories'].sum() if 'calories' in df_plan else 0
+                    total_salt = df_plan['salt_mg'].sum() if 'salt_mg' in df_plan else 0
+                    total_fat = df_plan['fat_g'].sum() if 'fat_g' in df_plan else 0
+                    total_iron = df_plan['iron_mg'].sum() if 'iron_mg' in df_plan else 0
+                    
+                    total_row = pd.DataFrame([{"meal": "TOTAL", "food": "---", "calories": total_cals, "salt_mg": total_salt, "fat_g": total_fat, "iron_mg": total_iron}])
+                    df_plan = pd.concat([df_plan, total_row], ignore_index=True)
+                    
+                    st.dataframe(df_plan, use_container_width=True)
+                    if abs(total_cals - target_cal) > 200:
+                        st.warning(f"Note: Total calories ({total_cals}) differ from your target ({target_cal}).")
+                else:
+                    st.error("AI failed to output valid JSON. Raw output:")
+                    st.text(raw_text)
+            except Exception as e:
+                st.error(f"Failed to parse AI output: {e}")
+                st.text(raw_text)
 
 if conn_reader: conn_reader.close()

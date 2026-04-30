@@ -43,11 +43,12 @@ def search_nutrition_db(query: str) -> str:
                 SELECT c.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g 
                 FROM food_db.products_core c
                 LEFT JOIN food_db.products_macros m ON c.code = m.code
-                WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
-                AND c.product_name IS NOT NULL AND c.product_name != ''
+                WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
+                AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
                 LIMIT 5
             """
-            cursor.execute(sql, (query,))
+            bool_query = " ".join([f"+{w}" for w in query.split()])
+            cursor.execute(sql, (bool_query,))
             results = cursor.fetchall()
             if not results: return f"No database records found for '{query}'."
             
@@ -203,6 +204,7 @@ if "authenticated_user" not in st.session_state:
 
 with st.sidebar:
     st.title("User Portal 🔐")
+    render_version()
     if st.session_state["authenticated_user"]:
         st.success(f"Logged in as: {st.session_state['authenticated_user']}")
         if st.button("Logout"):
@@ -247,7 +249,6 @@ with st.sidebar:
                         c.execute("DELETE FROM user_health_profiles WHERE id = %s", (e['id'],))
                         conn.commit()
                     st.rerun()
-        render_version()
     else:
         tab1, tab2, tab3 = st.tabs(["Login", "Register", "Reset"])
         with tab1:
@@ -278,7 +279,6 @@ with st.sidebar:
                     st.success("Password reset emailed.")
                 else: 
                     st.error(f"Failed: {status}")
-        render_version()
 
 if not st.session_state["authenticated_user"]:
     st.title("🍔 Food AI Medical Explorer")
@@ -298,17 +298,17 @@ with tab_chat:
     if c2.button("🧹 Clear Chat"):
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you analyze the food data today?"}]
         st.rerun()
-    with st.expander("ℹ️ How to use this feature (Examples)"):
-        st.markdown("""
-        **Your active conditions (e.g. Pregnant, Diabetic) are automatically sent to the AI in the background. You do not need to type them out.**
-        
-        *Examples:*
-        1. "I am pregnant, diabetic, and have kidney problems. Can I eat sushi?"
-        2. "What is a safe snack to stabilize my blood sugar without hurting my kidneys?"
-        3. "Can I drink milk? I need calcium for the baby."
-        4. "Is it safe to eat a large steak for iron?"
-        5. "What foods are strictly forbidden for me?"
-        """)
+    st.info("""
+    ℹ️ **How to use this feature (Examples)**
+    **Your active conditions (e.g. Pregnant, Diabetic) are automatically sent to the AI in the background. You do not need to type them out.**
+    
+    *Examples:*
+    1. "I am pregnant, diabetic, and have kidney problems. Can I eat sushi?"
+    2. "What is a safe snack to stabilize my blood sugar without hurting my kidneys?"
+    3. "Can I drink milk? I need calcium for the baby."
+    4. "Is it safe to eat a large steak for iron?"
+    5. "What foods are strictly forbidden for me?"
+    """)
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you analyze the food data today?"}]
 
@@ -368,17 +368,17 @@ def highlight_medical_warnings(row):
 
 with tab_explore:
     st.subheader("Clinical Data Search")
-    with st.expander("ℹ️ How to use this feature (Examples)"):
-        st.markdown("""
-        **Your active conditions are automatically flagged (⚠️ or 💚) in the search results.**
-        
-        *Example Searches:*
-        1. `Cereal` *(Checks for high sugar & hidden phosphorus)*
-        2. `Cheese` *(Checks for unpasteurized pregnancy risks & high sodium)*
-        3. `Fruit Juice` *(Checks for high sugar spikes)*
-        4. `Deli Meat` *(Checks for Listeria risk & extreme sodium)*
-        5. `White Rice` *(Safe for kidneys but flags high glycemic index)*
-        """)
+    st.info("""
+    ℹ️ **How to use this feature (Examples)**
+    **Your active conditions are automatically flagged (⚠️ or 💚) in the search results.**
+    
+    *Example Searches:*
+    1. `Cereal` *(Checks for high sugar & hidden phosphorus)*
+    2. `Cheese` *(Checks for unpasteurized pregnancy risks & high sodium)*
+    3. `Fruit Juice` *(Checks for high sugar spikes)*
+    4. `Deli Meat` *(Checks for Listeria risk & extreme sodium)*
+    5. `White Rice` *(Safe for kidneys but flags high glycemic index)*
+    """)
     sq = st.text_input("Search Product Name or Ingredient")
     cols = st.columns(5)
     min_pro = cols[0].number_input("Min Protein (g)", 0, 1000, 0)
@@ -413,15 +413,16 @@ with tab_explore:
                         LEFT JOIN food_db.products_macros m ON c.code = m.code
                         LEFT JOIN food_db.products_vitamins v ON c.code = v.code
                         LEFT JOIN food_db.products_minerals min ON c.code = min.code
-                        WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN NATURAL LANGUAGE MODE)
-                        AND c.product_name IS NOT NULL AND c.product_name != ''
+                        WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
+                        AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
                         AND (m.proteins_100g >= %s OR m.proteins_100g IS NULL)
                         AND (m.fat_100g >= %s OR m.fat_100g IS NULL)
                         AND (m.carbohydrates_100g >= %s OR m.carbohydrates_100g IS NULL)
                         AND (m.sugars_100g <= %s OR m.sugars_100g IS NULL)
                         {l_str}
                     """
-                    cursor.execute(query, (sq, min_pro, min_fat, min_carb, max_sug))
+                    sq_bool = " ".join([f"+{w}" for w in sq.split()])
+                    cursor.execute(query, (sq_bool, min_pro, min_fat, min_carb, max_sug))
                     results = cursor.fetchall()
                     
                     if results:
@@ -553,22 +554,22 @@ with tab_explore:
 
 with tab_plate:
     st.subheader("🍽️ My Plate Builder")
-    with st.expander("ℹ️ How to use this feature (Examples & Logic)"):
-        st.markdown("""
-        **Plate Builder Logic:**
-        1. Create a New Plate.
-        2. Search for exact food words (e.g. 'chicken', 'egg').
-        3. Add the food with a specific portion (e.g. '150g').
-        4. The system calculates the combined macros.
-        5. Use the 🗑️ buttons to delete incorrect items or entire plates.
-        
-        *Example Plates:*
-        1. `150g White Rice` + `50g Chicken Breast` + `100g Green Beans`
-        2. `200g Potatoes` + `100g Tomatoes` + `100g Beef`
-        3. `100g Spinach Salad` + `50g Feta Cheese`
-        4. `200g Lentils` + `100g Quinoa`
-        5. `100g Apple` + `30g Almonds`
-        """)
+    st.info("""
+    ℹ️ **How to use this feature (Examples & Logic)**
+    **Plate Builder Logic:**
+    1. Create a New Plate.
+    2. Search for exact food words (e.g. 'chicken', 'egg').
+    3. Add the food with a specific portion (e.g. '150g').
+    4. The system calculates the combined macros.
+    5. Use the 🗑️ buttons to delete incorrect items or entire plates.
+    
+    *Example Plates:*
+    1. `150g White Rice` + `50g Chicken Breast` + `100g Green Beans`
+    2. `200g Potatoes` + `100g Tomatoes` + `100g Beef`
+    3. `100g Spinach Salad` + `50g Feta Cheese`
+    4. `200g Lentils` + `100g Quinoa`
+    5. `100g Apple` + `30g Almonds`
+    """)
     uid = get_user_id(st.session_state["authenticated_user"])
     conn = get_db_connection('app_auth')
     if conn and uid:
@@ -627,7 +628,7 @@ with tab_plate:
                         FROM food_db.products_core c
                         JOIN food_db.products_macros m ON c.code = m.code
                         WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
-                        AND c.product_name IS NOT NULL AND c.product_name != ''
+                        AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
                         AND m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
                         LIMIT 10
                     """, (bool_search,))
@@ -655,17 +656,17 @@ with tab_plate:
 
 with tab_planner:
     st.subheader("🤖 AI Meal Planner")
-    with st.expander("ℹ️ How to use this feature (Examples)"):
-        st.markdown("""
-        **Your active conditions are automatically applied to the generated menu.**
-        
-        *Example Prompts:*
-        1. "Generate a full day meal plan for me. I am pregnant, diabetic, and have kidney disease."
-        2. "Plan a pregnancy-safe dinner that won't spike my blood sugar."
-        3. "I need a high-iron lunch that is safe for my kidneys."
-        4. "Plan a breakfast without dairy that is kidney-friendly."
-        5. "Give me a 3-day meal prep plan ensuring no raw fish, controlled protein portions, and steady complex carbs."
-        """)
+    st.info("""
+    ℹ️ **How to use this feature (Examples)**
+    **Your active conditions are automatically applied to the generated menu.**
+    
+    *Example Prompts:*
+    1. "Generate a full day meal plan for me. I am pregnant, diabetic, and have kidney disease."
+    2. "Plan a pregnancy-safe dinner that won't spike my blood sugar."
+    3. "I need a high-iron lunch that is safe for my kidneys."
+    4. "Plan a breakfast without dairy that is kidney-friendly."
+    5. "Give me a 3-day meal prep plan ensuring no raw fish, controlled protein portions, and steady complex carbs."
+    """)
     p_col1, p_col2, p_col3 = st.columns(3)
     target_cal = p_col1.number_input("Target Daily Calories (kcal)", 1000, 5000, 2000, 50)
     diet_pref = p_col2.selectbox("Dietary Preference", ["Omnivore", "Vegetarian", "Vegan", "Keto", "Paleo"])

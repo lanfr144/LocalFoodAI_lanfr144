@@ -17,9 +17,11 @@ def push_wiki(slug, md_path):
     if len(res) > 0:
         wiki_id = res[0]['id']
         version = res[0]['version']
-        payload = {'content': content, 'version': version}
+        payload = {'content': content, 'version': version, 'project': proj_id, 'slug': slug}
         r = requests.put(f'{base_url}/wiki/{wiki_id}', json=payload, headers=headers, verify=False)
         print(f'Updated {slug}: {r.status_code}')
+        if r.status_code != 200:
+            print(r.text)
     else:
         payload = {'project': proj_id, 'slug': slug, 'content': content}
         r = requests.post(f'{base_url}/wiki', json=payload, headers=headers, verify=False)
@@ -28,6 +30,7 @@ def push_wiki(slug, md_path):
             print(r.text)
 
 # In Taiga, the home page of the wiki is usually 'home'
+push_wiki('home', 'docs/Wiki_Home.md')
 push_wiki('26-04-30-plan', 'docs/Scrum_Plan.md')
 push_wiki('26-04-30-daily', 'docs/Scrum_Daily.md')
 push_wiki('26-04-30-review', 'docs/Scrum_Review.md')

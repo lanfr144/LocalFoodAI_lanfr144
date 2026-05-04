@@ -22,8 +22,6 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     restart: always
@@ -62,8 +60,6 @@ services:
 
   zabbix-server:
     image: zabbix/zabbix-server-mysql:ubuntu-7.0-latest
-    ports:
-      - "10051:10051"
     environment:
       - DB_SERVER_HOST=mysql
       - MYSQL_USER=zabbix

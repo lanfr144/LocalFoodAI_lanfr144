@@ -33,6 +33,7 @@ def main():
     try:
         conn = pymysql.connect(
             host='127.0.0.1',  # Assuming we run this from host to mapped port, or within a container network
+            port=3307,
             user='root',
             password='root_pass',
             database='food_db'

@@ -15,9 +15,10 @@ def get_email_from_env():
     return "lanfr144@gmail.com" # Default fallback
 
 def authenticate():
-    payload = {"jsonrpc": "2.0", "method": "user.login", "params": {"user": ZABBIX_USER, "password": ZABBIX_PASSWORD}, "id": 1}
+    payload = {"jsonrpc": "2.0", "method": "user.login", "params": {"username": ZABBIX_USER, "password": ZABBIX_PASSWORD}, "id": 1}
     try:
         response = requests.post(ZABBIX_API_URL, json=payload).json()
+        print(f"Debug: Zabbix API Auth Response: {response}")
         return response.get('result')
     except Exception as e:
         print(f"Error connecting to Zabbix API: {e}")

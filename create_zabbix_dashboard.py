@@ -8,7 +8,7 @@ def authenticate():
     payload = {
         "jsonrpc": "2.0",
         "method": "user.login",
-        "params": {"user": ZABBIX_USER, "password": ZABBIX_PASSWORD},
+        "params": {"username": ZABBIX_USER, "password": ZABBIX_PASSWORD},
         "id": 1
     }
     try:

@@ -72,6 +72,21 @@ db_search_tool_schema = {
 
 def get_db_connection(login_path):
     try:
+        import os
+        db_host = os.environ.get('DB_HOST')
+        # Check if environment variables exist for this login path
+        db_user = os.environ.get(f'{login_path.upper()}_USER') or os.environ.get('DB_USER')
+        db_pass = os.environ.get(f'{login_path.upper()}_PASS') or os.environ.get('DB_PASS')
+
+        if db_host and db_user and db_pass:
+            return pymysql.connect(
+                host=db_host,
+                user=db_user,
+                password=db_pass,
+                database='food_db',
+                cursorclass=pymysql.cursors.DictCursor
+            )
+            
         conf = myloginpath.parse(login_path)
         if not conf or not conf.get('user'):
             st.error(f"⚠️ MySQL configuration missing for `{login_path}`. If you are testing locally on Windows, this app must be run on the Ubuntu server where `mysql_config_editor` is properly configured.")
@@ -684,6 +699,7 @@ with tab_planner:
             You MUST autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and ensure the menu perfectly respects their medical requirements!
             CRITICAL INSTRUCTIONS:
             - YOU MUST USE the `search_nutrition_db` tool to find real products and their exact macros before constructing the menu!
+            - If you cannot find appropriate products in the local DB, you MUST use the `local_web_search` tool.
             - ALWAYS output exactly as a JSON array of objects. DO NOT OUTPUT MARKDOWN. DO NOT OUTPUT ANY TEXT EXCEPT JSON.
             - JSON Format required:
             [

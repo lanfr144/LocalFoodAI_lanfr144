@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  mysql:
+    build:
+      context: ./docker/mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/custom_ai_app.cnf
+      - ./init.sql:/docker-entrypoint-initdb.d/1-init.sql
+      - ./init_zabbix_db.sh:/docker-entrypoint-initdb.d/2-init_zabbix.sh
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_pass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: always
+
+  app:
+    build:
+      context: ./docker/app
+    ports:
+      - "8501:8501"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=db_reader
+      - DB_PASS=reader_pass
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  ingest:
+    build:
+      context: ./docker/ingest
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=db_loader
+      - DB_PASS=loader_pass
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles:
+      - manual # Only runs when explicitly requested
+
+  zabbix-server:
+    image: zabbix/zabbix-server-mysql:ubuntu-7.0-latest
+    ports:
+      - "10051:10051"
+    environment:
+      - DB_SERVER_HOST=mysql
+      - MYSQL_USER=zabbix
+      - MYSQL_PASSWORD=zabbix_pwd
+      - ZBX_SNMPTRAPPER=1
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-mysql:ubuntu-7.0-latest
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - DB_SERVER_HOST=mysql
+      - MYSQL_USER=zabbix
+      - MYSQL_PASSWORD=zabbix_pwd
+      - ZBX_SERVER_HOST=zabbix-server
+      - PHP_TZ=Europe/Paris
+    depends_on:
+      - zabbix-server
+    restart: always
+
+  zabbix-agent:
+    image: zabbix/zabbix-agent:ubuntu-7.0-latest
+    environment:
+      - ZBX_HOSTNAME=Zabbix server
+      - ZBX_SERVER_HOST=zabbix-server
+    privileged: true
+    pid: "host"
+    volumes:
+      - /var/run:/var/run
+    depends_on:
+      - zabbix-server
+    restart: always
+
+volumes:
+  mysql_data:
+  ollama_data:

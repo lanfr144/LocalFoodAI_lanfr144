@@ -9,6 +9,16 @@ from snmp_notifier import notifier
 
 def get_loader_engine():
     try:
+        import os
+        db_host = os.environ.get('DB_HOST')
+        db_user = os.environ.get('DB_USER')
+        db_pass = os.environ.get('DB_PASS')
+
+        if db_host and db_user and db_pass:
+            password = urllib.parse.quote_plus(db_pass)
+            conn_str = f"mysql+pymysql://{db_user}:{password}@{db_host}/food_db?charset=utf8mb4"
+            return create_engine(conn_str)
+            
         conf = myloginpath.parse('app_loader')
         user = conf.get('user')
         password = urllib.parse.quote_plus(conf.get('password'))

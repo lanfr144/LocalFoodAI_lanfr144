@@ -35,6 +35,8 @@ services:
       - DB_HOST=mysql
       - DB_USER=db_reader
       - DB_PASS=${DB_READER_PASS}
+      - APP_AUTH_USER=db_app_auth
+      - APP_AUTH_PASS=${DB_APP_AUTH_PASS}
       - OLLAMA_HOST=http://ollama:11434
     depends_on:
       mysql:

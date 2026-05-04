@@ -59,6 +59,25 @@ CREATE TABLE IF NOT EXISTS user_health_profiles (
 ) ENGINE=InnoDB;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.user_health_profiles TO 'db_app_auth'@'%';
+
+-- Step A.3: Create Plate Builder Tables
+CREATE TABLE IF NOT EXISTS plates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    plate_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS plate_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plate_id INT NOT NULL,
+    product_code VARCHAR(50) NOT NULL,
+    quantity_grams FLOAT NOT NULL,
+    FOREIGN KEY (plate_id) REFERENCES plates(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plates TO 'db_app_auth'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.plate_items TO 'db_app_auth'@'%';
 FLUSH PRIVILEGES;
 
 -- Step A.2: Create the table with known columns (Example structure for OpenFoodFacts)
@@ -90,7 +109,18 @@ CREATE TABLE IF NOT EXISTS products (
 
 -- Step B: The Owner grants explicit privileges to the Reader and Loader
 GRANT SELECT ON food_db.products TO 'db_reader'@'%';
+GRANT SELECT ON food_db.products_core TO 'db_reader'@'%';
+GRANT SELECT ON food_db.products_allergens TO 'db_reader'@'%';
+GRANT SELECT ON food_db.products_macros TO 'db_reader'@'%';
+GRANT SELECT ON food_db.products_vitamins TO 'db_reader'@'%';
+GRANT SELECT ON food_db.products_minerals TO 'db_reader'@'%';
+
 GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products TO 'db_loader'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_core TO 'db_loader'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_allergens TO 'db_loader'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_macros TO 'db_loader'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_vitamins TO 'db_loader'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_minerals TO 'db_loader'@'%';
 FLUSH PRIVILEGES;
 
 -- Step C: The Loader user would then run this MySQL command to import:

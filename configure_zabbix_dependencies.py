@@ -2,7 +2,7 @@ import requests
 import json
 import time
 
-ZABBIX_API_URL = "http://localhost:8080/api_jsonrpc.php"
+ZABBIX_API_URL = "http://localhost:8081/api_jsonrpc.php"
 ZABBIX_USER = "Admin"
 ZABBIX_PASSWORD = "zabbix" # Default zabbix admin password
 

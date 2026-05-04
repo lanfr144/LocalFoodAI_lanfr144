@@ -48,6 +48,17 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB;
 
 GRANT SELECT, INSERT, UPDATE ON food_db.users TO 'db_app_auth'@'%';
+
+-- Step A.2: Create Health Profiles Table
+CREATE TABLE IF NOT EXISTS user_health_profiles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    illness_health_condition_diet_dislikes_name VARCHAR(100),
+    illness_health_condition_diet_dislikes_value VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON food_db.user_health_profiles TO 'db_app_auth'@'%';
 FLUSH PRIVILEGES;
 
 -- Step A.2: Create the table with known columns (Example structure for OpenFoodFacts)

@@ -37,13 +37,14 @@ services:
 
   app:
     build:
-      context: ./docker/app
+      context: .
+      dockerfile: docker/app/Dockerfile
     ports:
       - "8501:8501"
     environment:
       - DB_HOST=mysql
       - DB_USER=db_reader
-      - DB_PASS=reader_pass
+      - DB_PASS=${DB_READER_PASS}
       - OLLAMA_HOST=http://ollama:11434
     depends_on:
       mysql:
@@ -52,11 +53,14 @@ services:
 
   ingest:
     build:
-      context: ./docker/ingest
+      context: .
+      dockerfile: docker/ingest/Dockerfile
     environment:
       - DB_HOST=mysql
       - DB_USER=db_loader
-      - DB_PASS=loader_pass
+      - DB_PASS=${DB_LOADER_PASS}
+    volumes:
+      - ./:/app
     depends_on:
       mysql:
         condition: service_healthy

@@ -220,14 +220,23 @@ if "authenticated_user" not in st.session_state:
 with st.sidebar:
     st.title("User Portal 🔐")
     render_version()
+    
+    with st.expander("🛠️ Diagnostic: App Database View"):
+        conn = get_db_connection('app_auth')
+        if conn:
+            with conn.cursor() as c:
+                c.execute("DESCRIBE users;")
+                st.json(c.fetchall())
+                c.execute("SELECT DATABASE(), CURRENT_USER();")
+                st.json(c.fetchall())
+            conn.close()
+            
     if st.session_state["authenticated_user"]:
         st.success(f"Logged in as: {st.session_state['authenticated_user']}")
         if st.button("Logout"):
             st.session_state["authenticated_user"] = None
             st.rerun()
             
-        st.markdown("---")
-        st.subheader("🏥 Dynamic Health Profile")
         eav_data = get_eav_profile(st.session_state["authenticated_user"])
         uid = get_user_id(st.session_state["authenticated_user"])
         user_lim = get_user_limit(st.session_state["authenticated_user"])

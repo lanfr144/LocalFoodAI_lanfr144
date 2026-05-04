@@ -336,14 +336,16 @@ with tab_chat:
     if "messages" not in st.session_state:
         st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you analyze the food data today?"}]
 
+    # Display chat history, filtering out TOOL_CALLS
+    for msg in st.session_state.messages:
+        if msg["role"] == "tool": continue
+        display_text = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', msg["content"]).strip()
+        if display_text:
+            st.chat_message(msg["role"]).write(display_text)
+
+    if prompt := st.chat_input("Ask a clinical question about your food..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Display chat history, filtering out TOOL_CALLS
-        for msg in st.session_state.messages:
-            if msg["role"] == "tool": continue
-            display_text = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', msg["content"]).strip()
-            if display_text:
-                st.chat_message(msg["role"]).write(display_text)
+        st.chat_message("user").write(prompt)
         
         user_eav = get_eav_profile(st.session_state["authenticated_user"])
         profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"

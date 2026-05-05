@@ -3,7 +3,8 @@ import pandas as pd
 import myloginpath
 import urllib.parse
 from sqlalchemy import create_engine, text
-from sqlalchemy.types import VARCHAR, TEXT, DOUBLE
+from sqlalchemy.types import VARCHAR, DOUBLE
+from sqlalchemy.dialects.mysql import LONGTEXT
 import os
 import sys
 from snmp_notifier import notifier
@@ -70,15 +71,15 @@ def ingest_file(filename, engine):
                 
                 # Cast datatypes: core and allergens are TEXT, others are DOUBLE
                 if table_name in ['products_core', 'products_allergens']:
-                    sql_dtypes = {col: TEXT() for col in columns if col != 'code'}
-                    sql_dtypes['code'] = VARCHAR(50)
+                    sql_dtypes = {col: LONGTEXT() for col in columns if col != 'code'}
+                    sql_dtypes['code'] = VARCHAR(255)
                 else:
                     # Convert to numeric (double) safely
                     for col in columns:
                         if col != 'code':
                             slice_df[col] = pd.to_numeric(slice_df[col], errors='coerce')
                     sql_dtypes = {col: DOUBLE() for col in columns if col != 'code'}
-                    sql_dtypes['code'] = VARCHAR(50)
+                    sql_dtypes['code'] = VARCHAR(255)
 
                 # Write to temp table
                 temp_name = f"temp_{table_name}"

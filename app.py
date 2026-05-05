@@ -626,8 +626,8 @@ with tab_plate:
                     st.rerun()
                 
                 cursor.execute("""
-                    SELECT i.id, i.product_code, i.quantity_grams, p.product_name, p.proteins_100g, p.fat_100g, p.carbohydrates_100g 
-                    FROM plate_items i LEFT JOIN products p ON i.product_code = p.code WHERE i.plate_id = %s
+                    SELECT i.id, i.product_code, i.quantity_grams, p.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g 
+                    FROM plate_items i LEFT JOIN products_core p ON i.product_code = p.code LEFT JOIN products_macros m ON i.product_code = m.code WHERE i.plate_id = %s
                 """, (active_p_id,))
                 items = cursor.fetchall()
                 if items:

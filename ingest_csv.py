@@ -106,8 +106,8 @@ if __name__ == "__main__":
     print("Initiating OpenFoodFacts Grouped Vertical Ingestion Process...")
     engine = get_loader_engine()
     
-    processed_en = ingest_file('en.openfoodfacts.org.products.csv', engine)
-    processed_fr = ingest_file('fr.openfoodfacts.org.products.csv', engine)
+    processed_en = ingest_file('data/en.openfoodfacts.org.products.csv', engine)
+    processed_fr = ingest_file('data/fr.openfoodfacts.org.products.csv', engine)
     
     if not processed_en and not processed_fr:
         print("\n❌ Could not find CSVs.")

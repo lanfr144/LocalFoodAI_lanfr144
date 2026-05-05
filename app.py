@@ -358,7 +358,7 @@ with tab_chat:
         with st.spinner("Analyzing..."):
             try:
                 temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-                response = ollama.chat(model='llama3', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+                response = ollama.chat(model='llama3.1', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
                 
                 if response.get('message', {}).get('tool_calls'):
                     for tool in response['message']['tool_calls']:
@@ -720,7 +720,7 @@ with tab_planner:
             """
             
             temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan. Find real foods from the DB.'}]
-            response = ollama.chat(model='llama3', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+            response = ollama.chat(model='llama3.1', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
             
             # Simple loop to handle multiple tool calls (up to 3 times to prevent infinite loops)
             for _ in range(3):
@@ -738,7 +738,7 @@ with tab_planner:
                             db_data = search_nutrition_db(query_arg)
                             temp_messages.append({'role': 'tool', 'content': db_data, 'name': 'search_nutrition_db'})
                     
-                    response = ollama.chat(model='llama3', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+                    response = ollama.chat(model='llama3.1', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
                 else:
                     break
                     

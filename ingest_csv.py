@@ -86,6 +86,7 @@ def ingest_file(filename, engine):
                 
                 # INSERT IGNORE into final table
                 with engine.begin() as conn:
+                    conn.execute(text(f"CREATE TABLE IF NOT EXISTS {table_name} LIKE {temp_name}"))
                     cols_str = ", ".join([f"`{c}`" for c in columns])
                     conn.execute(text(f"INSERT IGNORE INTO {table_name} ({cols_str}) SELECT {cols_str} FROM {temp_name}"))
                     conn.execute(text(f"DROP TABLE IF EXISTS {temp_name}"))

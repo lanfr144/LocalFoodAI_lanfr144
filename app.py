@@ -40,11 +40,12 @@ def search_nutrition_db(query: str) -> str:
         with conn.cursor() as cursor:
             # Query products view via natural language match on core table
             sql = """
-                SELECT c.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g 
+                SELECT c.code, MAX(c.product_name) as product_name, MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, MAX(m.sugars_100g) as sugars_100g 
                 FROM food_db.products_core c
                 LEFT JOIN food_db.products_macros m ON c.code = m.code
                 WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                 AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
+                GROUP BY c.code
                 LIMIT 5
             """
             bool_query = " ".join([f"+{w}" for w in query.split()])
@@ -429,11 +430,11 @@ with tab_explore:
                 with conn_reader.cursor() as cursor:
                     l_str = "" if limit_rc == "All" else f"LIMIT {limit_rc}"
                     query = f"""
-                        SELECT c.code, c.product_name, c.generic_name, c.brands, c.ingredients_text,
-                               a.allergens,
-                               m.`energy-kcal_100g`, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g, m.fiber_100g, m.sodium_100g, m.salt_100g, m.cholesterol_100g,
-                               v.`vitamin-a_100g`, v.`vitamin-b1_100g`, v.`vitamin-b2_100g`, v.`vitamin-pp_100g`, v.`vitamin-b6_100g`, v.`vitamin-b9_100g`, v.`vitamin-b12_100g`, v.`vitamin-c_100g`, v.`vitamin-d_100g`, v.`vitamin-e_100g`, v.`vitamin-k_100g`,
-                               min.calcium_100g, min.iron_100g, min.magnesium_100g, min.potassium_100g, min.zinc_100g
+                        SELECT c.code, MAX(c.product_name) as product_name, MAX(c.generic_name) as generic_name, MAX(c.brands) as brands, MAX(c.ingredients_text) as ingredients_text,
+                               MAX(a.allergens) as allergens,
+                               MAX(m.`energy-kcal_100g`) as `energy-kcal_100g`, MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, MAX(m.sugars_100g) as sugars_100g, MAX(m.fiber_100g) as fiber_100g, MAX(m.sodium_100g) as sodium_100g, MAX(m.salt_100g) as salt_100g, MAX(m.cholesterol_100g) as cholesterol_100g,
+                               MAX(v.`vitamin-a_100g`) as `vitamin-a_100g`, MAX(v.`vitamin-b1_100g`) as `vitamin-b1_100g`, MAX(v.`vitamin-b2_100g`) as `vitamin-b2_100g`, MAX(v.`vitamin-pp_100g`) as `vitamin-pp_100g`, MAX(v.`vitamin-b6_100g`) as `vitamin-b6_100g`, MAX(v.`vitamin-b9_100g`) as `vitamin-b9_100g`, MAX(v.`vitamin-b12_100g`) as `vitamin-b12_100g`, MAX(v.`vitamin-c_100g`) as `vitamin-c_100g`, MAX(v.`vitamin-d_100g`) as `vitamin-d_100g`, MAX(v.`vitamin-e_100g`) as `vitamin-e_100g`, MAX(v.`vitamin-k_100g`) as `vitamin-k_100g`,
+                               MAX(min.calcium_100g) as calcium_100g, MAX(min.iron_100g) as iron_100g, MAX(min.magnesium_100g) as magnesium_100g, MAX(min.potassium_100g) as potassium_100g, MAX(min.zinc_100g) as zinc_100g
                         FROM food_db.products_core c
                         LEFT JOIN food_db.products_allergens a ON c.code = a.code
                         LEFT JOIN food_db.products_macros m ON c.code = m.code
@@ -445,6 +446,7 @@ with tab_explore:
                         AND (m.fat_100g >= %s OR m.fat_100g IS NULL)
                         AND (m.carbohydrates_100g >= %s OR m.carbohydrates_100g IS NULL)
                         AND (m.sugars_100g <= %s OR m.sugars_100g IS NULL)
+                        GROUP BY c.code
                         {l_str}
                     """
                     sq_bool = " ".join([f"+{w}" for w in sq.split()])
@@ -626,8 +628,9 @@ with tab_plate:
                     st.rerun()
                 
                 cursor.execute("""
-                    SELECT i.id, i.product_code, i.quantity_grams, p.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g 
+                    SELECT i.id, i.product_code, MAX(i.quantity_grams) as quantity_grams, MAX(p.product_name) as product_name, MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g 
                     FROM plate_items i LEFT JOIN products_core p ON i.product_code = p.code LEFT JOIN products_macros m ON i.product_code = m.code WHERE i.plate_id = %s
+                    GROUP BY i.id, i.product_code
                 """, (active_p_id,))
                 items = cursor.fetchall()
                 if items:
@@ -650,12 +653,13 @@ with tab_plate:
                 if add_search:
                     bool_search = " ".join([f"+{w}" for w in add_search.split()])
                     cursor.execute("""
-                        SELECT c.code, c.product_name 
+                        SELECT c.code, MAX(c.product_name) as product_name
                         FROM food_db.products_core c
                         JOIN food_db.products_macros m ON c.code = m.code
                         WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                         AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
                         AND m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
+                        GROUP BY c.code
                         LIMIT 10
                     """, (bool_search,))
                     search_res = cursor.fetchall()

@@ -5,6 +5,26 @@
 #ident "@(#)LocalFoodAI:data_sync.sh:$Format:%D:%ci:%cN:%h$"
 # data_sync.sh - Automated Data Freshness Pipeline
 
+# --- Auto-Detach & Sudo Auth Block ---
+if [ "$1" = "--detached" ]; then
+    shift # Remove --detached from arguments for normal parsing
+else
+    echo "Preparing to run ingestion in the background to survive SSH disconnections."
+    echo "Please provide your sudo password to authorize the background task:"
+    sudo -v # Authenticate interactively upfront
+    if [ $? -ne 0 ]; then
+        echo "Authentication failed. Exiting."
+        exit 1
+    fi
+    echo "Authentication successful! Detaching process..."
+    nohup sudo "$0" --detached "$@" > data_sync.log 2>&1 < /dev/null &
+    echo "Process successfully detached! You can now safely close your SSH connection."
+    echo "To monitor progress at any time, type: tail -f data_sync.log"
+    exit 0
+fi
+# -------------------------------------
+
+
 ONLINE_MODE=0
 DATA_DIR="./data"
 INGEST_FILE="en.openfoodfacts.org.products.csv"

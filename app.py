@@ -353,38 +353,23 @@ with tab_chat:
         profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
         
         sys_prompt = f"""You are a helpful medical data analyst AI. 
-        The user has the following health profile / conditions: {profile_text}. 
-        You MUST act as a specialized clinical dietitian. Autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and apply these rules to all your answers.
-        ALWAYS query the local database using the search_nutrition_db tool to answer questions about food, macros, and nutrients before answering or searching the web! If it's not in the DB, you can use local_web_search.
-        DO NOT hallucinate that a well-known food like sushi has 0 macros just because the database is missing a row. Use your medical knowledge to supplement missing database data and warn the user of biological facts (e.g. Sushi contains raw fish and carbs from rice)."""
-        with st.spinner("Analyzing..."):
-            try:
-                temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-                response = ollama.chat(model='llama3.1', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
-                
-                if response.get('message', {}).get('tool_calls'):
-                    for tool in response['message']['tool_calls']:
-                        if tool['function']['name'] == 'local_web_search':
-                            query_arg = tool['function']['arguments'].get('query')
-                            st.info(f"🔍 Web Search triggered for: '{query_arg}'")
-                            search_data = local_web_search(query_arg)
-                            st.session_state.messages.append(response['message'])
-                            st.session_state.messages.append({'role': 'tool', 'content': search_data, 'name': 'local_web_search'})
-                        elif tool['function']['name'] == 'search_nutrition_db':
-                            query_arg = tool['function']['arguments'].get('query')
-                            st.info(f"🗄️ Database Search triggered for: '{query_arg}'")
-                            db_data = search_nutrition_db(query_arg)
-                            st.session_state.messages.append(response['message'])
-                            st.session_state.messages.append({'role': 'tool', 'content': db_data, 'name': 'search_nutrition_db'})
-                            
-                    temp_messages = [{"role": "system", "content": sys_prompt}] + st.session_state.messages
-                    response = ollama.chat(model='llama3', messages=temp_messages)
-                ai_reply = response['message']['content']
-                ai_reply = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', ai_reply).strip()
-            except Exception as e: ai_reply = f"Hold on! Engine execution fault: {e}"
-
-        st.session_state.messages.append({"role": "assistant", "content": ai_reply})
-        st.chat_message("assistant").write(ai_reply)
+        Health profile: {profile_text}. 
+        Act as a specialized clinical dietitian. Provide a direct answer. Skip all thinking, reasoning, and pleasantries.
+        Use this database context if relevant to the user's question: {search_nutrition_db(prompt)}
+        """
+        
+        try:
+            temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
+            response_stream = ollama.chat(model='llama3.2:1b', messages=temp_messages, stream=True)
+            
+            with st.chat_message("assistant"):
+                ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
+            
+            st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+        except Exception as e: 
+            ai_reply = f"Hold on! Engine execution fault: {e}"
+            st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+            st.chat_message("assistant").write(ai_reply)
 
 def highlight_medical_warnings(row):
     try:
@@ -580,7 +565,7 @@ with tab_explore:
                                 profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}. Provide a direct answer. Skip all thinking, reasoning, and pleasantries."
                                 try:
-                                    response_stream = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response_stream = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
                                 except Exception as e:
                                     st.error(f"AI Evaluation Failed: {e}")
@@ -742,7 +727,7 @@ with tab_planner:
             
             # Stream the response instantly!
             try:
-                response_stream = ollama.chat(model='llama3.1', messages=temp_messages, stream=True)
+                response_stream = ollama.chat(model='llama3.2:1b', messages=temp_messages, stream=True)
                 st.markdown("### 📋 Your Professional Meal Plan")
                 st.write_stream(chunk['message']['content'] for chunk in response_stream)
             except Exception as e:

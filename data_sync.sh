@@ -2,6 +2,7 @@
 # $Id$
 # $Author$
 # $log$
+#ident "@(#)LocalFoodAI:data_sync.sh:$Format:%D:%ci:%cN:%h$"
 # data_sync.sh - Automated Data Freshness Pipeline
 
 ONLINE_MODE=0

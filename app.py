@@ -1,6 +1,7 @@
 # $Id$
 # $Author$
 # $log$
+#ident "@(#)LocalFoodAI:app.py:$Format:%D:%ci:%cN:%h$"
 import streamlit as st
 import pymysql
 import myloginpath

@@ -2,6 +2,7 @@
 # $Id$
 # $Author$
 # $log$
+#ident "@(#)LocalFoodAI:backup_db.sh:$Format:%D:%ci:%cN:%h$"
 # backup_db.sh - Automated Disaster Recovery Backup Script
 
 BACKUP_DIR="./backups"

@@ -1,4 +1,4 @@
-*.py ident
-*.sh ident
-*.sql ident
-*.md ident
+*.py ident export-subst
+*.sh ident export-subst
+*.sql ident export-subst
+*.md ident export-subst

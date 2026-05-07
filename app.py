@@ -17,6 +17,13 @@ from unit_converter import UnitConverter
 from snmp_notifier import notifier
 import time
 
+import threading
+
+def pull_model_bg():
+    try: ollama.pull('llama3.2:1b')
+    except: pass
+threading.Thread(target=pull_model_bg, daemon=True).start()
+
 def local_web_search(query: str) -> str:
     try:
         req = requests.get(f'http://127.0.0.1:8080/search', params={'q': query, 'format': 'json'})
@@ -45,12 +52,11 @@ def search_nutrition_db(query: str) -> str:
         with conn.cursor() as cursor:
             # Query products view via natural language match on core table
             sql = """
-                SELECT c.code, MAX(c.product_name) as product_name, MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, MAX(m.sugars_100g) as sugars_100g 
+                SELECT c.code, c.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g 
                 FROM food_db.products_core c
                 LEFT JOIN food_db.products_macros m ON c.code = m.code
                 WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                 AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
-                GROUP BY c.code
                 LIMIT 5
             """
             bool_query = " ".join([f"+{w}" for w in query.split()])
@@ -417,17 +423,16 @@ with tab_explore:
                 with conn_reader.cursor() as cursor:
                     l_str = "" if limit_rc == "All" else f"LIMIT {limit_rc}"
                     query = f"""
-                        SELECT c.code, c.product_name, MAX(c.generic_name) as generic_name, MAX(c.brands) as brands, MAX(c.ingredients_text) as ingredients_text,
-                               MAX(a.allergens) as allergens,
-                               MAX(m.`energy-kcal_100g`) as `energy-kcal_100g`, MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, MAX(m.sugars_100g) as sugars_100g, MAX(m.fiber_100g) as fiber_100g, MAX(m.sodium_100g) as sodium_100g, MAX(m.salt_100g) as salt_100g, MAX(m.cholesterol_100g) as cholesterol_100g,
-                               MAX(v.`vitamin-a_100g`) as `vitamin-a_100g`, MAX(v.`vitamin-b1_100g`) as `vitamin-b1_100g`, MAX(v.`vitamin-b2_100g`) as `vitamin-b2_100g`, MAX(v.`vitamin-pp_100g`) as `vitamin-pp_100g`, MAX(v.`vitamin-b6_100g`) as `vitamin-b6_100g`, MAX(v.`vitamin-b9_100g`) as `vitamin-b9_100g`, MAX(v.`vitamin-b12_100g`) as `vitamin-b12_100g`, MAX(v.`vitamin-c_100g`) as `vitamin-c_100g`, MAX(v.`vitamin-d_100g`) as `vitamin-d_100g`, MAX(v.`vitamin-e_100g`) as `vitamin-e_100g`, MAX(v.`vitamin-k_100g`) as `vitamin-k_100g`,
-                               MAX(min.calcium_100g) as calcium_100g, MAX(min.iron_100g) as iron_100g, MAX(min.magnesium_100g) as magnesium_100g, MAX(min.potassium_100g) as potassium_100g, MAX(min.zinc_100g) as zinc_100g
+                        SELECT c.code, c.product_name, c.generic_name, c.brands, c.ingredients_text,
+                               a.allergens,
+                               m.`energy-kcal_100g`, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g, m.fiber_100g, m.sodium_100g, m.salt_100g, m.cholesterol_100g,
+                               v.`vitamin-a_100g`, v.`vitamin-b1_100g`, v.`vitamin-b2_100g`, v.`vitamin-pp_100g`, v.`vitamin-b6_100g`, v.`vitamin-b9_100g`, v.`vitamin-b12_100g`, v.`vitamin-c_100g`, v.`vitamin-d_100g`, v.`vitamin-e_100g`, v.`vitamin-k_100g`,
+                               min.calcium_100g, min.iron_100g, min.magnesium_100g, min.potassium_100g, min.zinc_100g
                         FROM (
-                            SELECT code, MAX(product_name) as product_name, MAX(generic_name) as generic_name, MAX(brands) as brands, MAX(ingredients_text) as ingredients_text
+                            SELECT code, product_name, generic_name, brands, ingredients_text
                             FROM food_db.products_core
                             WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                             AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
-                            GROUP BY code
                             {l_str}
                         ) c
                         LEFT JOIN food_db.products_allergens a ON c.code = a.code
@@ -438,7 +443,6 @@ with tab_explore:
                         AND (m.fat_100g >= %s OR m.fat_100g IS NULL)
                         AND (m.carbohydrates_100g >= %s OR m.carbohydrates_100g IS NULL)
                         AND (m.sugars_100g <= %s OR m.sugars_100g IS NULL)
-                        GROUP BY c.code, c.product_name
                     """
                     sq_bool = " ".join([f"+{w}" for w in sq.split()])
                     start_time = time.time()
@@ -644,24 +648,60 @@ with tab_plate:
                 st.markdown("---")
                 st.markdown("#### ➕ Add Food to Plate")
                 add_search = st.text_input("Search Exact Product Name (e.g. 'chicken', 'egg')")
+                
+                col_scope, col_comp = st.columns(2)
+                search_scope = col_scope.radio("Search Scope", ["Auto (Cascaded)", "Product Name Only", "Both (Product & Ingredients)", "Ingredients Only"], horizontal=True)
+                comp_reqs = col_comp.multiselect("Require Nutrients (Sorts by highest)", ["Iron", "Vitamin C", "Calcium", "Proteins", "Fiber"])
+                
                 if add_search:
                     bool_search = " ".join([f"+{w}" for w in add_search.split()])
                     start_time = time.time()
-                    cursor.execute("""
-                        SELECT c.code, c.product_name
-                        FROM (
-                            SELECT code, MAX(product_name) as product_name
-                            FROM food_db.products_core
-                            WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE)
-                            AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
-                            GROUP BY code
-                            LIMIT 10
-                        ) c
-                        JOIN food_db.products_macros m ON c.code = m.code
-                        WHERE m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
-                        GROUP BY c.code, c.product_name
-                    """, (bool_search,))
-                    search_res = cursor.fetchall()
+                    
+                    def execute_search(match_col_override=None):
+                        m_col = "product_name"
+                        if match_col_override: m_col = match_col_override
+                        elif "Both" in search_scope: m_col = "product_name, ingredients_text"
+                        elif "Ingredients" in search_scope: m_col = "ingredients_text"
+                        
+                        join_min = "LEFT JOIN food_db.products_minerals min ON c.code = min.code" if any(n in comp_reqs for n in ["Iron", "Calcium"]) else ""
+                        join_vit = "LEFT JOIN food_db.products_vitamins v ON c.code = v.code" if "Vitamin C" in comp_reqs else ""
+                        
+                        r_clauses, o_clauses = [], []
+                        if "Iron" in comp_reqs: r_clauses.append("min.iron_100g > 0"); o_clauses.append("min.iron_100g DESC")
+                        if "Vitamin C" in comp_reqs: r_clauses.append("v.`vitamin-c_100g` > 0"); o_clauses.append("v.`vitamin-c_100g` DESC")
+                        if "Calcium" in comp_reqs: r_clauses.append("min.calcium_100g > 0"); o_clauses.append("min.calcium_100g DESC")
+                        if "Proteins" in comp_reqs: r_clauses.append("m.proteins_100g > 0"); o_clauses.append("m.proteins_100g DESC")
+                        if "Fiber" in comp_reqs: r_clauses.append("m.fiber_100g > 0"); o_clauses.append("m.fiber_100g DESC")
+                        
+                        wh_comp = " AND " + " AND ".join(r_clauses) if r_clauses else ""
+                        order_by = "ORDER BY " + ", ".join(o_clauses) if o_clauses else ""
+                        
+                        sql = f"""
+                            SELECT c.code, c.product_name
+                            FROM (
+                                SELECT code, product_name
+                                FROM food_db.products_core
+                                WHERE MATCH({m_col}) AGAINST(%s IN BOOLEAN MODE)
+                                AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
+                                LIMIT 100
+                            ) c
+                            JOIN food_db.products_macros m ON c.code = m.code
+                            {join_min}
+                            {join_vit}
+                            WHERE m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
+                            {wh_comp}
+                            {order_by}
+                            LIMIT 15
+                        """
+                        cursor.execute(sql, (bool_search,))
+                        return cursor.fetchall()
+
+                    search_res = execute_search()
+                    
+                    if not search_res and search_scope == "Auto (Cascaded)":
+                        st.warning("No product found in names, so I am looking into the ingredients...")
+                        search_res = execute_search("ingredients_text")
+                        
                     elapsed = time.time() - start_time
                     st.caption(f"⏱️ Plate Search Executed in {elapsed:.3f} seconds")
                     if search_res:

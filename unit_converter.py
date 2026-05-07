@@ -25,6 +25,10 @@ class UnitConverter:
         'liter': 1000.0,
         'pinch': 0.36, # rough estimate
         'dash': 0.72,
+        'xl': 64.0, # mostly for eggs
+        'large': 50.0,
+        'medium': 44.0,
+        'small': 38.0,
     }
 
     # Densities in grams per milliliter (g/ml)
@@ -159,3 +163,5 @@ if __name__ == '__main__':
     print("2 tbsp of olive oil:", UnitConverter.parse_and_convert("2 tbsp", "olive oil"), "g")
     print("1 pound of generic food:", UnitConverter.parse_and_convert("1 pound", "unknown"), "g")
     print("1 pinch of salt:", UnitConverter.parse_and_convert("1 pinch", "salt"), "g")
+    print("1 xl egg:", UnitConverter.parse_and_convert("1 xl", "egg"), "g")
+    print("2 large eggs:", UnitConverter.parse_and_convert("2 large", "egg"), "g")

@@ -85,11 +85,22 @@ def ingest_file(filename, engine):
                 temp_name = f"temp_{table_name}"
                 slice_df.to_sql(temp_name, con=engine, if_exists='replace', index=False, dtype=sql_dtypes)
                 
-                # INSERT IGNORE into final table
+                # UPSERT into final table with Primary Key enforcement
                 with engine.begin() as conn:
+                    # Ensure temp table has a primary key on code so LIKE copies it, or alter it later
+                    conn.execute(text(f"ALTER TABLE {temp_name} ADD PRIMARY KEY (code);"))
                     conn.execute(text(f"CREATE TABLE IF NOT EXISTS {table_name} LIKE {temp_name}"))
+                    
                     cols_str = ", ".join([f"`{c}`" for c in columns])
-                    conn.execute(text(f"INSERT IGNORE INTO {table_name} ({cols_str}) SELECT {cols_str} FROM {temp_name}"))
+                    # Generate ON DUPLICATE KEY UPDATE clause with COALESCE to fill nulls
+                    update_cols = ", ".join([f"`{c}` = COALESCE(`{table_name}`.`{c}`, VALUES(`{c}`))" for c in columns if c != 'code'])
+                    
+                    if update_cols:
+                        upsert_query = f"INSERT INTO {table_name} ({cols_str}) SELECT {cols_str} FROM {temp_name} ON DUPLICATE KEY UPDATE {update_cols}"
+                    else:
+                        upsert_query = f"INSERT IGNORE INTO {table_name} ({cols_str}) SELECT {cols_str} FROM {temp_name}"
+                        
+                    conn.execute(text(upsert_query))
                     conn.execute(text(f"DROP TABLE IF EXISTS {temp_name}"))
 
             total_processed += len(df)

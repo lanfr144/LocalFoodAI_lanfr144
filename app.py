@@ -578,7 +578,7 @@ with tab_explore:
                             with st.spinner("AI is dynamically evaluating these records against your profile..."):
                                 user_eav = get_eav_profile(st.session_state["authenticated_user"])
                                 profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
-                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}"
+                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}. Provide a direct answer. Skip all thinking, reasoning, and pleasantries."
                                 try:
                                     response_stream = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
@@ -735,6 +735,7 @@ with tab_planner:
             - Output the menu beautifully formatted as a Markdown Table.
             - Columns MUST be: | Meal Time | Exact Food | Portion Size | Calories | Protein |
             - Do NOT output JSON. Do NOT use tool calls.
+            - Provide a direct answer. Skip all thinking, reasoning, and pleasantries.
             """
             
             temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}]

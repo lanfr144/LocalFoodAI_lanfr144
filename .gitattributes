@@ -1,0 +1,4 @@
+*.py ident
+*.sh ident
+*.sql ident
+*.md ident

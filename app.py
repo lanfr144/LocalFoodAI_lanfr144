@@ -1,3 +1,6 @@
+# $Id$
+# $Author$
+# $log$
 import streamlit as st
 import pymysql
 import myloginpath
@@ -11,6 +14,7 @@ from email.message import EmailMessage
 import pandas as pd
 from unit_converter import UnitConverter
 from snmp_notifier import notifier
+import time
 
 def local_web_search(query: str) -> str:
     try:
@@ -163,7 +167,6 @@ def send_email(to_email, subject, body, to_name="User"):
     msg['From'] = '"Clinical Food AI System" <security@localfoodai.com>'
     msg['To'] = f'"{to_name}" <{to_email}>'
     
-    import time
     for attempt in range(5):
         try:
             s = smtplib.SMTP('localhost', 25)
@@ -196,11 +199,9 @@ def reset_password(username, email):
 
 # UI Theming
 def render_version():
-    import os, datetime
-    file_time = datetime.datetime.fromtimestamp(os.path.getmtime(__file__)).strftime('%Y-%m-%d %H:%M:%S')
     st.markdown("---")
     st.caption("🚀 Version: v1.3.0")
-    st.caption(f"📅 Last Updated: {file_time}")
+    st.caption(f"📅 Git ID: $Id$")
 
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
 st.markdown("""

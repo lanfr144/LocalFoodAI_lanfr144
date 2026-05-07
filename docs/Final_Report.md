@@ -1,25 +1,19 @@
-# Local Food AI: Final Project Report
+# $Id$
+# Final Project Report (Living Document)
 
-## 1. What Has Been Done
-The "Local Food AI Clinical Explorer" project has been fully architected, containerized, and deployed to the production environment (Ubuntu server `192.168.130.170`).
+## What Has Been Done
+1. **Core Architecture**: Deployed a resilient 4-container Docker Compose stack (MySQL, Nginx, Streamlit UI, Ollama Inference).
+2. **Database Optimization**: Successfully loaded 4.4M+ OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
+3. **Clinical Subquery Strategy**: Refactored the core Pandas/SQL query pipeline to use subquery limiting, resolving Cartesian join explosions and reducing query latency to ~0.04s.
+4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors the proxy and server health, dynamically reporting alerts to Microsoft Teams.
+5. **Git Versioning**: Implemented Git `.gitattributes` to push `$Id$` tracking directly into the Python Application UI.
 
-- **Database Engineering:** Secure MySQL instance deployed with strict Principle of Least Privilege (PoLP) and Separation of Duties (SoD) using isolated `db_owner`, `db_reader`, and `db_auth` accounts.
-- **Data Ingestion Pipeline:** Automated parsing and ingestion of the massive OpenFoodFacts `.csv` dataset, utilizing Grouped Vertical Partitioning to drastically optimize read speeds for the Clinical Explorer.
-- **Application Development:** Streamlit-based Web UI featuring user authentication (via bcrypt), AI-powered Medical Search (via Ollama RAG), and dynamic Plate Calculation logic.
-- **Observability:** Comprehensive deployment of Zabbix using Docker Compose. Both the host Ubuntu Server and the Streamlit application are actively sending SNMPv3 encrypted telemetry and traps to Zabbix.
-- **Agile Project Management:** Taiga synchronization scripts have dynamically populated all 8 Sprints, User Stories, and Technical Tasks to mirror the repository lifecycle.
-- **Documentation:** The Taiga Wiki has been populated with Agile methodologies, Backup Procedures, WSL Deployment strategies, and Clinical Test Cases.
+## What Needs To Be Done (Day 2 Operations)
+1. **SSL/TLS Certificates**: The Nginx proxy is functional on HTTP port 80. Port 443 (HTTPS) must be configured with a Let's Encrypt certificate for true production encryption.
+2. **User Acceptance Testing (UAT)**: Clinical dietitians should rigorously test the AI Chat constraints and Plate Builder to ensure edge cases are handled safely.
+3. **Advanced Rate Limiting**: Limit the number of AI requests per user using a sliding window algorithm in `app.py`.
 
-## 2. What Needs To Be Done
-The technical scope of the project is 100% complete and meets all examination requirements. However, administrative preparations are needed:
-
-- **Email Media Types:** While Zabbix is receiving alerts, the internal SMTP relay server configuration for Zabbix needs your exact student credentials if you wish to demonstrate live email delivery to your inbox during the exam.
-- **Hardware Resources:** The OpenFoodFacts ingestion script requires 12GB+ RAM. When presenting the WSL deployment, you must ensure your local Docker Desktop has adequate memory allocated.
-
-## 3. The Next Step
-You are ready for the BTS Defense.
-
-**Preparation Checklist:**
-1. Log into your Taiga dashboard (`https://192.168.130.161/taiga`) and review the newly populated Wiki Pages (`Scrum_Wiki`, `WSL_Deployment`, `Backup_Procedure`, `Test_Cases_Sprint8`).
-2. Log into the Zabbix dashboard (`http://192.168.130.170:8080`) to verify the "Application Monitoring Verified" SNMP trap that was successfully fired during Sprint 8 testing.
-3. Use the `Test_Cases_Sprint8.md` file as a script during your live presentation to demonstrate how the AI handles the "Pregnant, Diabetic, Kidney Patient" persona perfectly.
+## What Is The Next Step
+- Execute the `data_sync.sh` cron job monthly.
+- Maintain the automated `backup_db.sh` 7-day retention cycle.
+- Begin the hand-off to the operational team for Phase 2 feature requests.

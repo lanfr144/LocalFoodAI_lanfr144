@@ -1,4 +1,7 @@
 #!/bin/bash
+# $Id$
+# $Author$
+# $log$
 # data_sync.sh - Automated Data Freshness Pipeline
 
 ONLINE_MODE=0

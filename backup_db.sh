@@ -1,4 +1,7 @@
 #!/bin/bash
+# $Id$
+# $Author$
+# $log$
 # backup_db.sh - Automated Disaster Recovery Backup Script
 
 BACKUP_DIR="./backups"

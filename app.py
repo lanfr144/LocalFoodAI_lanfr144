@@ -580,8 +580,8 @@ with tab_explore:
                                 profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}"
                                 try:
-                                    response = ollama.chat(model='llama3', messages=[{'role': 'user', 'content': eval_prompt}])
-                                    st.info(response['message']['content'])
+                                    response_stream = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    st.write_stream(chunk['message']['content'] for chunk in response_stream)
                                 except Exception as e:
                                     st.error(f"AI Evaluation Failed: {e}")
                     else:
@@ -719,75 +719,32 @@ with tab_planner:
     extra_notes = st.text_input("Any additional allergies or goals?")
     
     if st.button("Generate Professional Menu"):
-        with st.spinner("AI is formulating and interrogating the local database..."):
+        with st.spinner("Executing Lightning-Fast Context RAG..."):
             user_eav = get_eav_profile(st.session_state["authenticated_user"])
             profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
             
+            # Pre-fetch database context directly without using AI tools!
+            db_context = search_nutrition_db(diet_pref)
+            
             sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal over {meal_count} meals. 
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
-            The user has the following health profile / conditions: {profile_text}. 
-            You MUST autonomously deduce what foods are recommended, forbidden, or accepted for these specific conditions and ensure the menu perfectly respects their medical requirements!
+            Health profile: {profile_text}. 
+            
             CRITICAL INSTRUCTIONS:
-            - YOU MUST USE the `search_nutrition_db` tool to find real products and their exact macros before constructing the menu!
-            - If you cannot find appropriate products in the local DB, you MUST use the `local_web_search` tool.
-            - ALWAYS output exactly as a JSON array of objects. DO NOT OUTPUT MARKDOWN. DO NOT OUTPUT ANY TEXT EXCEPT JSON.
-            - JSON Format required:
-            [
-                {{"meal": "Breakfast", "food": "100g Oatmeal with 50g berries", "calories": 300, "salt_mg": 10, "fat_g": 5, "iron_mg": 2}}
-            ]
-            - Ensure the total calories sum up closely to {target_cal}.
+            - You MUST formulate the menu using ONLY the following real database items retrieved for you: {db_context}
+            - Output the menu beautifully formatted as a Markdown Table.
+            - Columns MUST be: | Meal Time | Exact Food | Portion Size | Calories | Protein |
+            - Do NOT output JSON. Do NOT use tool calls.
             """
             
-            temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan. Find real foods from the DB.'}]
-            response = ollama.chat(model='llama3.1', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
+            temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}]
             
-            # Simple loop to handle multiple tool calls (up to 3 times to prevent infinite loops)
-            for _ in range(3):
-                if response.get('message', {}).get('tool_calls'):
-                    temp_messages.append(response['message'])
-                    for tool in response['message']['tool_calls']:
-                        if tool['function']['name'] == 'local_web_search':
-                            query_arg = tool['function']['arguments'].get('query')
-                            st.info(f"🔍 Planner Web Search triggered for: '{query_arg}'")
-                            search_data = local_web_search(query_arg)
-                            temp_messages.append({'role': 'tool', 'content': search_data, 'name': 'local_web_search'})
-                        elif tool['function']['name'] == 'search_nutrition_db':
-                            query_arg = tool['function']['arguments'].get('query')
-                            st.info(f"🗄️ Planner DB Search triggered for: '{query_arg}'")
-                            db_data = search_nutrition_db(query_arg)
-                            temp_messages.append({'role': 'tool', 'content': db_data, 'name': 'search_nutrition_db'})
-                    
-                    response = ollama.chat(model='llama3.1', messages=temp_messages, tools=[search_tool_schema, db_search_tool_schema])
-                else:
-                    break
-                    
-            import json
-            raw_text = response['message']['content']
-            raw_text = re.sub(r'\[TOOL_CALLS\]\s*\[.*?\]', '', raw_text).strip()
-            
+            # Stream the response instantly!
             try:
-                start_idx = raw_text.find('[')
-                end_idx = raw_text.rfind(']') + 1
-                if start_idx != -1 and end_idx != -1:
-                    json_data = json.loads(raw_text[start_idx:end_idx])
-                    df_plan = pd.DataFrame(json_data)
-                    
-                    total_cals = df_plan['calories'].sum() if 'calories' in df_plan else 0
-                    total_salt = df_plan['salt_mg'].sum() if 'salt_mg' in df_plan else 0
-                    total_fat = df_plan['fat_g'].sum() if 'fat_g' in df_plan else 0
-                    total_iron = df_plan['iron_mg'].sum() if 'iron_mg' in df_plan else 0
-                    
-                    total_row = pd.DataFrame([{"meal": "TOTAL", "food": "---", "calories": total_cals, "salt_mg": total_salt, "fat_g": total_fat, "iron_mg": total_iron}])
-                    df_plan = pd.concat([df_plan, total_row], ignore_index=True)
-                    
-                    st.dataframe(df_plan, use_container_width=True)
-                    if abs(total_cals - target_cal) > 200:
-                        st.warning(f"Note: Total calories ({total_cals}) differ from your target ({target_cal}).")
-                else:
-                    st.error("AI failed to output valid JSON. Raw output:")
-                    st.text(raw_text)
+                response_stream = ollama.chat(model='llama3.1', messages=temp_messages, stream=True)
+                st.markdown("### 📋 Your Professional Meal Plan")
+                st.write_stream(chunk['message']['content'] for chunk in response_stream)
             except Exception as e:
-                st.error(f"Failed to parse AI output: {e}")
-                st.text(raw_text)
+                st.error(f"AI Generation Failed: {e}")
 
 if conn_reader: conn_reader.close()

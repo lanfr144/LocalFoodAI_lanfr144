@@ -1,10 +1,28 @@
 import os
 import time
-from app import get_db_connection
+import pymysql
 from snmp_notifier import notifier
 
+def get_db_connection():
+    try:
+        # Defaults to host environment or localhost for external execution
+        db_host = os.environ.get('DB_HOST', '127.0.0.1')
+        db_user = os.environ.get('DB_READER_USER', 'db_reader')
+        db_pass = os.environ.get('DB_READER_PASS', 'reader_pass')
+
+        return pymysql.connect(
+            host=db_host,
+            user=db_user,
+            password=db_pass,
+            database='food_db',
+            cursorclass=pymysql.cursors.DictCursor
+        )
+    except Exception as e:
+        print(f"DB Connection Error: {e}")
+        return None
+
 def report_telemetry():
-    conn = get_db_connection('app_reader')
+    conn = get_db_connection()
     if not conn:
         print("Failed to connect to database for telemetry.")
         return

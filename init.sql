@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS products (
 ) ENGINE=InnoDB;
 
 -- Step B: The Owner grants explicit privileges to the Reader and Loader
+-- Grant explicit privileges to the Reader
 GRANT SELECT ON food_db.products TO 'db_reader'@'%';
 GRANT SELECT ON food_db.products_core TO 'db_reader'@'%';
 GRANT SELECT ON food_db.products_allergens TO 'db_reader'@'%';
@@ -115,12 +116,8 @@ GRANT SELECT ON food_db.products_macros TO 'db_reader'@'%';
 GRANT SELECT ON food_db.products_vitamins TO 'db_reader'@'%';
 GRANT SELECT ON food_db.products_minerals TO 'db_reader'@'%';
 
-GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products TO 'db_loader'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_core TO 'db_loader'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_allergens TO 'db_loader'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_macros TO 'db_loader'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_vitamins TO 'db_loader'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE ON food_db.products_minerals TO 'db_loader'@'%';
+-- Grant broad privileges to the Loader on food_db to allow temp tables and UPSERT modifications
+GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, INDEX ON food_db.* TO 'db_loader'@'%';
 FLUSH PRIVILEGES;
 
 -- Step C: The Loader user would then run this MySQL command to import:

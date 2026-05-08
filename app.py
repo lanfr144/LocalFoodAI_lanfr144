@@ -573,7 +573,11 @@ with tab_explore:
                                     response_stream = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
                                 except Exception as e:
-                                    st.error(f"AI Evaluation Failed: {e}")
+                                    error_msg = str(e).lower()
+                                    if "404" in error_msg or "not found" in error_msg:
+                                        st.warning("⚠️ The AI engine is currently downloading its core models in the background. Please wait a minute and try again!")
+                                    else:
+                                        st.error(f"AI Evaluation Failed: {e}")
                     else:
                         st.warning("No products found matching those strict terms.")
             except Exception as e: st.error(f"SQL/Pandas Error: {e}")
@@ -772,6 +776,10 @@ with tab_planner:
                 st.markdown("### 📋 Your Professional Meal Plan")
                 st.write_stream(chunk['message']['content'] for chunk in response_stream)
             except Exception as e:
-                st.error(f"AI Generation Failed: {e}")
+                error_msg = str(e).lower()
+                if "404" in error_msg or "not found" in error_msg:
+                    st.warning("⚠️ The AI engine is currently downloading its core models in the background. Please wait a minute and try again!")
+                else:
+                    st.error(f"AI Generation Failed: {e}")
 
 if conn_reader: conn_reader.close()

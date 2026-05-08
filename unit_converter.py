@@ -25,7 +25,14 @@ class UnitConverter:
         'liter': 1000.0,
         'pinch': 0.36, # rough estimate
         'dash': 0.72,
-        'xl': 64.0, # mostly for eggs
+        'xl': 64.0,
+        'l': 50.0,
+        'm': 44.0,
+        's': 38.0,
+        'extra': 64.0,
+        'extra large': 64.0,
+        'big': 64.0,
+        'b': 64.0,
         'large': 50.0,
         'medium': 44.0,
         'small': 38.0,

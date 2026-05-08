@@ -108,6 +108,47 @@ CREATE TABLE IF NOT EXISTS products (
     FULLTEXT INDEX ft_idx_search (product_name, ingredients_text)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS products_core (
+    code VARCHAR(50) PRIMARY KEY,
+    product_name TEXT,
+    ingredients_text TEXT,
+    FULLTEXT INDEX ft_idx_search (product_name, ingredients_text)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS products_macros (
+    code VARCHAR(50) PRIMARY KEY,
+    energy_100g DOUBLE,
+    proteins_100g DOUBLE,
+    fat_100g DOUBLE,
+    carbohydrates_100g DOUBLE,
+    sugars_100g DOUBLE,
+    fiber_100g DOUBLE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS products_vitamins (
+    code VARCHAR(50) PRIMARY KEY,
+    vitamin_a_100g DOUBLE,
+    vitamin_c_100g DOUBLE,
+    vitamin_d_100g DOUBLE,
+    vitamin_b12_100g DOUBLE,
+    vitamin_b6_100g DOUBLE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS products_minerals (
+    code VARCHAR(50) PRIMARY KEY,
+    calcium_100g DOUBLE,
+    iron_100g DOUBLE,
+    magnesium_100g DOUBLE,
+    potassium_100g DOUBLE,
+    zinc_100g DOUBLE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS products_allergens (
+    code VARCHAR(50) PRIMARY KEY,
+    allergens TEXT,
+    traces TEXT
+) ENGINE=InnoDB;
+
 -- Step B: The Owner grants explicit privileges to the Reader and Loader
 -- Grant explicit privileges to the Reader
 GRANT SELECT ON food_db.products TO 'db_reader'@'%';

@@ -111,27 +111,40 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS products_core (
     code VARCHAR(50) PRIMARY KEY,
     product_name TEXT,
+    generic_name TEXT,
+    brands TEXT,
     ingredients_text TEXT,
-    FULLTEXT INDEX ft_idx_search (product_name, ingredients_text)
+    FULLTEXT INDEX ft_idx_search (product_name, ingredients_text),
+    FULLTEXT INDEX ft_idx_pn (product_name),
+    FULLTEXT INDEX ft_idx_it (ingredients_text)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS products_macros (
     code VARCHAR(50) PRIMARY KEY,
-    energy_100g DOUBLE,
+    `energy-kcal_100g` DOUBLE,
     proteins_100g DOUBLE,
     fat_100g DOUBLE,
     carbohydrates_100g DOUBLE,
     sugars_100g DOUBLE,
-    fiber_100g DOUBLE
+    fiber_100g DOUBLE,
+    sodium_100g DOUBLE,
+    salt_100g DOUBLE,
+    cholesterol_100g DOUBLE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS products_vitamins (
     code VARCHAR(50) PRIMARY KEY,
-    vitamin_a_100g DOUBLE,
-    vitamin_c_100g DOUBLE,
-    vitamin_d_100g DOUBLE,
-    vitamin_b12_100g DOUBLE,
-    vitamin_b6_100g DOUBLE
+    `vitamin-a_100g` DOUBLE,
+    `vitamin-b1_100g` DOUBLE,
+    `vitamin-b2_100g` DOUBLE,
+    `vitamin-pp_100g` DOUBLE,
+    `vitamin-b6_100g` DOUBLE,
+    `vitamin-b9_100g` DOUBLE,
+    `vitamin-b12_100g` DOUBLE,
+    `vitamin-c_100g` DOUBLE,
+    `vitamin-d_100g` DOUBLE,
+    `vitamin-e_100g` DOUBLE,
+    `vitamin-k_100g` DOUBLE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS products_minerals (

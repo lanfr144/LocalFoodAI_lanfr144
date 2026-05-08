@@ -24,7 +24,6 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     restart: always
-    command: bash -c "ollama serve & sleep 5 && ollama pull llama3.2:1b && wait"
 
   app:
     build:

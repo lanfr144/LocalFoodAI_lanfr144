@@ -45,19 +45,34 @@ search_tool_schema = {
     },
 }
 
-def search_nutrition_db(query: str) -> str:
+def search_nutrition_db(query: str, user_eav=None) -> str:
     conn = get_db_connection('app_reader')
     if not conn: return "Database connection failed."
     try:
         with conn.cursor() as cursor:
-            # Query products view via natural language match on core table
-            sql = """
+            # Dynamically build strictly-enforced clinical SQL filters
+            clinical_filters = ""
+            if user_eav:
+                for p in user_eav:
+                    name = p['name'].lower()
+                    val = p['value'].lower()
+                    if name in ['condition', 'illness']:
+                        if val == 'diabetes': clinical_filters += " AND m.sugars_100g < 5.0"
+                        elif 'kidney' in val: clinical_filters += " AND m.proteins_100g < 15.0"
+                        elif 'hypertension' in val: clinical_filters += " AND m.sodium_100g < 0.2"
+                    elif name in ['diet', 'religious', 'preference']:
+                        if val == 'kosher': clinical_filters += " AND c.ingredients_text NOT LIKE '%pork%' AND c.ingredients_text NOT LIKE '%shellfish%'"
+                        elif val == 'halal': clinical_filters += " AND c.ingredients_text NOT LIKE '%pork%' AND c.ingredients_text NOT LIKE '%wine%' AND c.ingredients_text NOT LIKE '%alcohol%'"
+                        elif val in ['christian', 'good friday', 'ash wednesday']: clinical_filters += " AND c.ingredients_text NOT LIKE '%meat%' AND c.ingredients_text NOT LIKE '%beef%' AND c.ingredients_text NOT LIKE '%chicken%' AND c.ingredients_text NOT LIKE '%pork%'"
+
+            sql = f"""
                 SELECT c.code, c.product_name, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g 
                 FROM food_db.products_core c
                 LEFT JOIN food_db.products_macros m ON c.code = m.code
                 WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                 AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
-                LIMIT 5
+                {clinical_filters}
+                LIMIT 15
             """
             bool_query = " ".join([f"+{w}" for w in query.split()])
             cursor.execute(sql, (bool_query,))
@@ -754,7 +769,8 @@ with tab_planner:
             profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
             
             # Pre-fetch database context directly without using AI tools!
-            db_context = search_nutrition_db(diet_pref)
+            # Enforce the strict clinical constraints directly via SQL
+            db_context = search_nutrition_db(diet_pref, user_eav)
             
             sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal over {meal_count} meals. 
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.

@@ -4,6 +4,15 @@
 #ident "@(#)LocalFoodAI:app.py:$Format:%D:%ci:%cN:%h$"
 import streamlit as st
 import pymysql
+import bcrypt
+import random
+import string
+import time
+import os
+import pandas as pd
+from snmp_notifier import notifier
+from unit_converter import UnitConverter
+from fpdf import FPDF
 import myloginpath
 import ollama
 import bcrypt
@@ -278,11 +287,22 @@ with st.sidebar:
 
         with st.expander("➕ Add Condition / Diet"):
             new_cat = st.selectbox("Category", ["Condition", "Illness", "Diet", "Dislike", "Allergy"])
-            new_val = st.text_input("Value (e.g. 'vegan', 'diabetes', 'broccoli')").strip().lower()
-            if st.button("Add to Profile") and new_val and uid:
+            
+            if new_cat == "Condition":
+                new_val = st.selectbox("Value", ["Pregnant", "Breastfeeding", "Low Fat"])
+            elif new_cat == "Illness":
+                new_val = st.selectbox("Value", ["Diabetes", "Hypertension", "Kidney Disease", "Osteoporosis", "Scurvy", "Anemia"])
+            elif new_cat == "Diet":
+                new_val = st.selectbox("Value", ["Vegan", "Vegetarian", "Kosher", "Halal", "Christian", "Good Friday", "Ash Wednesday", "Keto", "Paleo"])
+            else:
+                new_val = st.text_input("Value (e.g. 'peanuts', 'broccoli')").strip()
+                
+            new_val_clean = new_val.lower()
+            
+            if st.button("Add to Profile") and new_val_clean and uid:
                 conn = get_db_connection('app_auth')
                 with conn.cursor() as c:
-                    c.execute("INSERT INTO user_health_profiles (user_id, illness_health_condition_diet_dislikes_name, illness_health_condition_diet_dislikes_value) VALUES (%s, %s, %s)", (uid, new_cat, new_val))
+                    c.execute("INSERT INTO user_health_profiles (user_id, illness_health_condition_diet_dislikes_name, illness_health_condition_diet_dislikes_value) VALUES (%s, %s, %s)", (uid, new_cat.lower(), new_val_clean))
                     conn.commit()
                 st.rerun()
                 
@@ -789,8 +809,46 @@ with tab_planner:
             # Stream the response instantly!
             try:
                 response_stream = ollama.chat(model='llama3.2:1b', messages=temp_messages, stream=True)
-                st.markdown("### 📋 Your Professional Meal Plan")
-                st.write_stream(chunk['message']['content'] for chunk in response_stream)
+                ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
+                
+                # PDF Generation
+                def generate_pdf(text):
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Helvetica", 'B', 16)
+                    pdf.cell(0, 10, "Strict Clinical Meal Plan", ln=True, align='C')
+                    pdf.set_font("Helvetica", size=10)
+                    pdf.ln(5)
+                    
+                    for line in text.split('\n'):
+                        line = line.strip()
+                        if not line:
+                            pdf.ln(5)
+                            continue
+                        
+                        if line.startswith('|') and line.endswith('|'):
+                            if '---' in line: continue
+                            cols = [col.strip() for col in line.strip('|').split('|')]
+                            col_width = 190 / max(1, len(cols))
+                            for col in cols:
+                                # encode to ignore unicode errors in basic PDF fonts
+                                clean_col = str(col).encode('latin-1', 'replace').decode('latin-1')
+                                pdf.cell(col_width, 10, clean_col, border=1)
+                            pdf.ln()
+                        else:
+                            clean_line = str(line).encode('latin-1', 'replace').decode('latin-1')
+                            pdf.multi_cell(0, 8, clean_line)
+                            
+                    return pdf.output()
+                
+                st.download_button(
+                    label="📄 Download PDF Export",
+                    data=generate_pdf(ai_reply),
+                    file_name="Clinical_Meal_Plan.pdf",
+                    mime="application/pdf",
+                    type="primary"
+                )
+                
             except Exception as e:
                 error_msg = str(e).lower()
                 if "404" in error_msg or "not found" in error_msg:

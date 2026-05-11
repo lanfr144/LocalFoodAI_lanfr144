@@ -843,7 +843,7 @@ with tab_planner:
                 
                 st.download_button(
                     label="📄 Download PDF Export",
-                    data=generate_pdf(ai_reply),
+                    data=bytes(generate_pdf(ai_reply)),
                     file_name="Clinical_Meal_Plan.pdf",
                     mime="application/pdf",
                     type="primary"

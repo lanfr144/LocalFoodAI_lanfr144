@@ -796,8 +796,11 @@ with tab_planner:
             # Enforce the strict clinical constraints directly via SQL
             db_context = search_nutrition_db(diet_pref, user_eav)
             
+            meal_names = ["Breakfast", "Lunch", "Dinner", "Morning Snack", "Afternoon Snack", "Evening Snack"]
+            selected_meals = ", ".join(meal_names[:int(meal_count)])
+            
             sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal. 
-            You must generate EXACTLY {meal_count} meals total. Do NOT add extra snacks or courses.
+            You must generate a meal plan consisting of EXACTLY these meals and no others: {selected_meals}.
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
             
@@ -852,6 +855,13 @@ with tab_planner:
                         if line.startswith('|') and line.endswith('|'):
                             if '---' in line: continue
                             cols = [col.strip() for col in line.strip('|').split('|')]
+                            
+                            # Normalize column length to prevent FPDF table crashing
+                            if table_data:
+                                target_len = len(table_data[0])
+                                while len(cols) < target_len: cols.append("")
+                                cols = cols[:target_len]
+                                
                             table_data.append(cols)
                         else:
                             flush_table()

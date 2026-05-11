@@ -451,7 +451,10 @@ with tab_explore:
     idx = opts.index(user_lim_val)
     limit_rc = cols[4].selectbox("Limit Results", opts, index=idx)
     
-    if st.button("Search Database") and sq and conn_reader:
+    if st.button("Search Database"):
+        st.session_state["trigger_search"] = True
+        
+    if st.session_state.get("trigger_search", False) and sq and conn_reader:
         notifier.send_alert(f"Medical DB Search Executed: {sq}")
         with st.spinner("Processing massive clinical query..."):
             try:

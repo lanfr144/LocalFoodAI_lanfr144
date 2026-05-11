@@ -606,7 +606,8 @@ with tab_explore:
                             with st.spinner("AI is dynamically evaluating these records against your profile..."):
                                 user_eav = get_eav_profile(st.session_state["authenticated_user"])
                                 profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
-                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these foods and state which are highly recommended or strictly forbidden: {df_display.to_dict('records')}. Provide a direct answer. Skip all thinking, reasoning, and pleasantries."
+                                minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
+                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
                                     response_stream = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
@@ -820,7 +821,6 @@ with tab_planner:
                     pdf.add_page()
                     pdf.set_font("Helvetica", 'B', 16)
                     pdf.cell(0, 10, "Strict Clinical Meal Plan", ln=True, align='C')
-                    pdf.set_font("Helvetica", size=10)
                     pdf.ln(5)
                     
                     for line in text.split('\n'):
@@ -831,22 +831,29 @@ with tab_planner:
                         
                         if line.startswith('|') and line.endswith('|'):
                             if '---' in line: continue
+                            pdf.set_font("Helvetica", size=9)
                             cols = [col.strip() for col in line.strip('|').split('|')]
-                            col_width = 190 / max(1, len(cols))
-                            for col in cols:
-                                # encode to ignore unicode errors in basic PDF fonts
+                            col_widths = [25, 80, 30, 25, 25] if len(cols) == 5 else [190 / max(1, len(cols))] * len(cols)
+                            for i, col in enumerate(cols):
+                                cw = col_widths[i]
                                 clean_col = str(col).encode('latin-1', 'replace').decode('latin-1')
-                                pdf.cell(col_width, 10, clean_col, border=1)
+                                max_chars = int(cw * 0.7)
+                                if len(clean_col) > max_chars: clean_col = clean_col[:max_chars-2] + ".."
+                                pdf.cell(cw, 8, clean_col, border=1)
                             pdf.ln()
                         else:
+                            pdf.set_font("Helvetica", size=11)
                             clean_line = str(line).encode('latin-1', 'replace').decode('latin-1')
                             pdf.multi_cell(0, 8, clean_line)
                             
-                    return pdf.output()
+                    pdf_path = "/tmp/meal_plan.pdf"
+                    pdf.output(pdf_path)
+                    with open(pdf_path, "rb") as f:
+                        return f.read()
                 
                 st.download_button(
                     label="📄 Download PDF Export",
-                    data=bytes(generate_pdf(ai_reply)),
+                    data=generate_pdf(ai_reply),
                     file_name="Clinical_Meal_Plan.pdf",
                     mime="application/pdf",
                     type="primary"

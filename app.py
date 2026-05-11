@@ -796,7 +796,8 @@ with tab_planner:
             # Enforce the strict clinical constraints directly via SQL
             db_context = search_nutrition_db(diet_pref, user_eav)
             
-            sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal over {meal_count} meals. 
+            sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal. 
+            You must generate EXACTLY {meal_count} meals total. Do NOT add extra snacks or courses.
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
             
@@ -822,29 +823,43 @@ with tab_planner:
                     pdf.set_font("Helvetica", 'B', 16)
                     pdf.cell(0, 10, "Strict Clinical Meal Plan", ln=True, align='C')
                     pdf.ln(5)
+                    in_table = False
+                    table_data = []
                     
+                    def flush_table():
+                        if not table_data: return
+                        pdf.set_font("Helvetica", size=9)
+                        # Auto-calculate col_widths based on 5 columns if present
+                        cw = (20, 40, 15, 10, 15) if len(table_data[0]) == 5 else None
+                        try:
+                            with pdf.table(text_align="LEFT", col_widths=cw) as table:
+                                for row_data in table_data:
+                                    row = table.row()
+                                    for datum in row_data:
+                                        row.cell(str(datum).encode('latin-1', 'replace').decode('latin-1'))
+                        except Exception as e:
+                            pdf.multi_cell(0, 8, "Table Render Error: " + str(e))
+                        table_data.clear()
+                        pdf.ln(5)
+
                     for line in text.split('\n'):
                         line = line.strip()
                         if not line:
-                            pdf.ln(5)
+                            flush_table()
+                            pdf.ln(2)
                             continue
                         
                         if line.startswith('|') and line.endswith('|'):
                             if '---' in line: continue
-                            pdf.set_font("Helvetica", size=9)
                             cols = [col.strip() for col in line.strip('|').split('|')]
-                            col_widths = [25, 80, 30, 25, 25] if len(cols) == 5 else [190 / max(1, len(cols))] * len(cols)
-                            for i, col in enumerate(cols):
-                                cw = col_widths[i]
-                                clean_col = str(col).encode('latin-1', 'replace').decode('latin-1')
-                                max_chars = int(cw * 0.7)
-                                if len(clean_col) > max_chars: clean_col = clean_col[:max_chars-2] + ".."
-                                pdf.cell(cw, 8, clean_col, border=1)
-                            pdf.ln()
+                            table_data.append(cols)
                         else:
+                            flush_table()
                             pdf.set_font("Helvetica", size=11)
                             clean_line = str(line).encode('latin-1', 'replace').decode('latin-1')
                             pdf.multi_cell(0, 8, clean_line)
+                            
+                    flush_table()
                             
                     pdf_path = "/tmp/meal_plan.pdf"
                     pdf.output(pdf_path)

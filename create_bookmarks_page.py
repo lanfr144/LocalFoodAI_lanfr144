@@ -15,6 +15,11 @@ content = """# BOOKMARKS
 - [26.05.07 REVIEW](260507-review)
 - [26.05.07 RETROSPECTIVE](260507-retrospective)
 - [26.05.07 PLAN](260507-plan)
+
+- [26.05.08 DAILY](260508-daily)
+- [26.05.08 REVIEW](260508-review)
+- [26.05.08 RETROSPECTIVE](260508-retrospective)
+- [26.05.08 PLAN](260508-plan)
 """
 
 check_req = requests.get(f'{base_url}/wiki?project={proj_id}&slug={slug}', headers=headers, verify=False)

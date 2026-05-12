@@ -25,6 +25,16 @@ services:
       - ollama_data:/root/.ollama
     restart: always
 
+  searxng:
+    image: searxng/searxng:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+    restart: always
+
   app:
     build:
       context: .
@@ -38,6 +48,7 @@ services:
       - APP_AUTH_USER=db_app_auth
       - APP_AUTH_PASS=${DB_APP_AUTH_PASS}
       - OLLAMA_HOST=http://ollama:11434
+      - SEARXNG_HOST=http://searxng:8080
     depends_on:
       mysql:
         condition: service_healthy

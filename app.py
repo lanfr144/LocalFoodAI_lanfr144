@@ -394,10 +394,26 @@ with tab_chat:
         user_eav = get_eav_profile(st.session_state["authenticated_user"])
         profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
         
+        db_context = search_nutrition_db(prompt, user_eav)
+        searxng_context = ""
+        
+        if "No database records found" in db_context:
+            try:
+                searxng_url = os.environ.get("SEARXNG_HOST", "http://searxng:8080")
+                resp = requests.get(f"{searxng_url}/search", params={'q': prompt, 'format': 'json'}, timeout=5)
+                if resp.status_code == 200:
+                    results = resp.json().get('results', [])
+                    if results:
+                        snippets = [r.get('content', '') for r in results[:3]]
+                        searxng_context = "Web Search Context: " + " | ".join(snippets)
+            except Exception as e:
+                pass
+                
         sys_prompt = f"""You are a helpful medical data analyst AI. 
         Health profile: {profile_text}. 
         Act as a specialized clinical dietitian. Provide a direct answer. Skip all thinking, reasoning, and pleasantries.
-        Use this database context if relevant to the user's question: {search_nutrition_db(prompt)}
+        Local Database Context: {db_context}
+        {searxng_context}
         """
         
         try:

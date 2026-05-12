@@ -32,7 +32,7 @@ def main():
     # 1. Connect to MySQL as root
     try:
         conn = pymysql.connect(
-            host='127.0.0.1',  # Assuming we run this from host to mapped port, or within a container network
+            host='192.168.130.170',  # Assuming we run this from host to mapped port, or within a container network
             port=3307,
             user='root',
             password='root_pass',
@@ -52,9 +52,9 @@ def main():
     # 3. Update MySQL Users
     try:
         with conn.cursor() as cursor:
-            cursor.execute("ALTER USER 'db_reader'@'%' IDENTIFIED BY %s", (new_passwords['DB_READER_PASS'],))
-            cursor.execute("ALTER USER 'db_loader'@'%' IDENTIFIED BY %s", (new_passwords['DB_LOADER_PASS'],))
-            cursor.execute("ALTER USER 'db_app_auth'@'%' IDENTIFIED BY %s", (new_passwords['DB_APP_AUTH_PASS'],))
+            cursor.execute("ALTER USER 'db_reader'@'%%' IDENTIFIED BY %s", (new_passwords['DB_READER_PASS'],))
+            cursor.execute("ALTER USER 'db_loader'@'%%' IDENTIFIED BY %s", (new_passwords['DB_LOADER_PASS'],))
+            cursor.execute("ALTER USER 'db_app_auth'@'%%' IDENTIFIED BY %s", (new_passwords['DB_APP_AUTH_PASS'],))
             cursor.execute("FLUSH PRIVILEGES")
             conn.commit()
         print("✅ Database user passwords rotated successfully.")

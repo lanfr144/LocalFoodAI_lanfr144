@@ -71,7 +71,11 @@ def main():
     # 5. Gracefully restart client containers to sync connection
     print("🔄 Restarting App and Ingest containers to synchronize new credentials...")
     try:
-        subprocess.run(["docker-compose", "up", "-d", "app"], check=True)
+        # Pass a clean environment without cached variables so docker-compose reads the updated .env file
+        env = os.environ.copy()
+        for k in new_passwords.keys():
+            env.pop(k, None)
+        subprocess.run(["docker-compose", "up", "-d", "app"], check=True, env=env)
         # We don't necessarily need to restart ingest if it's manual, but we can recreate it if it was running.
         print("✅ Client containers synchronized with new database passwords!")
     except Exception as e:

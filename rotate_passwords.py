@@ -3,6 +3,7 @@ import os
 import secrets
 import string
 import subprocess
+from dotenv import load_dotenv
 
 def generate_password(length=16):
     characters = string.ascii_letters + string.digits + "!@#$%^&*"
@@ -27,6 +28,7 @@ def update_env_file(passwords):
     print("✅ .env file updated with new synchronized passwords.")
 
 def main():
+    load_dotenv()
     print("🔄 Starting Password Synchronization Routine...")
     
     # 1. Connect to MySQL as root
@@ -35,7 +37,7 @@ def main():
             host='192.168.130.170',  # Assuming we run this from host to mapped port, or within a container network
             port=3307,
             user='root',
-            password='root_pass',
+            password=os.environ.get('MYSQL_ROOT_PASSWORD', 'root_pass'),
             database='food_db'
         )
     except Exception as e:

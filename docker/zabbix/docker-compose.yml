@@ -7,7 +7,7 @@ services:
     environment:
       - DB_SERVER_HOST=192.168.130.170 # Use the unified MySQL DB
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=zabbix_pwd
+      - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SNMPTRAPPER=1
     restart: always
 
@@ -19,7 +19,7 @@ services:
     environment:
       - DB_SERVER_HOST=192.168.130.170
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=zabbix_pwd
+      - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SERVER_HOST=zabbix-server
       - PHP_TZ=Europe/Paris
     depends_on:

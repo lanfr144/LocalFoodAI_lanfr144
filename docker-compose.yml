@@ -11,7 +11,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/1-init.sql
       - ./init_zabbix_db.sh:/docker-entrypoint-initdb.d/2-init_zabbix.sh
     environment:
-      - MYSQL_ROOT_PASSWORD=root_pass
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -75,7 +75,7 @@ services:
     environment:
       - DB_SERVER_HOST=mysql
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=zabbix_pwd
+      - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SNMPTRAPPER=1
     depends_on:
       mysql:
@@ -90,7 +90,7 @@ services:
     environment:
       - DB_SERVER_HOST=mysql
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=zabbix_pwd
+      - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SERVER_HOST=zabbix-server
       - PHP_TZ=Europe/Paris
     depends_on:

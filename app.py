@@ -742,6 +742,7 @@ with tab_plate:
                                 FROM food_db.products_core
                                 WHERE MATCH({m_col}) AGAINST(%s IN BOOLEAN MODE)
                                 AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
+                                ORDER BY LENGTH(product_name) ASC
                                 LIMIT 100
                             ) c
                             JOIN food_db.products_macros m ON c.code = m.code

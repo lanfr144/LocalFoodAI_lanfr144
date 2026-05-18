@@ -143,7 +143,7 @@ def verify_login(username, password):
     conn = get_db_connection('app_auth')
     if not conn: return False
     with conn.cursor() as cursor:
-        cursor.execute("SELECT password_hash FROM users WHERE username = %s LIMIT 1", (username,))
+        cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
         result = cursor.fetchone()
         conn.close()
         if result: return bcrypt.checkpw(password.encode('utf-8'), result['password_hash'].encode('utf-8'))
@@ -153,7 +153,7 @@ def get_user_id(username):
     conn = get_db_connection('app_auth')
     if not conn: return None
     with conn.cursor() as cursor:
-        cursor.execute("SELECT id FROM users WHERE username = %s LIMIT 1", (username,))
+        cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
         result = cursor.fetchone()
         conn.close()
         return result['id'] if result else None
@@ -172,7 +172,7 @@ def get_user_limit(username):
     conn = get_db_connection('app_auth')
     if not conn: return "50"
     with conn.cursor() as cursor:
-        cursor.execute("SELECT search_limit FROM users WHERE username = %s LIMIT 1", (username,))
+        cursor.execute("SELECT search_limit FROM users WHERE username = %s", (username,))
         result = cursor.fetchone()
         conn.close()
         return result['search_limit'] if (result and result['search_limit']) else "50"
@@ -751,7 +751,6 @@ with tab_plate:
                             WHERE m.proteins_100g IS NOT NULL AND m.fat_100g IS NOT NULL AND m.carbohydrates_100g IS NOT NULL
                             {wh_comp}
                             {order_by}
-                            LIMIT 15
                         """
                         cursor.execute(sql, (bool_search,))
                         return cursor.fetchall()

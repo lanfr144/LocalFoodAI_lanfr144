@@ -17,8 +17,13 @@ echo "Starting Database Backup for $DB_NAME..."
 # Ensure backup directory exists
 mkdir -p "$BACKUP_DIR"
 
-# Execute mysqldump inside the container and pipe to gzip
-sudo docker exec $DB_CONTAINER mysqldump -u root -proot_pass $DB_NAME | gzip > "$BACKUP_FILE"
+# Load credentials from configuration file
+if [ -f "./.env" ]; then
+    source ./.env
+fi
+
+# Execute mysqldump inside the container securely via environment variable
+sudo docker exec -e MYSQL_PWD="${MYSQL_ROOT_PASSWORD}" $DB_CONTAINER mysqldump -u root $DB_NAME | gzip > "$BACKUP_FILE"
 
 if [ $? -eq 0 ]; then
     echo "Backup successfully saved to $BACKUP_FILE"

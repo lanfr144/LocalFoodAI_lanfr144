@@ -81,7 +81,6 @@ def search_nutrition_db(query: str, user_eav=None) -> str:
                 WHERE MATCH(c.product_name, c.ingredients_text) AGAINST(%s IN BOOLEAN MODE)
                 AND c.product_name IS NOT NULL AND c.product_name != '' AND c.product_name != 'None'
                 {clinical_filters}
-                LIMIT 15
             """
             bool_query = " ".join([f"+{w}" for w in query.split()])
             cursor.execute(sql, (bool_query,))
@@ -139,59 +138,67 @@ def get_db_connection(login_path):
         st.error(f"Connection Failed: {e}")
         return None
 
-def verify_login(username, password):
-    conn = get_db_connection('app_auth')
-    if not conn: return False
-    with conn.cursor() as cursor:
+from contextlib import contextmanager
+
+@contextmanager
+def db_cursor(login_path: str):
+    conn = get_db_connection(login_path)
+    if not conn:
+        yield None
+        return
+    try:
+        with conn.cursor() as cursor:
+            yield cursor
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        st.error(f"Database query error: {e}")
+        raise e
+    finally:
+        conn.close()
+
+def verify_login(username: str, password: str) -> bool:
+    with db_cursor('app_auth') as cursor:
+        if not cursor: return False
         cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
         result = cursor.fetchone()
-        conn.close()
         if result: return bcrypt.checkpw(password.encode('utf-8'), result['password_hash'].encode('utf-8'))
     return False
 
-def get_user_id(username):
-    conn = get_db_connection('app_auth')
-    if not conn: return None
-    with conn.cursor() as cursor:
+def get_user_id(username: str) -> Optional[int]:
+    with db_cursor('app_auth') as cursor:
+        if not cursor: return None
         cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
         result = cursor.fetchone()
-        conn.close()
         return result['id'] if result else None
 
-def get_eav_profile(username):
+def get_eav_profile(username: str) -> List[Dict[str, Any]]:
     uid = get_user_id(username)
     if not uid: return []
-    conn = get_db_connection('app_auth')
-    with conn.cursor() as cursor:
+    with db_cursor('app_auth') as cursor:
+        if not cursor: return []
         cursor.execute("SELECT id, illness_health_condition_diet_dislikes_name as name, illness_health_condition_diet_dislikes_value as value FROM user_health_profiles WHERE user_id = %s", (uid,))
-        res = cursor.fetchall()
-        conn.close()
-        return res
+        return cursor.fetchall()
 
-def get_user_limit(username):
-    conn = get_db_connection('app_auth')
-    if not conn: return "50"
-    with conn.cursor() as cursor:
+def get_user_limit(username: str) -> str:
+    with db_cursor('app_auth') as cursor:
+        if not cursor: return "50"
         cursor.execute("SELECT search_limit FROM users WHERE username = %s", (username,))
         result = cursor.fetchone()
-        conn.close()
         return result['search_limit'] if (result and result['search_limit']) else "50"
 
-def register_user(username, password, email):
-    conn = get_db_connection('app_auth')
-    if not conn: return False
+def register_user(username: str, password: str, email: str) -> bool:
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     try:
-        with conn.cursor() as cursor:
+        with db_cursor('app_auth') as cursor:
+            if not cursor: return False
             cursor.execute("INSERT INTO users (username, password_hash, email) VALUES (%s, %s, %s)", (username, hashed, email))
-            conn.commit()
-        conn.close()
         send_email(email, "Welcome to Local Food AI", f"Hello {username}, your account was securely created!", to_name=username.title())
         return True
     except pymysql.err.IntegrityError:
         return False
 
-def send_email(to_email, subject, body, to_name="User"):
+def send_email(to_email: str, subject: str, body: str, to_name: str = "User") -> Any:
     msg = EmailMessage()
     msg.set_content(body)
     msg['Subject'] = subject
@@ -210,22 +217,17 @@ def send_email(to_email, subject, body, to_name="User"):
             time.sleep(2)
     return "Unknown Error Occurred"
 
-def reset_password(username, email):
-    conn = get_db_connection('app_auth')
-    if not conn: return False
-    with conn.cursor() as cursor:
+def reset_password(username: str, email: str) -> Any:
+    with db_cursor('app_auth') as cursor:
+        if not cursor: return False
         cursor.execute("SELECT id, email FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
         if user and user['email'] == email:
             new_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
             hashed = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (hashed, user['id']))
-            conn.commit()
-            conn.close()
             status = send_email(email, "Password Reset", f"Your new temporary password is: {new_pass}", to_name=username.title())
-            if status is True:
-                return True
-            return status
+            return True if status is True else status
     return False
 
 # UI Theming
@@ -254,15 +256,8 @@ with st.sidebar:
     st.title("User Portal 🔐")
     render_version()
     
-    with st.expander("🛠️ Diagnostic: App Database View"):
-        conn = get_db_connection('app_auth')
-        if conn:
-            with conn.cursor() as c:
-                c.execute("DESCRIBE users;")
-                st.json(c.fetchall())
-                c.execute("SELECT DATABASE(), CURRENT_USER();")
-                st.json(c.fetchall())
-            conn.close()
+    with st.expander("ℹ️ Welcome"):
+        st.info("Welcome to the secure Local Food AI environment.")
             
     if st.session_state["authenticated_user"]:
         st.success(f"Logged in as: {st.session_state['authenticated_user']}")
@@ -693,7 +688,8 @@ with tab_plate:
                 if items:
                     for i in items:
                         c1, c2 = st.columns([5, 1])
-                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {i['product_name']} (Pro: {i['proteins_100g'] or 0}g)</li>", unsafe_allow_html=True)
+                        safe_name = html.escape(str(i['product_name']))
+                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {safe_name} (Pro: {i['proteins_100g'] or 0}g)</li>", unsafe_allow_html=True)
                         if c2.button("🗑️", key=f"del_item_{i['id']}"):
                             cursor.execute("DELETE FROM plate_items WHERE id = %s", (i['id'],))
                             conn.commit()
@@ -743,7 +739,6 @@ with tab_plate:
                                 WHERE MATCH({m_col}) AGAINST(%s IN BOOLEAN MODE)
                                 AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
                                 ORDER BY LENGTH(product_name) ASC
-                                LIMIT 100
                             ) c
                             JOIN food_db.products_macros m ON c.code = m.code
                             {join_min}

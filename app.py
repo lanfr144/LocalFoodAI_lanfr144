@@ -795,7 +795,7 @@ with tab_planner:
     p_col1, p_col2, p_col3 = st.columns(3)
     target_cal = p_col1.number_input("Target Daily Calories (kcal)", 1000, 5000, 2000, 50)
     diet_pref = p_col2.selectbox("Dietary Preference", ["Omnivore", "Vegetarian", "Vegan", "Keto", "Paleo"])
-    meal_count = p_col3.slider("Number of Meals", 2, 6, 3)
+    meal_count = p_col3.slider("Number of Meals", 1, 6, 3)
     extra_notes = st.text_input("Any additional allergies or goals?")
     
     if st.button("Generate Professional Menu"):
@@ -811,14 +811,17 @@ with tab_planner:
             selected_meals = ", ".join(meal_names[:int(meal_count)])
             
             sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal. 
-            You must generate a meal plan consisting of EXACTLY these meals and no others: {selected_meals}.
+            You must generate a meal plan consisting of EXACTLY {meal_count} meals. Do NOT generate more than {meal_count} meals under any circumstance.
+            The allowed meal(s) are strictly: {selected_meals}.
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
             
             CRITICAL INSTRUCTIONS:
             - You MUST formulate the menu using ONLY the following real database items retrieved for you: {db_context}
             - Output the menu beautifully formatted as a Markdown Table.
-            - Columns MUST be: | Meal Time | Exact Food | Portion Size | Calories | Protein |
+            - The Markdown table MUST strictly contain 5 columns separated by pipes (|).
+            - Columns MUST be exactly: | Meal Time | Exact Food | Portion Size | Calories | Protein |
+            - If you merge columns, the system will fail. Separate Calories and Protein with a pipe.
             - Do NOT output JSON. Do NOT use tool calls.
             - Provide a direct answer. Skip all thinking, reasoning, and pleasantries.
             """

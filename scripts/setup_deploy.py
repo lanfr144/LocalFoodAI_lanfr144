@@ -175,6 +175,37 @@ monitoring_services = """
       - /var/run:/var/run
     restart: always
 """
+airflow_services = """
+  airflow-webserver:
+    image: apache/airflow:2.8.1
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: webserver
+    restart: always
+
+  airflow-scheduler:
+    image: apache/airflow:2.8.1
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: bash -c "airflow db migrate && airflow users create --role Admin --username admin --email admin --firstname admin --lastname admin --password admin && airflow scheduler"
+    restart: always
+"""
 
 header = "services:\n"
 footer = """
@@ -186,12 +217,12 @@ volumes:
 compose_content = header
 
 if choice == "1":
-    compose_content += mysql_service + ingest_service + ai_services + app_service + monitoring_services
+    compose_content += mysql_service + ingest_service + ai_services + app_service + monitoring_services + airflow_services
 elif choice == "2":
     compose_content += ai_services + app_service
     footer = "volumes:\n  ollama_data:\n"
 elif choice == "3":
-    compose_content += mysql_service + ingest_service
+    compose_content += mysql_service + ingest_service + airflow_services
     footer = "volumes:\n  mysql_data:\n"
 elif choice == "4":
     compose_content += monitoring_services

@@ -2,6 +2,8 @@ import os
 import sys
 import getpass
 
+import subprocess
+
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -9,7 +11,14 @@ print("="*60)
 print(" Local Food AI - Distributed Deployment Configuration Tool")
 print("="*60)
 
-print("Select the role for this specific node in the network:")
+# Check Docker availability
+try:
+    subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    print("[+] Docker is correctly configured and accessible.")
+except (subprocess.CalledProcessError, FileNotFoundError):
+    print("[-] Warning: Docker is not running or not accessible. Please ensure Docker Desktop or Docker Engine is installed and running before deploying.")
+
+print("\nSelect the role for this specific node in the network:")
 print("1. All-in-One (Runs everything, default)")
 print("2. Application Frontend (Runs Streamlit, Nginx, AI Services)")
 print("3. Database Node (Runs MySQL & Ingestion)")
@@ -188,8 +197,13 @@ elif choice == "4":
     compose_content += monitoring_services
     footer = ""
 
-print("[+] Generating docker-compose.yml for selected role...")
+print("\n[+] Generating docker-compose.yml for selected role...")
 with open("docker-compose.yml", "w") as f:
     f.write(compose_content + footer)
+
+print("\n" + "="*60)
+print("⚠️ IMPORTANT HYPERVISOR NETWORKING REMINDER:")
+print("If this node is running inside VirtualBox or Hyper-V, you MUST configure the VM network adapter to use a 'Bridged Adapter' or 'External Virtual Switch' so it shares the host's subnet. Otherwise, cross-node communication will fail.")
+print("="*60)
 
 print("\nDone! You can now run `docker compose up -d`.")

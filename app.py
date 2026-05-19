@@ -23,6 +23,7 @@ import smtplib
 from email.message import EmailMessage
 import pandas as pd
 from unit_converter import UnitConverter
+from typing import Optional, List, Dict, Any, Tuple
 from snmp_notifier import notifier
 import time
 

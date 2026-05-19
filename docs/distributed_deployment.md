@@ -1,95 +1,64 @@
-# Multi-Hypervisor Distributed Deployment (Proof of Concept)
+# Distributed Deployment Guide
 
-This document provides the exact procedure to decouple the monolithic `docker-compose.yml` into a fully distributed, cross-hypervisor microservice architecture.
+This document outlines the procedure to deploy the Local Food AI stack across a mixed topology of Windows 11 subsystems and hypervisors on the same local network.
 
-## 1. Architectural Topology
-To demonstrate cross-platform interoperability, the application stack is split across three distinct virtualized environments on the host machine.
+## Supported Hypervisor Topologies
+You can distribute the services across any combination of:
+- **Windows Subsystem for Linux (WSL 2)**: Ideal for the frontend and LLM nodes.
+- **Hyper-V**: Ideal for the Database node.
+- **VirtualBox**: Ideal for isolated Monitoring nodes.
 
-- **VM 1: Hyper-V (Ubuntu Server)**
-  - **Container**: `mysql` (Database Engine)
-  - **IP Subnet Allocation**: `192.168.130.170` (Bridged)
-- **VM 2: VirtualBox (Debian/Ubuntu)**
-  - **Container**: `ollama` (Local LLM) + `searxng` (Web Search)
-  - **IP Subnet Allocation**: `192.168.130.171` (Bridged)
-- **VM 3: WSL2 (Windows Subsystem for Linux)**
-  - **Container**: `app` (Streamlit Web Interface)
-  - **IP Subnet Allocation**: `192.168.130.172` (NAT/Bridged via Hyper-V switch)
+## Port Conflict Matrix
+When deploying nodes on the same IP subnet or host machine, ensure the following ports are open on your host firewall (e.g., Windows Defender Firewall) and not conflicting with existing services:
 
-## 2. Networking Configuration
-To ensure these isolated VMs can communicate, you must configure a **Bridged Virtual Switch**:
-1. Open Hyper-V Virtual Switch Manager.
-2. Create an "External" switch mapped to your physical network adapter.
-3. Attach VM 1 (Hyper-V) and VM 3 (WSL2) to this switch.
-4. In VirtualBox, set the Network Adapter for VM 2 to "Bridged Adapter" pointing to the same physical interface.
-5. Disable `ufw` or Windows Firewall for the `192.168.130.0/24` subnet on all hosts.
+| Service Name | Default Port | Protocol | Purpose |
+|--------------|--------------|----------|---------|
+| Nginx (App)  | `80`         | HTTP     | Main Application User Interface |
+| Streamlit    | `8502`       | HTTP     | Direct Application Interface |
+| SearXNG API  | `8080`       | HTTP     | AI web searching endpoint |
+| MySQL DB     | `3307`       | TCP      | Relational database port |
+| Zabbix Web   | `8081`       | HTTP     | Zabbix monitoring dashboard |
+| Zabbix HTTPS | `8444`       | HTTPS    | Zabbix monitoring dashboard secure |
+| Zabbix Agent | `10050`      | TCP      | Node metric scraping |
+| Zabbix Trap  | `10051`      | TCP      | Active monitoring trap receiver |
 
-## 3. Deployment Steps
+## Distributed Setup Procedure
 
-### Step 1: Deploy Database on Hyper-V
-On VM 1, create a `docker-compose.yml` containing *only* the MySQL service.
-```yaml
-services:
-  mysql:
-    build:
-      context: ./docker/mysql
-    ports:
-      - "3306:3306"
-      - "161:161/udp" # Expose SNMP
-    volumes:
-      - mysql_data:/var/lib/mysql
+### 1. Network Bridging
+If you are using VirtualBox or Hyper-V, you **must** configure the VM network adapter to use a **Bridged Adapter** or **External Virtual Switch**. This ensures that the VMs receive an IP address on the same physical subnet as your host machine (e.g., `192.168.x.x`). 
+
+For WSL 2, use `wsl --set-version <Distro> 2` and ensure `localhost` forwarding is enabled, or use a tool like `wsl-vpnkit` if you need a dedicated IP.
+
+### 2. Configure the Node via Python
+On each designated node, clone the repository and execute the interactive setup script.
+
+```bash
+python scripts/setup_deploy.py
 ```
 
-### Step 2: Deploy AI Engines on VirtualBox
-On VM 2, create a `docker-compose.yml` containing the AI services.
-```yaml
-services:
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-      - "161:161/udp" # Requires sidecar or custom image for SNMP
-  searxng:
-    image: searxng/searxng:latest
-    ports:
-      - "8080:8080"
+The script will ask you for:
+1. **Node Role**: Choose whether this node is the Database, the Application Frontend, or the Monitoring hub.
+2. **Network IPs**: If you are setting up the Application node, it will ask you for the IP address of the Database node (e.g., the Hyper-V VM IP).
+3. **Credentials**: It will securely generate a local `.env` file containing your passwords so they are not committed to Git.
+
+### 3. Deploy Docker
+Once the script generates the role-specific `docker-compose.yml`, run:
+```bash
+docker compose up -d
 ```
 
-### Step 3: Deploy Frontend on WSL2
-On VM 3, configure the App container to point to the external IP addresses rather than Docker DNS hostnames.
-Update your `.env` file on WSL2:
-```ini
-DB_HOST=192.168.130.170
-OLLAMA_HOST=http://192.168.130.171:11434
-SEARXNG_HOST=http://192.168.130.171:8080
+## Moving Docker Images Offline
+If your Hyper-V or VirtualBox nodes do not have internet access, you can transfer the Docker images directly from a machine that does.
+
+**On the Internet-connected machine (Export):**
+```bash
+docker save -o local_food_app.tar local_food_ai-app:latest nginx:latest
+docker save -o local_food_db.tar mysql:8.0
+docker save -o local_food_monitoring.tar zabbix/zabbix-server-mysql:ubuntu-7.0-latest
 ```
 
-## 4. SNMP Telemetry within Containers
-By default, Docker containers run a single process (PID 1). To run `snmpd` alongside the application in *every* container, we use `supervisord`.
-
-**Example Dockerfile Modification for App Container:**
-```dockerfile
-RUN apt-get update && apt-get install -y supervisor snmpd
-COPY snmpd.conf /etc/snmp/snmpd.conf
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-EXPOSE 8501 161/udp
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+**On the Offline Node (Import):**
+Copy the `.tar` files via USB or SCP, then run:
+```bash
+docker load -i local_food_app.tar
 ```
-
-**supervisord.conf:**
-```ini
-[supervisord]
-nodaemon=true
-
-[program:app]
-command=streamlit run app.py
-autorestart=true
-
-[program:snmpd]
-command=/usr/sbin/snmpd -f
-autorestart=true
-```
-
-## 5. Zabbix Monitoring Integration
-1. On the Zabbix Server (`192.168.130.170:8081`), navigate to **Configuration > Hosts**.
-2. Add three separate Hosts corresponding to the VM IPs (`192.168.130.170`, `192.168.130.171`, `192.168.130.172`).
-3. Attach the "Linux SNMP" template to each host. Zabbix will now automatically poll CPU, RAM, and Disk I/O natively from within each Docker container across the distributed environment.

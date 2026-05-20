@@ -10,6 +10,7 @@ import string
 import time
 import os
 import pandas as pd
+import html
 from snmp_notifier import notifier
 from unit_converter import UnitConverter
 from fpdf import FPDF

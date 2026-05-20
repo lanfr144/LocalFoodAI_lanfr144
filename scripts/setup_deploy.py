@@ -78,6 +78,11 @@ mysql_service = """
       timeout: 5s
       retries: 20
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 """
 
 ingest_service = """
@@ -101,6 +106,11 @@ ai_services = """
     volumes:
       - ollama_data:/root/.ollama
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   searxng:
     image: searxng/searxng:latest
@@ -111,6 +121,11 @@ ai_services = """
     environment:
       - SEARXNG_BASE_URL=http://localhost:8080/
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 """
 
 app_service = """
@@ -129,6 +144,11 @@ app_service = """
       - OLLAMA_HOST=http://ollama:11434
       - SEARXNG_HOST=http://searxng:8080
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   nginx:
     image: nginx:latest
@@ -137,6 +157,11 @@ app_service = """
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 """
 
 monitoring_services = """
@@ -148,6 +173,11 @@ monitoring_services = """
       - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SNMPTRAPPER=1
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     ports:
       - "10051:10051"
 
@@ -163,6 +193,11 @@ monitoring_services = """
       - ZBX_SERVER_HOST=zabbix-server
       - PHP_TZ=Europe/Paris
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   zabbix-agent:
     image: zabbix/zabbix-agent:ubuntu-7.0-latest
@@ -174,6 +209,11 @@ monitoring_services = """
     volumes:
       - /var/run:/var/run
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 """
 airflow_services = """
   airflow-webserver:
@@ -191,6 +231,11 @@ airflow_services = """
       - /var/run/docker.sock:/var/run/docker.sock
     command: webserver
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   airflow-scheduler:
     image: apache/airflow:2.8.1
@@ -205,6 +250,11 @@ airflow_services = """
       - /var/run/docker.sock:/var/run/docker.sock
     command: bash -c "airflow db migrate && airflow users create --role Admin --username admin --email admin --firstname admin --lastname admin --password admin && airflow scheduler"
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 """
 
 header = "services:\n"

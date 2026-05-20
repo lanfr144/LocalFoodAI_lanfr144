@@ -10,6 +10,11 @@ services:
       - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SNMPTRAPPER=1
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   zabbix-web:
     image: zabbix/zabbix-web-nginx-mysql:ubuntu-7.0-latest
@@ -25,6 +30,11 @@ services:
     depends_on:
       - zabbix-server
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   zabbix-agent:
     image: zabbix/zabbix-agent:ubuntu-7.0-latest
@@ -36,3 +46,8 @@ services:
     volumes:
       - /var/run:/var/run
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"

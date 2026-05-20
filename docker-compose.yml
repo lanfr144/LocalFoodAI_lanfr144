@@ -3,7 +3,7 @@ services:
     build:
       context: ./docker/mysql
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./my.cnf:/etc/mysql/conf.d/custom_ai_app.cnf

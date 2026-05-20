@@ -836,11 +836,33 @@ with tab_planner:
                 
                 # PDF Generation
                 def generate_pdf(text):
+                    import re
+                    # Aggressive sanitization: if a table row has 4 columns and the last contains a comma or space before 'g', split it
+                    sanitized_lines = []
+                    for line in text.split('\\n'):
+                        line = line.strip()
+                        if line.startswith('|') and line.endswith('|') and '---' not in line:
+                            cols = [c.strip() for c in line.strip('|').split('|')]
+                            # If exactly 4 columns and the last one contains calories and protein merged
+                            if len(cols) == 4 and any(char.isdigit() for char in cols[3]):
+                                # Attempt to split by comma or 'kcal'
+                                if ',' in cols[3]:
+                                    split_last = cols[3].split(',', 1)
+                                    cols = cols[:3] + [split_last[0].strip(), split_last[1].strip()]
+                                elif 'kcal' in cols[3].lower():
+                                    split_last = re.split(r'(?<=kcal)\s+', cols[3], flags=re.IGNORECASE, maxsplit=1)
+                                    if len(split_last) == 2:
+                                        cols = cols[:3] + [split_last[0].strip(), split_last[1].strip()]
+                            sanitized_lines.append('| ' + ' | '.join(cols) + ' |')
+                        else:
+                            sanitized_lines.append(line)
+                    text = '\\n'.join(sanitized_lines)
+
                     pdf = FPDF()
                     pdf.add_page()
                     pdf.set_font("Helvetica", 'B', 16)
-                    pdf.cell(0, 10, "Strict Clinical Meal Plan", ln=True, align='C')
-                    pdf.ln(5)
+                    pdf.cell(0, 10, "Strict Clinical Meal Plan", new_x="LMARGIN", new_y="NEXT", align='C')
+                    pdf.ln(h=5)
                     in_table = False
                     table_data = []
                     
@@ -858,13 +880,13 @@ with tab_planner:
                         except Exception as e:
                             pdf.multi_cell(0, 8, "Table Render Error: " + str(e))
                         table_data.clear()
-                        pdf.ln(5)
+                        pdf.ln(h=5)
 
                     for line in text.split('\n'):
                         line = line.strip()
                         if not line:
                             flush_table()
-                            pdf.ln(2)
+                            pdf.ln(h=2)
                             continue
                         
                         if line.startswith('|') and line.endswith('|'):

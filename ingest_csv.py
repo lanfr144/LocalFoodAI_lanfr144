@@ -41,6 +41,8 @@ def ingest_file(filename, engine):
     
     chunk_size = 10000 
     total_processed = 0
+    max_chunks = int(os.environ.get('MAX_CHUNKS', '0'))
+    chunks_count = 0
 
     # Define the groupings
     groups = {
@@ -55,6 +57,10 @@ def ingest_file(filename, engine):
     all_required_cols = list(set([col for cols in groups.values() for col in cols]))
 
     for chunk in pd.read_csv(filename, sep='\t', dtype=str, chunksize=chunk_size, on_bad_lines='skip', low_memory=False, encoding='utf-8'):
+        chunks_count += 1
+        if max_chunks > 0 and chunks_count > max_chunks:
+            print(f"\nReached MAX_CHUNKS limit ({max_chunks}). Ingestion stopped early.")
+            break
         try:
             # Drop rows with missing codes
             if 'code' not in chunk.columns:

@@ -11,10 +11,10 @@ docs = {
 # Final Project Report (Living Document)
 
 ## What Has Been Done
-1. **Core Architecture**: Deployed a resilient 4-container Docker Compose stack (MySQL, Nginx, Streamlit UI, Ollama Inference).
-2. **Database Optimization**: Successfully loaded 4.4M+ OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
+1. **Core Architecture**: Deployed a resilient 8-container local fallback Docker Compose stack (MySQL, Streamlit UI, local Ollama LLM, anonymous SearXNG search, secure Nginx proxy, and local Zabbix Server/Web/Agent observability suite).
+2. **Database Optimization**: Successfully loaded OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
 3. **Clinical Subquery Strategy**: Refactored the core Pandas/SQL query pipeline to use subquery limiting, resolving Cartesian join explosions and reducing query latency to ~0.04s.
-4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors the proxy and server health, dynamically reporting alerts to Microsoft Teams.
+4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors proxy and server health, dynamically handling SNMP/alert loops in local/offline fallback mode.
 5. **Git Versioning**: Implemented Git `.gitattributes` to push `$Id$` tracking directly into the Python Application UI.
 
 ## What Needs To Be Done (Day 2 Operations)
@@ -32,13 +32,14 @@ docs = {
 
 ## Automated Backups
 The system utilizes a cron job pointing to `backup_db.sh`.
-- The script executes `mysqldump` directly inside the MySQL container.
+- The script dynamically detects the active MySQL container name (`food-mysql-1` or `food_project-mysql-1`) for high-availability robustness.
+- It executes `mysqldump` directly inside the detected MySQL container.
 - Outputs are piped to `gzip` and stored in `/backups`.
 - A 7-day retention policy automatically purges old backups using `find ... -mtime +7 -exec rm`.
 
 ## Manual Restore
-To manually restore a backup:
-`gunzip < backups/food_db_20260507_0200.sql.gz | docker exec -i food_project-mysql-1 mysql -u root -proot_pass food_db`
+To manually restore a backup (adjust container name to `food-mysql-1` or `food_project-mysql-1` as appropriate):
+`gunzip < backups/food_db_20260507_0200.sql.gz | docker exec -i food-mysql-1 mysql -u root -proot_pass food_db`
 """,
     "Data_Ingestion.md": """# $Id$
 # Data Ingestion Pipeline
@@ -61,11 +62,15 @@ Drop a `en.openfoodfacts.org.products.csv` file into the `/data` folder and run 
 - 16GB RAM Minimum
 
 ## Deployment Steps
-1. `git clone https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
+1. **Clone the Repository**:
+   - *Online Mode*: `git clone https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
+   - *Offline/Disconnected Mode*: Copy the repository files directly to the target environment via SCP or USB storage.
 2. `cd LocalFoodAI_lanfr144`
 3. `chmod +x data_sync.sh backup_db.sh`
-4. `docker-compose up -d --build`
-5. Navigate to `http://<server-ip>`
+4. **Deploy Stack**:
+   - For regular production: `docker compose up -d --build`
+   - For local/offline single-node fallback: `docker compose -f docker-compose_skip.yml up -d`
+5. Navigate to `http://localhost` (or `http://localhost:8502` for direct Streamlit port)
 """,
     "User_Guide.md": """# $Id$
 # User Guide
@@ -120,10 +125,25 @@ To deploy on Windows Subsystem for Linux:
 """
 }
 
+import subprocess
+try:
+    log_info = subprocess.check_output(['git', 'log', '-1', '--format=%H %ad %an %s', '--date=format:%Y/%m/%d %H:%M:%S'], encoding='utf-8').strip()
+    try:
+        tag_info = subprocess.check_output(['git', 'describe', '--tags', '--always'], stderr=subprocess.DEVNULL, encoding='utf-8').strip()
+    except Exception:
+        tag_info = ""
+    
+    if tag_info:
+        git_id = f"$Id$"
+    else:
+        git_id = f"$Id$"
+except Exception:
+    git_id = "$Id$"
+
 for filename, content in docs.items():
     filepath = os.path.join(docs_dir, filename)
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write(content)
+        f.write(content.replace('$Id$', git_id))
     print(f"Generated {filepath}")
 
 print("\nDocs directory perfectly mirrored.")

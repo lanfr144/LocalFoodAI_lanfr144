@@ -2,8 +2,8 @@ import os
 import socket
 
 class SNMPNotifier:
-    def __init__(self, target_host='192.168.130.170', target_port=162):
-        self.target_host = target_host
+    def __init__(self, target_host=None, target_port=162):
+        self.target_host = target_host or os.environ.get('ZABBIX_HOST', '192.168.130.170')
         self.target_port = target_port
         self.user = 'zabbix_snmp'
         self.auth_key = 'authkey123'

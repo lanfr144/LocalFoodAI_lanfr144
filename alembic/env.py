@@ -9,6 +9,17 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
+import os
+db_url = os.environ.get("DATABASE_URL")
+if not db_url:
+    db_host = os.environ.get("DB_HOST")
+    db_user = os.environ.get("DB_USER") or os.environ.get("DB_OWNER_USER")
+    db_pass = os.environ.get("DB_PASS") or os.environ.get("DB_OWNER_PASS")
+    if db_host and db_user and db_pass:
+        db_url = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}/food_db"
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:

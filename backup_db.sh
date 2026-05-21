@@ -6,7 +6,18 @@
 # backup_db.sh - Automated Disaster Recovery Backup Script
 
 BACKUP_DIR="./backups"
-DB_CONTAINER="food_project-mysql-1"
+# Detect MySQL container name dynamically (e.g. food-mysql-1 or food_project-mysql-1)
+DB_CONTAINER=""
+if sudo docker ps --format '{{.Names}}' | grep -q "^food-mysql-1$"; then
+    DB_CONTAINER="food-mysql-1"
+elif sudo docker ps --format '{{.Names}}' | grep -q "^food_project-mysql-1$"; then
+    DB_CONTAINER="food_project-mysql-1"
+else
+    DB_CONTAINER=$(sudo docker ps --format '{{.Names}}' | grep "mysql" | head -n 1)
+    if [ -z "$DB_CONTAINER" ]; then
+        DB_CONTAINER="food-mysql-1"
+    fi
+fi
 DB_NAME="food_db"
 RETENTION_DAYS=7
 DATE=$(date +"%Y%m%d_%H%M%S")

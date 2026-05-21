@@ -1,3 +1,5 @@
+use_default_settings: true
+
 search:
   formats:
     - html
@@ -6,3 +8,4 @@ server:
   port: 8080
   bind_address: "0.0.0.0"
   secret_key: "local_food_ai_secret"
+

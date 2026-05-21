@@ -1,5 +1,8 @@
 # Taiga Agile Audit Report
 
+> [!WARNING]
+> **Offline Notice**: The network connection to the Taiga server (`192.168.130.161`) is currently offline. Dynamic synchronizations via `taiga_sync_final.py` are temporarily suspended. During this offline window, agile task tracking is managed via local workspace plans (e.g. `task.md`), and the statuses below represent the verified offline milestone baseline.
+
 > Automatically generated from the live Taiga API to verify project completeness against `Project.pdf`.
 
 ## Sprint & Velocity Overview

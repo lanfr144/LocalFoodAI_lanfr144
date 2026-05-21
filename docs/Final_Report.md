@@ -2,10 +2,10 @@
 # Final Project Report (Living Document)
 
 ## What Has Been Done
-1. **Core Architecture**: Deployed a resilient 4-container Docker Compose stack (MySQL, Nginx, Streamlit UI, Ollama Inference).
-2. **Database Optimization**: Successfully loaded 4.4M+ OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
+1. **Core Architecture**: Deployed a resilient 8-container local fallback Docker Compose stack (MySQL, Streamlit UI, local Ollama LLM, anonymous SearXNG search, secure Nginx proxy, and local Zabbix Server/Web/Agent observability suite).
+2. **Database Optimization**: Successfully loaded OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
 3. **Clinical Subquery Strategy**: Refactored the core Pandas/SQL query pipeline to use subquery limiting, resolving Cartesian join explosions and reducing query latency to ~0.04s.
-4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors the proxy and server health, dynamically reporting alerts to Microsoft Teams.
+4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors proxy and server health, dynamically handling SNMP/alert loops in local/offline fallback mode.
 5. **Git Versioning**: Implemented Git `.gitattributes` to push `$Id$` tracking directly into the Python Application UI.
 
 ## What Needs To Be Done (Day 2 Operations)

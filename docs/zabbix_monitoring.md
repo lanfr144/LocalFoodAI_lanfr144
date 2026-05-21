@@ -3,8 +3,11 @@
 ## Overview
 The Local Food AI project enforces strict DevSecOps observability by streaming live hardware and database telemetry metrics to an external Zabbix server (`192.168.130.170:8081`).
 
+> [!IMPORTANT]
+> **Offline Local Fallback**: If the network to the external server is down or unavailable, the Zabbix monitoring dashboard is fully functional and accessible locally at **`http://localhost:8081`** when running the local Docker Compose stack.
+
 ## Accessing the Dashboard
-1. Open your browser and navigate to `http://192.168.130.170:8081`.
+1. Open your browser and navigate to `http://192.168.130.170:8081` (or `http://localhost:8081` if offline/local).
 2. Log in using your Zabbix credentials (default: `Admin` / `zabbix`).
 3. On the left sidebar, click **Monitoring > Dashboards**.
 4. Select the **Food AI RAG Telemetry (Live)** dashboard.

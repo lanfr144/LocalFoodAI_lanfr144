@@ -1,7 +1,8 @@
 import json
 import urllib.request
+import os
 
-ZABBIX_URL = 'http://192.168.130.170:8081/api_jsonrpc.php'
+ZABBIX_URL = os.environ.get('ZABBIX_URL', 'http://192.168.130.170:8081/api_jsonrpc.php')
 ZABBIX_USER = 'Admin'
 ZABBIX_PASS = 'zabbix'
 DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1504740323576774739/2-MNclIGcYSxtLrQ-jzIXWl6miW3dOFTvB6KZsTQIX1FFis6JFoszATegAJoosJD7CMT'

@@ -3,7 +3,7 @@ services:
     build:
       context: ./docker/mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./my.cnf:/etc/mysql/conf.d/custom_ai_app.cnf
@@ -16,11 +16,7 @@ services:
       timeout: 5s
       retries: 20
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
+
 
   ingest:
     build:
@@ -40,11 +36,6 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
 
   searxng:
     image: searxng/searxng:latest
@@ -55,11 +46,6 @@ services:
     environment:
       - SEARXNG_BASE_URL=http://localhost:8080/
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
 
   app:
     build:
@@ -76,11 +62,6 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       - SEARXNG_HOST=http://searxng:8080
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
 
   nginx:
     image: nginx:latest
@@ -89,11 +70,6 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
 
   zabbix-server:
     image: zabbix/zabbix-server-mysql:ubuntu-7.0-latest
@@ -103,11 +79,6 @@ services:
       - MYSQL_PASSWORD=${MYSQL_ZABBIX_PASSWORD}
       - ZBX_SNMPTRAPPER=1
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
     ports:
       - "10051:10051"
 
@@ -123,11 +94,6 @@ services:
       - ZBX_SERVER_HOST=zabbix-server
       - PHP_TZ=Europe/Paris
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
 
   zabbix-agent:
     image: zabbix/zabbix-agent:ubuntu-7.0-latest
@@ -139,52 +105,6 @@ services:
     volumes:
       - /var/run:/var/run
     restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
-
-
-  airflow-webserver:
-    image: apache/airflow:2.8.1
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/data/airflow.db
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-    ports:
-      - "8082:8080"
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./data:/opt/airflow/data
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: webserver
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
-
-  airflow-scheduler:
-    image: apache/airflow:2.8.1
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/data/airflow.db
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      - ./data:/opt/airflow/data
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: bash -c "airflow db migrate && airflow users create --role Admin --username admin --email admin --firstname admin --lastname admin --password admin && airflow scheduler"
-    restart: always
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
 
 volumes:
   mysql_data:

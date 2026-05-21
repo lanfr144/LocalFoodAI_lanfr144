@@ -1,4 +1,4 @@
-# $Id$
+# $Id$ log fields, date format, and redesign architecture.md diagram [v1.0.2] $
 # User Guide
 
 ## 1. Clinical Data Search

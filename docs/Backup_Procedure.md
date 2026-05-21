@@ -1,4 +1,4 @@
-# $Id$
+# $Id$ log fields, date format, and redesign architecture.md diagram [v1.0.2] $
 # Database Backup Procedure
 
 ## Automated Backups

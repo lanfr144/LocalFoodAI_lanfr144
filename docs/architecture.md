@@ -1,3 +1,4 @@
+# $Id$
 # Local Food AI - Architecture Map
 
 This document describes the technical architecture, database schema design, AI RAG data flows, and dual-mode deployment topology for the Local Food AI clinical dietitian platform.
@@ -53,18 +54,17 @@ graph TD
 To optimize massive dataset ingestion (~24GB OpenFoodFacts dataset) and completely bypass InnoDB row size limits while maintaining sub-second RAG response times, the database utilizes a vertically partitioned structure:
 
 ```
-                  ┌────────────────────────────────────────┐
-                  │           Unified SQL View             │
-                  │              "products"                │
-                  └───────────────────┬────────────────────┘
-                                      │
-         ┌────────────────────────────┼────────────────────────────┐
-         ▼                            ▼                            ▼
-┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
-│  products_core   │         │products_allergens│         │ products_macros  │
-│ (Base Data,      │         │  (Allergens &    │         │ (Double Precision│
-│ FULLTEXT index)  │         │  Ingredients)    │         │  Macros)         │
-└──────────────────┘         └──────────────────┘         └──────────────────┘
+             ┌─────────────────────────┐
+             │    Unified SQL View     │
+             │       "products"        │
+             └────────────┬────────────┘
+                          │
+       ┌──────────────────┼──────────────────┐
+       ▼                  ▼                  ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│products_core │   │  allergens   │   │    macros    │
+│(Base/FULLTEXT│   │(Ingredients) │   │ (Precision)  │
+└──────────────┘   └──────────────┘   └──────────────┘
 ```
 
 1. **`products_core`**: Contains product base information (barcode, name, brand, primary category) optimized with `FULLTEXT` indexing.

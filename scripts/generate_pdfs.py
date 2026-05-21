@@ -20,7 +20,7 @@ def main():
             
         import subprocess
         try:
-            log_info = subprocess.check_output(['git', 'log', '-1', '--format=%H %ad %an %s', '--date=format:%Y/%m/%d %H:%M:%S'], encoding='utf-8').strip()
+            log_info = subprocess.check_output(['git', 'log', '-1', '--format=%H %an %ae %ad %cn %ce %cd %N  %s', '--date=format:%Y/%m/%d %H:%M:%S'], encoding='utf-8').strip()
             try:
                 tag_info = subprocess.check_output(['git', 'describe', '--tags', '--always'], stderr=subprocess.DEVNULL, encoding='utf-8').strip()
             except Exception:

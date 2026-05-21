@@ -31,7 +31,7 @@ import time
 import threading
 
 def pull_model_bg():
-    try: ollama.pull('llama3.2:1b')
+    try: ollama.pull('llama3.2:3b')
     except: pass
 threading.Thread(target=pull_model_bg, daemon=True).start()
 
@@ -415,7 +415,7 @@ with tab_chat:
         
         try:
             temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-            response_stream = ollama.chat(model='llama3.2:1b', messages=temp_messages, stream=True)
+            response_stream = ollama.chat(model='llama3.2:3b', messages=temp_messages, stream=True)
             
             with st.chat_message("assistant"):
                 ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
@@ -622,7 +622,7 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response_stream = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response_stream = ollama.chat(model='llama3.2:3b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
                                 except Exception as e:
                                     error_msg = str(e).lower()
@@ -832,7 +832,7 @@ with tab_planner:
             
             # Stream the response instantly!
             try:
-                response_stream = ollama.chat(model='llama3.2:1b', messages=temp_messages, stream=True)
+                response_stream = ollama.chat(model='llama3.2:3b', messages=temp_messages, stream=True)
                 ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
                 
                 # PDF Generation

@@ -1,4 +1,4 @@
-# $Id$ log fields, date format, and redesign architecture.md diagram [v1.0.2] $
+# $Id$
 # WSL Deployment Runbook
 To deploy on Windows Subsystem for Linux:
 1. Ensure WSL2 backend is enabled in Docker Desktop.

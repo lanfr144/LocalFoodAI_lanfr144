@@ -45,6 +45,6 @@ If deploying in the distributed Multi-Hypervisor PoC environment (Hyper-V / Virt
 
 ### 3.3 Network/Server Disconnect & Local Fallback Mode
 When the network to the remote host VM (`192.168.130.170`) or the Taiga server (`192.168.130.161`) is unavailable:
-- **Resilient Single-Node Local Fallback**: The entire stack is completely containerized. By running `docker compose up -d` at the root of the workspace, MySQL, Ollama (with Llama 3.2:1B), SearXNG, Zabbix (Server, Web, Agent), Nginx, and the Streamlit App run entirely locally on the same host, avoiding external network dependencies.
+- **Resilient Single-Node Local Fallback**: The entire stack is completely containerized. By running `docker compose up -d` at the root of the workspace, MySQL, Ollama (with Llama 3.2:3B), SearXNG, Zabbix (Server, Web, Agent), Nginx, and the Streamlit App run entirely locally on the same host, avoiding external network dependencies.
 - **Taiga Sync Bypass**: The `taiga_sync_final.py` execution is decoupled from core runtime. In disconnected mode, commits and user stories are managed through local Git branch state and manual tasks/walkthroughs, and sync scripts can be run once the connection is restored.
 - **Dynamic Configuration Resolvers**: The application components, database migrations (`alembic/env.py`), and SNMP notification wrappers (`snmp_notifier.py`, `configure_zabbix_alerts.py`) automatically detect the local environment or fall back to container names (e.g. `mysql`, `zabbix-server`) rather than crashing on unreachable remote IPs.

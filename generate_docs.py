@@ -82,7 +82,7 @@ Search for products using keywords. The system utilizes FULLTEXT matching to ins
 Add portion sizes of different foods to calculate cumulative nutritional intake. Use the 🗑️ icon to remove items.
 
 ## 3. Chat with AI
-Ask the `llama3.1` model complex dietary questions. It natively utilizes RAG Tool Calling to silently search the database and formulate clinical answers.
+Ask the `llama3.2:3b` model complex dietary questions. It natively utilizes RAG Tool Calling to silently search the database and formulate clinical answers.
 """,
     "Wiki_Home.md": """# $Id$
 # Documentation Home

@@ -21,7 +21,7 @@ Please refer to the `docs/` folder for detailed guides:
 ## Tech Stack
 - **Frontend**: Streamlit
 - **Database**: MySQL 8.0
-- **AI Engine**: Ollama (Llama 3.2:1B)
+- **AI Engine**: Ollama (Llama 3.2:3B)
 - **Web Search**: SearXNG
 - **Monitoring**: Zabbix (SNMPv2c)
 - **Deployment**: Native Ubuntu, Docker Compose, Hyper-V / VirtualBox

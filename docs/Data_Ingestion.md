@@ -1,4 +1,4 @@
-# $Id$ log fields, date format, and redesign architecture.md diagram [v1.0.2] $
+# $Id$
 # Data Ingestion Pipeline
 
 ## Overview

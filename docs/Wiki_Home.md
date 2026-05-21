@@ -1,3 +1,3 @@
-# $Id$ log fields, date format, and redesign architecture.md diagram [v1.0.2] $
+# $Id$
 # Documentation Home
 Welcome to the static documentation mirror. Please navigate the markdown files in this directory for architectural diagrams and guides.

@@ -14,7 +14,7 @@ The Local Food AI project enforces strict DevSecOps observability by streaming l
 
 ## Key Metrics Monitored
 The dashboard automatically queries the SNMP daemons running inside the Docker containers to monitor:
-- **Memory Consumption**: Evaluates the massive RAM usage required by the Ollama Llama3.2:1B LLM during clinical evaluations.
+- **Memory Consumption**: Evaluates the massive RAM usage required by the Ollama Llama3.2:3B LLM during clinical evaluations.
 - **CPU Spikes**: Identifies processing bottlenecks during the 3GB OpenFoodFacts `MATCH AGAINST` queries.
 - **Database Row Count Check**: Displays the real-time record count of `food_db.products_core` to monitor the background CSV ingestion progress.
 

@@ -447,7 +447,7 @@ with tab_chat:
                 
         sys_prompt = f"""You are a helpful medical data analyst AI. 
         Health profile: {profile_text}. 
-        Act as a specialized clinical dietitian. Provide a direct answer. Skip all thinking, reasoning, and pleasantries.
+        Act as a specialized clinical dietitian. Provide a direct answer. Use Chain of Thought reasoning, and skip pleasantries.
         Local Database Context: {db_context}
         {searxng_context}
         """

@@ -37,9 +37,56 @@ def main():
         
         try:
             pdf = MarkdownPdf(toc_level=2)
-            pdf.add_section(Section(md_content))
+            base_name = os.path.basename(md_file)
+            
+            if base_name == 'project_report.md':
+                print("Splitting project_report.md into Portrait/Landscape/Portrait sections...")
+                parts = md_content.split('## 2. Project File Catalog & Documentation')
+                if len(parts) == 2:
+                    portrait_part1 = parts[0]
+                    remaining = parts[1]
+                    parts2 = remaining.split('## 3. Directory Structure Map')
+                    if len(parts2) == 2:
+                        landscape_part = '## 2. Project File Catalog & Documentation' + parts2[0]
+                        portrait_part2 = '## 3. Directory Structure Map' + parts2[1]
+                        
+                        pdf.add_section(Section(portrait_part1, paper_size="A4"))
+                        pdf.add_section(Section(landscape_part, paper_size="A4-L"))
+                        pdf.add_section(Section(portrait_part2, paper_size="A4"))
+                    else:
+                        print("WARNING: Could not find Directory Structure Map heading. Defaulting to full portrait.")
+                        pdf.add_section(Section(md_content, paper_size="A4"))
+                else:
+                    print("WARNING: Could not find Project File Catalog heading. Defaulting to full portrait.")
+                    pdf.add_section(Section(md_content, paper_size="A4"))
+            else:
+                pdf.add_section(Section(md_content, paper_size="A4"))
+                
             pdf.save(pdf_file)
             print(f"Saved {os.path.basename(pdf_file)}")
+            
+            # Copy to workspace root if applicable
+            import shutil
+            root_dir = os.path.join(os.path.dirname(__file__), '..')
+            if base_name == 'project_report.md':
+                dest = os.path.join(root_dir, 'Project.pdf')
+                try:
+                    if os.path.exists(dest):
+                        os.remove(dest)
+                    shutil.copy2(pdf_file, dest)
+                    print("Successfully updated root Project.pdf")
+                except Exception as copy_err:
+                    print(f"WARNING: Could not copy to root Project.pdf: {copy_err}")
+            elif base_name == 'retro_planning.md':
+                dest = os.path.join(root_dir, 'Retro Planning.pdf')
+                try:
+                    if os.path.exists(dest):
+                        os.remove(dest)
+                    shutil.copy2(pdf_file, dest)
+                    print("Successfully updated root Retro Planning.pdf")
+                except Exception as copy_err:
+                    print(f"WARNING: Could not copy to root Retro Planning.pdf: {copy_err}")
+                    
         except Exception as e:
             print(f"WARNING: Could not save {os.path.basename(pdf_file)}. File might be locked or open in a viewer. Error: {e}")
 

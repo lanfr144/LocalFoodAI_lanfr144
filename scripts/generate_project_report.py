@@ -6,109 +6,139 @@ import sys
 # Ensure stdout handles UTF-8 correctly
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Dictionary containing static details about files
+# Dictionary containing static details about files with relative paths and detailed purposes
 FILE_DETAILS = {
     "app.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\app.py",
+        "location": "./app.py",
         "purpose": "Core Streamlit Web Application. Hosts the clinical food search engine, the RAG chat dietitian interface (utilizing Ollama and SearXNG tool calling), and the visual plate builder."
     },
     "ingest_csv.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\ingest_csv.py",
+        "location": "./ingest_csv.py",
         "purpose": "High-performance background database loader. Stream-reads and batch-inserts the 3GB OpenFoodFacts dataset into MySQL using Pandas chunking and optimizes indices post-load."
     },
     "unit_converter.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\unit_converter.py",
+        "location": "./unit_converter.py",
         "purpose": "Mathematical converter engine that parses natural recipe volume inputs (e.g. cups, spoons) and converts them to metric weights based on macro density mappings."
     },
     "snmp_notifier.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\snmp_notifier.py",
+        "location": "./snmp_notifier.py",
         "purpose": "Observability SNMP utility. Formulates and transmits raw SNMP trap payloads to the central Zabbix monitoring server on critical application failures."
     },
     "configure_zabbix_alerts.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\configure_zabbix_alerts.py",
+        "location": "./configure_zabbix_alerts.py",
         "purpose": "DevOps provisioning script. Uses the Zabbix API to automatically set up host groups, custom templates, items, triggers, actions, and media types for alerts."
     },
+    "configure_zabbix_email.py": {
+        "location": "./configure_zabbix_email.py",
+        "purpose": "Security & Monitoring. Configures email media types and SMTP server routes for Zabbix alert notifications on system downtime."
+    },
     "zabbix_telemetry.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\zabbix_telemetry.py",
-        "purpose": "Telemetry collector daemon. Scrapes live memory usage, Streamlit active user threads, and query performance to feed the Zabbix dashboard."
+        "location": "./zabbix_telemetry.py",
+        "purpose": "Monitoring agent daemon. Queries active application statistics, memory, and query timers to supply Zabbix telemetry indicators."
     },
     "check_users.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\check_users.py",
+        "location": "./check_users.py",
         "purpose": "Security utility. Verifies user accounts inside the MySQL `users` table and checks password hashing complexity."
     },
     "rotate_passwords.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\rotate_passwords.py",
+        "location": "./rotate_passwords.py",
         "purpose": "Administrative credential utility. Cycles and re-encrypts database passwords within the `.env` secret file."
     },
     "myloginpath.py": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\myloginpath.py",
+        "location": "./myloginpath.py",
         "purpose": "MySQL credential companion helper that simplifies the generation of encrypted login path configuration profiles."
     },
     "data_sync.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\data_sync.sh",
+        "location": "./data_sync.sh",
         "purpose": "Master pipeline coordinator. Supports download fetching in --online mode and local file processing in offline fallback mode."
     },
     "backup_db.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\backup_db.sh",
+        "location": "./backup_db.sh",
         "purpose": "Resiliency backup automation. Runs mysqldump on user tables inside the active container and prunes backups older than 7 days."
     },
     "reset.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\reset.sh",
+        "location": "./reset.sh",
         "purpose": "Teardown script. Wipes local temporary containers and prunes volume locks during crashes."
     },
     "proper_reset.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\proper_reset.sh",
+        "location": "./proper_reset.sh",
         "purpose": "High-level administrative wipe script that brings the entire network stack and repositories back to a pristine state."
     },
     "deploy.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\deploy.sh",
+        "location": "./deploy.sh",
         "purpose": "Naked OS installation guide. Installs necessary system packages, Python venv libraries, and native Ollama."
     },
     "start_batch_ingest.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\start_batch_ingest.sh",
+        "location": "./start_batch_ingest.sh",
         "purpose": "Asynchronous background shell script wrapping the main csv ingestion stream inside a detached session."
     },
     "download_csv.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\download_csv.sh",
+        "location": "./download_csv.sh",
         "purpose": "Downloader helper script that fetches specific smaller subsets of OpenFoodFacts CSV files."
     },
     "master_trigger.sh": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\master_trigger.sh",
+        "location": "./master_trigger.sh",
         "purpose": "Orchestrator script that wakes and verifies multiple secondary subservices in sequence."
     },
+    "manage_services.sh": {
+        "location": "./manage_services.sh",
+        "purpose": "DevOps service manager script. Handles automated, sequential startup, shutdown, restart, and health checking of all container elements in the stack."
+    },
+    "generate_docs.py": {
+        "location": "./generate_docs.py",
+        "purpose": "Dynamic doc generator. Generates and mirrors all markdown manuals under `/docs` with live Git log metadata injection."
+    },
     "docker-compose.yml": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\docker-compose.yml",
+        "location": "./docker-compose.yml",
         "purpose": "Main 10-container Docker orchestration map defining MySQL, App UI, Ollama Engine, SearXNG, Nginx proxy, Airflow stack, and Zabbix server suites."
     },
     "docker-compose_skip.yml": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\docker-compose_skip.yml",
+        "location": "./docker-compose_skip.yml",
         "purpose": "Resilient 8-container offline/local single-node orchestration manifest."
     },
     "alembic.ini": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\alembic.ini",
+        "location": "./alembic.ini",
         "purpose": "Alembic configuration setting routing database connection URIs for versioning schemas."
     },
     "my.cnf": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\my.cnf",
+        "location": "./my.cnf",
         "purpose": "Custom tuned MySQL database performance settings enabling local_infile data loading and index page buffers."
     },
     ".env": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\.env",
+        "location": "./.env",
         "purpose": "Secret storage container holding encrypted MySQL user passwords and active environment flags."
     },
     ".gitattributes": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\.gitattributes",
+        "location": "./.gitattributes",
         "purpose": "Git clean/smudge layout mapping enabling automatic tracking of dynamic $Id$ metadata expansion within version files."
     },
     "requirements.txt": {
-        "location": "c:\\Users\\lanfr144\\Documents\\DOPRO1\\Antigravity\\Food\\requirements.txt",
+        "location": "./requirements.txt",
         "purpose": "Python runtime dependency catalog storing strict library versioning constraints."
+    },
+    "scripts/generate_pdfs.py": {
+        "location": "./scripts/generate_pdfs.py",
+        "purpose": "PDF document builder. Converts all markdown documentation manuals under `/docs` into high-fidelity PDF format with expanded Git version headers."
+    },
+    "scripts/generate_project_report.py": {
+        "location": "./scripts/generate_project_report.py",
+        "purpose": "Technical project report generator. Automatically gathers codebase structure, Git commit metadata, and purpose records to construct the Project.pdf report."
+    },
+    "scripts/setup_deploy.py": {
+        "location": "./scripts/setup_deploy.py",
+        "purpose": "DevOps deployment script. Orchestrates local and VM container sets, verifying network connectivity and system parameters."
+    },
+    "scripts/taiga_sync_final.py": {
+        "location": "./scripts/taiga_sync_final.py",
+        "purpose": "Taiga automated synchronization helper. Pushes bug tickets, fills wiki pages, and assigns unassigned user stories."
     }
 }
 
 def get_git_info(filename):
     try:
-        cmd = ['git', 'log', '-1', '--format=%h|%an|%ad|%s', '--date=format:%Y/%m/%d %H:%M:%S', '--', filename]
+        # Standardize path separators for git command line
+        git_filename = filename.replace('\\', '/')
+        cmd = ['git', 'log', '-1', '--format=%h|%an|%ad|%s', '--date=format:%Y/%m/%d %H:%M:%S', '--', git_filename]
         output = subprocess.check_output(cmd, encoding='utf-8').strip()
         if output:
             parts = output.split('|')
@@ -163,19 +193,22 @@ The **Local Food AI** capstone project has successfully completed all sprint ite
 4. **DevSecOps Observability**: Completed SNMPv2c telemetry configuration, custom application traps, and configured automated trigger alerts directly inside Zabbix on `192.168.130.170`.
 5. **Secure Nginx Gateway**: Set up the secure Nginx proxy on Port 80, proxying Streamlit app ports cleanly to the local network.
 6. **Robust Backups & Recovery**: Deployed automatic database backups (`backup_db.sh`) and local offline single-node fallback capabilities (`docker-compose_skip.yml`).
+7. **Sequential Operations Manager**: Created `manage_services.sh` to allow developers to safely stop, start, and restart all microservices in the proper dependency order without triggering redundant online ingestion sequences.
 
 ---
 
 ## 2. Project File Catalog & Documentation
-Below is an exhaustive description of every critical file in the repository, detailing its absolute location, primary purpose, and active Git version tags.
+Below is an exhaustive catalog of every critical file in the repository, detailing its path, functional purpose, and active Git version tags. 
 
-| File Name | Absolute Location | Purpose & Core Responsibility | Last Commit | Author | Commit Date | Last Commit Message |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+*Note: This chapter is compiled in landscape layout inside Project.pdf to guarantee complete columns readability.*
+
+| File Path | Purpose & Technical Responsibility | Commit | Author | Commit Date | Last Commit Message |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 """
 
     for filename, details in FILE_DETAILS.items():
         git_info = get_git_info(filename)
-        row = f"| **{filename}** | `{details['location']}` | {details['purpose']} | `{git_info['commit']}` | {git_info['author']} | {git_info['date']} | {git_info['message']} |\n"
+        row = f"| **{filename}**<br>`{details['location']}` | {details['purpose']} | `{git_info['commit']}` | {git_info['author']} | {git_info['date']} | *{git_info['message']}* |\n"
         report_content += row
 
     report_content += """

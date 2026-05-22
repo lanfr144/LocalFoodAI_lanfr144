@@ -17,6 +17,7 @@ Please refer to the `docs/` folder for detailed guides:
 - [Zabbix Telemetry Guide](docs/zabbix_monitoring.md)
 - [Agile Retro Planning](docs/retro_planning.md)
 - [Taiga Final Audit Report](docs/taiga_audit_report.md)
+- [Historical Taiga Agile Export](taiga/local-food-ai-1-5947063a-612b-454f-b3f1-6b5858445510.json) (included strictly for documentation and project history purposes)
 
 ## Tech Stack
 - **Frontend**: Streamlit

@@ -18,7 +18,7 @@ Allows practitioners to search the 24GB OpenFoodFacts dataset in real time (aver
 - **Flexible Column Customization**: Multi-select column headers to inspect specific macro and micro-nutrients.
 
 ### 💬 tab 2: AI Clinical Chat (💬 AI Chat)
-An interactive NLP dialogue interface powered by a local lightweight LLM (**Llama3.2:3b**).
+An interactive NLP dialogue interface powered by a local lightweight LLM (**Qwen2.5:7b**).
 - **RAG-Driven Precision**: The AI dietitian automatically retrieves and reviews local database records and private meta-search results before formulating an answer.
 - **Dynamic Medical Guardrails**: The user's active illnesses, diets, and conditions are injected into the AI's system prompt in the background, forcing the AI to strictly enforce clinical safety constraints.
 

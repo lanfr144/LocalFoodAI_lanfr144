@@ -27,7 +27,7 @@ To maximize CPU/GPU efficiency and secure database read/writes, services are dis
 | :--- | :--- | :--- |
 | **streamlit-app (app.py)** | Local WSL2 (Windows) | Low-latency rendering and direct client access |
 | **mysql (Database Node)** | Hyper-V VM (Server A) | Persistent enterprise-grade disk storage |
-| **ollama (NLP Llama3.2:3b Engine)** | VirtualBox VM (Server B) | Dedicated CPU/GPU virtualization allocation |
+| **ollama (NLP Qwen2.5:7b Engine)** | VirtualBox VM (Server B) | Dedicated CPU/GPU virtualization allocation |
 | **zabbix-server & web (Monitoring)** | Hyper-V VM (Server A) | Centralized SNMPv3 alert processing and logs |
 | **searxng (Meta-Search Gateway)** | Local WSL2 (Windows) | Dynamic browser-level loopbacks |
 
@@ -179,6 +179,6 @@ Run these test cases to verify the installation:
 | :--- | :--- | :--- | :---: |
 | **TC-OP-01** | Search 'Cheese' on Search Tab | 10+ records returned in <0.04s. Listeria warning flags on unpasteurized. | `[ ]` |
 | **TC-OP-02** | Enter '1.5 cups' in Plate Tab | Parsed and converted to metric grams based on density index. | `[ ]` |
-| **TC-OP-03** | Ask Chat: 'Can I eat sushi?' | Llama3.2:3b retrieves database context and flags raw fish as forbidden for pregnancy. | `[ ]` |
+| **TC-OP-03** | Ask Chat: 'Can I eat sushi?' | Qwen2.5:7b retrieves database context and flags raw fish as forbidden for pregnancy. | `[ ]` |
 | **TC-OP-04** | Trigger manual db backup | Timestamped compressed .sql.gz created inside backups/ folder. | `[ ]` |
 | **TC-OP-05** | Terminate Ollama Container | Zabbix PROBLEM active alert generated on dashboard in < 30 seconds. | `[ ]` |

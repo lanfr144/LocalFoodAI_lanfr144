@@ -187,7 +187,7 @@ def main():
 The **Local Food AI** capstone project has successfully completed all sprint iterations. The system stands fully verified, containerized, and documented. 
 
 ### What Has Been Done
-1. **Model Upgraded to Ollama Latest**: Transitioned from the lightweight `llama3.2:1b` model to the much more robust and recent **`llama3.2:3b`** model (2.0 GB). Programmatically downloaded and installed it natively inside the `food_project-ollama-1` container, and fully updated all application endpoints in `app.py`.
+1. **Model Upgraded to Ollama Latest**: Transitioned from the `llama3.2:3b` model to the much more robust, large reasoning-focused **`qwen2.5:7b`** model (4.7 GB) with structured XML Chain-of-Thought (CoT) calculations. Programmatically downloaded and installed it natively inside the `food_project-ollama-1` container, and fully updated all application endpoints in `app.py`.
 2. **Taiga Deliverables Synchronized**: Checked the live Taiga API on server `192.168.130.161`. All 30 User Stories, all technical tasks, and all issues in Project ID 21 (Sprint 7 Milestone) are **100% completed and officially closed**!
 3. **Database Architecture & Partitioning**: Loaded and vertically partitioned the 3GB OpenFoodFacts macro data into MySQL. Configured matching FULLTEXT engines to search records in less than **0.04s** (averaging 90% latency reduction).
 4. **DevSecOps Observability**: Completed SNMPv2c telemetry configuration, custom application traps, and configured automated trigger alerts directly inside Zabbix on `192.168.130.170`.

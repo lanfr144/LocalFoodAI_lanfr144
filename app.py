@@ -30,8 +30,47 @@ import time
 
 import threading
 
+def strip_scratchpad(text: str) -> str:
+    import re
+    # Strip out the XML <scratchpad> tag and everything in between, non-greedily
+    clean_text = re.sub(r'<scratchpad>.*?</scratchpad>', '', text, flags=re.DOTALL)
+    return clean_text.strip()
+
+def filter_scratchpad_stream(stream):
+    buffer = ""
+    in_scratchpad = False
+    for chunk in stream:
+        content = chunk['message']['content']
+        buffer += content
+        
+        while True:
+            if not in_scratchpad:
+                start_idx = buffer.find("<scratchpad>")
+                if start_idx != -1:
+                    yield buffer[:start_idx]
+                    buffer = buffer[start_idx:]
+                    in_scratchpad = True
+                else:
+                    yield_len = max(0, len(buffer) - 11)
+                    if yield_len > 0:
+                        yield buffer[:yield_len]
+                        buffer = buffer[yield_len:]
+                    break
+            else:
+                end_idx = buffer.find("</scratchpad>")
+                if end_idx != -1:
+                    buffer = buffer[end_idx + 13:]
+                    in_scratchpad = False
+                else:
+                    keep_len = 12
+                    if len(buffer) > keep_len:
+                        buffer = buffer[-keep_len:]
+                    break
+    if not in_scratchpad and buffer:
+        yield buffer
+
 def pull_model_bg():
-    try: ollama.pull('llama3.2:3b')
+    try: ollama.pull('qwen2.5:7b')
     except: pass
 threading.Thread(target=pull_model_bg, daemon=True).start()
 
@@ -415,7 +454,7 @@ with tab_chat:
         
         try:
             temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-            response_stream = ollama.chat(model='llama3.2:3b', messages=temp_messages, stream=True)
+            response_stream = ollama.chat(model='qwen2.5:7b', messages=temp_messages, stream=True)
             
             with st.chat_message("assistant"):
                 ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
@@ -622,7 +661,7 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response_stream = ollama.chat(model='llama3.2:3b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response_stream = ollama.chat(model='qwen2.5:7b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
                                 except Exception as e:
                                     error_msg = str(e).lower()
@@ -818,22 +857,33 @@ with tab_planner:
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
             
-            CRITICAL INSTRUCTIONS:
-            - You MUST formulate the menu using ONLY the following real database items retrieved for you: {db_context}
-            - Output the menu beautifully formatted as a Markdown Table.
-            - The Markdown table MUST strictly contain 5 columns separated by pipes (|).
-            - Columns MUST be exactly: | Meal Time | Exact Food | Portion Size | Calories | Protein |
-            - If you merge columns, the system will fail. Separate Calories and Protein with a pipe.
-            - Do NOT output JSON. Do NOT use tool calls.
-            - Provide a direct answer. Skip all thinking, reasoning, and pleasantries.
+            COGNITIVE SCRATCHPAD INSTRUCTIONS:
+            - You MUST perform all your intermediate thinking, unit conversions (e.g. converting cups, tablespoons, or ounces to exact metric grams based on food density), and calorie/protein mathematical additions inside a `<scratchpad>` tag.
+            - Format:
+              <scratchpad>
+              Calculations:
+              - 1.5 cups of Cheese = X grams (density Y). Calories = A, Protein = B.
+              - 2 tbsp of Peanut Butter = Z grams (density C). Calories = D, Protein = E.
+              - Summation: Total Calories = A + D = Z kcal (vs target {target_cal}kcal). Total Protein = B + E = Fg.
+              </scratchpad>
+              | Meal Time | Exact Food | Portion Size | Calories | Protein |
+              | --- | --- | --- | --- | --- |
+              ...
+            
+            CRITICAL FORMATTING INSTRUCTIONS:
+            - After the </scratchpad> closing tag, you MUST strictly output the menu formatted as a Markdown Table.
+            - The table MUST contain exactly 5 columns separated by pipes (|): | Meal Time | Exact Food | Portion Size | Calories | Protein |
+            - The items in the table MUST be selected strictly from: {db_context}
+            - Do NOT output JSON. Do NOT use tool calls. Skip pleasantries.
             """
             
             temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}]
             
             # Stream the response instantly!
             try:
-                response_stream = ollama.chat(model='llama3.2:3b', messages=temp_messages, stream=True)
-                ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
+                response_stream = ollama.chat(model='qwen2.5:7b', messages=temp_messages, stream=True)
+                clean_stream = filter_scratchpad_stream(response_stream)
+                ai_reply = st.write_stream(clean_stream)
                 
                 # PDF Generation
                 def generate_pdf(text):
@@ -916,7 +966,7 @@ with tab_planner:
                 
                 st.download_button(
                     label="📄 Download PDF Export",
-                    data=generate_pdf(ai_reply),
+                    data=generate_pdf(strip_scratchpad(ai_reply)),
                     file_name="Clinical_Meal_Plan.pdf",
                     mime="application/pdf",
                     type="primary"

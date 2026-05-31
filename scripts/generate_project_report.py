@@ -96,6 +96,10 @@ FILE_DETAILS = {
         "location": "./docker-compose_skip.yml",
         "purpose": "Resilient 8-container offline/local single-node orchestration manifest."
     },
+    "docker-compose-wsl.yml": {
+        "location": "./docker-compose-wsl.yml",
+        "purpose": "WSL2-specific Docker Compose configuration file. Configures services with a +20 port shift to guarantee zero port conflicts on developer workstations."
+    },
     "alembic.ini": {
         "location": "./alembic.ini",
         "purpose": "Alembic configuration setting routing database connection URIs for versioning schemas."
@@ -115,6 +119,14 @@ FILE_DETAILS = {
     "requirements.txt": {
         "location": "./requirements.txt",
         "purpose": "Python runtime dependency catalog storing strict library versioning constraints."
+    },
+    "INSTALL_WSL.md": {
+        "location": "./INSTALL_WSL.md",
+        "purpose": "WSL2 deployment guide. Provides step-by-step instructions for installing and deploying the application inside WSL2 with port shifts."
+    },
+    "taiga/local-food-ai-1-36f35ff9-da1b-4eb5-9309-058448c998ad.json": {
+        "location": "./taiga/local-food-ai-1-36f35ff9-da1b-4eb5-9309-058448c998ad.json",
+        "purpose": "Historical Taiga Agile export. Contains the complete project history, including all closed user stories, tasks, and sprint configurations."
     },
     "scripts/generate_pdfs.py": {
         "location": "./scripts/generate_pdfs.py",

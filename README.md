@@ -27,3 +27,13 @@ Please refer to the `docs/` folder for detailed guides:
 - **Monitoring**: Zabbix (SNMPv2c)
 - **Deployment**: Native Ubuntu, Docker Compose, Hyper-V / VirtualBox
 - **Project Management**: Taiga (Synced dynamically via Python)
+
+## AI Skills & Governance
+This project leverages specialized AI skills to maintain code quality, documentation, and strict governance:
+- **Code Review**: Automatically reviews code changes for correctness, edge cases, style, and performance.
+- **Doc Writer**: Ensures all documentation and inline comments stay perfectly synchronized with source code changes.
+- **Expert Coach**: Acts as a principal engineer, enforcing optimal code, modularity, and a mandatory Identity Tag in file headers.
+- **Git Commit**: Enforces strict Git governance, Taiga tracking (`TG-123`), and a single `main` branch workflow. For every commit, a task in Taiga must be associated. If the task does not exist, it must be created and added to a user story and a sprint.
+- **Refactor Coach**: Refactors code to improve readability, performance, and modularity without changing external behavior.
+- **SQL Optimizer**: Enforces DBA standards for MySQL, Oracle, and PostgreSQL, ensuring proper indexing, transaction management, and secure access.
+- **Test Generator**: Generates comprehensive unit and integration tests focusing on boundary conditions and logical coverage.

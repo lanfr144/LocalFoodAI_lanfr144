@@ -1,4 +1,5 @@
 import re
+#ident "@(#)$Format:LocalFoodAI:unit_converter.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 class UnitConverter:
     """
@@ -147,14 +148,19 @@ class UnitConverter:
     @classmethod
     def parse_and_convert(cls, recipe_string, product_name=None):
         """
-        Parses a string like "1.5 cups" or "2 tbsp" and converts to grams.
+        Parses a string like "1.5 cups" or "2 tbsp" or "100" and converts to grams.
         """
-        # Match number (including decimals/fractions roughly) followed by text
-        match = re.match(r'^([\d\.]+)\s*([a-zA-Z\s]+)$', str(recipe_string).strip())
+        # Strip trailing non-alphanumeric chars first just in case
+        clean_str = re.sub(r'[^\w\.\s]+$', '', str(recipe_string).strip())
+        
+        # Match number (including decimals/fractions roughly) followed by optional text
+        match = re.match(r'^([\d\.]+)\s*([a-zA-Z\s]*)$', clean_str)
         if match:
             try:
                 amount = float(match.group(1))
                 unit = match.group(2).strip()
+                if not unit:
+                    unit = 'g' # Default to grams if no unit provided
                 result = cls.convert_to_grams(amount, unit, product_name)
                 if result is not None:
                     return round(result, 2)

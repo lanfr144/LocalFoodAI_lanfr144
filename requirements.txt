@@ -1,10 +1,12 @@
 pandas
 pymysql
 myloginpath
-streamlit
+streamlit>=1.41.0
 ollama
 bcrypt
 pysnmp
 sqlalchemy
 requests
 fpdf2
+extra-streamlit-components
+pathspec

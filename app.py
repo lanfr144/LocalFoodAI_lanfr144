@@ -2,7 +2,10 @@
 # $Author$
 # $log$
 #ident "@(#)LocalFoodAI:app.py:$Format:%D:%ci:%cN:%h$"
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import streamlit as st
+import extra_streamlit_components as stx
+import subprocess
 import pymysql
 import bcrypt
 import random
@@ -16,18 +19,10 @@ from unit_converter import UnitConverter
 from fpdf import FPDF
 import myloginpath
 import ollama
-import bcrypt
 import requests
-import string
-import random
 import smtplib
 from email.message import EmailMessage
-import pandas as pd
-from unit_converter import UnitConverter
 from typing import Optional, List, Dict, Any, Tuple
-from snmp_notifier import notifier
-import time
-
 import threading
 
 def strip_scratchpad(text: str) -> str:
@@ -70,7 +65,7 @@ def filter_scratchpad_stream(stream):
         yield buffer
 
 def pull_model_bg():
-    try: ollama.pull('qwen2.5:7b')
+    try: ollama.pull('qwen2.5:1.5b')
     except: pass
 threading.Thread(target=pull_model_bg, daemon=True).start()
 
@@ -130,7 +125,11 @@ def search_nutrition_db(query: str, user_eav=None) -> str:
             
             snippets = []
             for r in results:
-                snippets.append(f"- {r['product_name']}: Protein {r['proteins_100g']}g, Fat {r['fat_100g']}g, Carbs {r['carbohydrates_100g']}g, Sugars {r['sugars_100g']}g (per 100g)")
+                pro = float(r['proteins_100g'] or 0)
+                fat = float(r['fat_100g'] or 0)
+                carb = float(r['carbohydrates_100g'] or 0)
+                sug = float(r['sugars_100g'] or 0)
+                snippets.append(f"- {r['product_name']}: Protein {pro:.2f}g, Fat {fat:.2f}g, Carbs {carb:.2f}g, Sugars {sug:.2f}g (per 100g)")
             return "\n".join(snippets)
     except Exception as e:
         return f"Database query failed: {e}"
@@ -275,9 +274,24 @@ def reset_password(username: str, email: str) -> Any:
 def render_version():
     st.markdown("---")
     st.caption("🚀 Version: v1.3.0")
-    st.caption(f"📅 Git ID: $Id$")
+    try:
+        git_id = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip()
+    except Exception:
+        git_id = "Unknown"
+    st.caption(f"📅 Git ID: {git_id}")
 
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
+
+@st.cache_resource(experimental_allow_widgets=True)
+def get_manager():
+    return stx.CookieManager()
+cookie_manager = get_manager()
+
+if cookie_manager.get(cookie="auth_user"):
+    st.session_state["authenticated_user"] = cookie_manager.get(cookie="auth_user")
+elif "authenticated_user" not in st.session_state:
+    st.session_state["authenticated_user"] = None
+
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -286,7 +300,7 @@ st.markdown("""
     div[data-testid="stSidebar"] { background: rgba(11, 25, 44, 0.95) !important; backdrop-filter: blur(10px); border-right: 1px solid #1e293b; }
     .stButton>button { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: none; border-radius: 6px; }
     .stButton>button:hover { transform: scale(1.02); }
-    .stTextInput>div>div>input, .stNumberInput>div>div>input, .stSelectbox>div>div>div { background-color: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; }
+    .stTextInput>div>div>input, .stNumberInput>div>div>input, .stSelectbox>div>div>div { background-color: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; caret-color: #f8fafc !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -304,6 +318,8 @@ with st.sidebar:
         st.success(f"Logged in as: {st.session_state['authenticated_user']}")
         if st.button("Logout"):
             st.session_state["authenticated_user"] = None
+            cookie_manager.delete("auth_user")
+            time.sleep(0.5)
             st.rerun()
             
         eav_data = get_eav_profile(st.session_state["authenticated_user"])
@@ -454,10 +470,12 @@ with tab_chat:
         
         try:
             temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
-            response_stream = ollama.chat(model='qwen2.5:7b', messages=temp_messages, stream=True)
+            start_llm = time.time()
+            response_stream = ollama.chat(model='qwen2.5:1.5b', messages=temp_messages, stream=True)
             
             with st.chat_message("assistant"):
                 ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
+                st.caption(f"⏱️ AI response generated in {time.time() - start_llm:.2f} seconds")
             
             st.session_state.messages.append({"role": "assistant", "content": ai_reply})
         except Exception as e: 
@@ -486,26 +504,28 @@ with tab_explore:
     4. `Deli Meat` *(Checks for Listeria risk & extreme sodium)*
     5. `White Rice` *(Safe for kidneys but flags high glycemic index)*
     """)
-    sq = st.text_input("Search Product Name or Ingredient")
-    cols = st.columns(5)
-    min_pro = cols[0].number_input("Min Protein (g)", 0, 1000, 0)
-    min_fat = cols[1].number_input("Min Fat (g)", 0, 1000, 0)
-    min_carb = cols[2].number_input("Min Carbs (g)", 0, 1000, 0)
-    max_sug = cols[3].number_input("Max Sugar (g)", 0, 1000, 1000)
-    
-    # Load dynamically fetched limit to prevent Pandas Styler crash
-    pd.set_option("styler.render.max_elements", 5000000)
-    opts = [10, 50, 100, 500, 1000]
-    
-    user_lim_str = get_user_limit(st.session_state["authenticated_user"])
-    user_lim_val = 1000 if user_lim_str == "All" else int(user_lim_str)
-    if user_lim_val not in opts: user_lim_val = 50
-    idx = opts.index(user_lim_val)
-    limit_rc = cols[4].selectbox("Limit Results", opts, index=idx)
-    
-    if st.button("Search Database"):
-        st.session_state["trigger_search"] = True
+    with st.form("explore_search_form"):
+        sq = st.text_input("Search Product Name or Ingredient")
+        cols = st.columns(5)
+        min_pro = cols[0].number_input("Min Protein (g)", 0, 1000, 0)
+        min_fat = cols[1].number_input("Min Fat (g)", 0, 1000, 0)
+        min_carb = cols[2].number_input("Min Carbs (g)", 0, 1000, 0)
+        max_sug = cols[3].number_input("Max Sugar (g)", 0, 1000, 1000)
         
+        # Load dynamically fetched limit to prevent Pandas Styler crash
+        pd.set_option("styler.render.max_elements", 5000000)
+        opts = [10, 50, 100, 500, 1000]
+        
+        user_lim_str = get_user_limit(st.session_state["authenticated_user"])
+        user_lim_val = 1000 if user_lim_str == "All" else int(user_lim_str)
+        if user_lim_val not in opts: user_lim_val = 50
+        idx = opts.index(user_lim_val)
+        limit_rc = cols[4].selectbox("Limit Results", opts, index=idx)
+        
+        submit_search = st.form_submit_button("Search Database")
+        if submit_search:
+            st.session_state["trigger_search"] = True
+            
     if st.session_state.get("trigger_search", False) and sq and conn_reader:
         notifier.send_alert(f"Medical DB Search Executed: {sq}")
         with st.spinner("Processing massive clinical query..."):
@@ -521,8 +541,9 @@ with tab_explore:
                         FROM (
                             SELECT code, product_name, generic_name, brands, ingredients_text
                             FROM food_db.products_core
-                            WHERE MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE)
+                            WHERE (MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE) OR product_name LIKE %s)
                             AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
+                            ORDER BY MATCH(product_name) AGAINST(%s IN BOOLEAN MODE) DESC, MATCH(ingredients_text) AGAINST(%s IN BOOLEAN MODE) DESC
                             {l_str}
                         ) c
                         LEFT JOIN food_db.products_allergens a ON c.code = a.code
@@ -535,8 +556,9 @@ with tab_explore:
                         AND (m.sugars_100g <= %s OR m.sugars_100g IS NULL)
                     """
                     sq_bool = " ".join([f"+{w}" for w in sq.split()])
+                    sq_like = f"%{sq}%"
                     start_time = time.time()
-                    cursor.execute(query, (sq_bool, min_pro, min_fat, min_carb, max_sug))
+                    cursor.execute(query, (sq_bool, sq_like, sq_bool, sq_bool, min_pro, min_fat, min_carb, max_sug))
                     results = cursor.fetchall()
                     elapsed = time.time() - start_time
                     st.caption(f"⏱️ DB Query Executed in {elapsed:.3f} seconds")
@@ -649,10 +671,12 @@ with tab_explore:
                             warnings_col.append(" | ".join(list(set(warns))) if warns else "✅ Safe for Profile")
                             
                         df_display.insert(0, 'Medical Warning', warnings_col)
+                        df_display.fillna("", inplace=True)
+                        df_display.index = range(1, len(df_display) + 1)
                         styled_df = df_display.style.apply(highlight_medical_warnings, axis=1)
 
                         st.success(f"Analysed {len(results)} records utilizing dynamic Partitions!")
-                        st.dataframe(styled_df, use_container_width=True)
+                        st.dataframe(styled_df, use_container_width=True, hide_index=True)
                         
                         if st.button("🤖 Ask AI to Evaluate This Table"):
                             with st.spinner("AI is dynamically evaluating these records against your profile..."):
@@ -661,7 +685,7 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response_stream = ollama.chat(model='qwen2.5:7b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response_stream = ollama.chat(model='qwen2.5:1.5b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response_stream)
                                 except Exception as e:
                                     error_msg = str(e).lower()
@@ -698,19 +722,22 @@ with tab_plate:
             cursor.execute("SELECT id, plate_name FROM plates WHERE user_id = %s", (uid,))
             plates = cursor.fetchall()
             
-            with st.expander("➕ Create a New Plate"):
-                new_plate_name = st.text_input("Plate Name")
-                if st.button("Create Plate"):
-                    cursor.execute("INSERT INTO plates (user_id, plate_name) VALUES (%s, %s)", (uid, new_plate_name))
-                    conn.commit()
-                    st.session_state["active_plate"] = new_plate_name
-                    st.rerun()
+            st.markdown("#### ➕ Create a New Plate")
+            col_p1, col_p2 = st.columns([3, 1])
+            new_plate_name = col_p1.text_input("Plate Name (e.g., 'Spaghetti Bolognese')", key="new_plate")
+            if col_p2.button("Create Plate", use_container_width=True) and new_plate_name:
+                cursor.execute("INSERT INTO plates (user_id, plate_name) VALUES (%s, %s)", (uid, new_plate_name))
+                conn.commit()
+                st.session_state["active_plate"] = new_plate_name
+                st.rerun()
+            
+            st.markdown("---")
 
             if plates:
                 colA, colB = st.columns([4, 1])
                 plate_names = [p['plate_name'] for p in plates]
                 default_idx = plate_names.index(st.session_state["active_plate"]) if "active_plate" in st.session_state and st.session_state["active_plate"] in plate_names else 0
-                selected_plate = colA.selectbox("Select Active Plate", plate_names, index=default_idx)
+                selected_plate = colA.selectbox("Select Active Plate to Edit Ingredients", plate_names, index=default_idx)
                 st.session_state["active_plate"] = selected_plate
                 active_p_id = next(p['id'] for p in plates if p['plate_name'] == selected_plate)
                 
@@ -721,16 +748,26 @@ with tab_plate:
                     st.rerun()
                 
                 cursor.execute("""
-                    SELECT i.id, i.product_code, MAX(i.quantity_grams) as quantity_grams, MAX(p.product_name) as product_name, MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g 
-                    FROM plate_items i LEFT JOIN products_core p ON i.product_code = p.code LEFT JOIN products_macros m ON i.product_code = m.code WHERE i.plate_id = %s
+                    SELECT i.id, i.product_code, MAX(i.quantity_grams) as quantity_grams, MAX(p.product_name) as product_name, 
+                           MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, 
+                           MAX(m.sodium_100g) as sodium_100g, MAX(m.sugars_100g) as sugars_100g, MAX(m.fiber_100g) as fiber_100g,
+                           MAX(v.`vitamin-c_100g`) as vitamin_c_100g, MAX(min.iron_100g) as iron_100g, MAX(min.calcium_100g) as calcium_100g
+                    FROM plate_items i 
+                    LEFT JOIN products_core p ON i.product_code = p.code 
+                    LEFT JOIN products_macros m ON i.product_code = m.code 
+                    LEFT JOIN products_vitamins v ON i.product_code = v.code
+                    LEFT JOIN products_minerals min ON i.product_code = min.code
+                    WHERE i.plate_id = %s
                     GROUP BY i.id, i.product_code
                 """, (active_p_id,))
                 items = cursor.fetchall()
                 if items:
                     for i in items:
                         c1, c2 = st.columns([5, 1])
-                        safe_name = html.escape(str(i['product_name']))
-                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {safe_name} (Pro: {i['proteins_100g'] or 0}g)</li>", unsafe_allow_html=True)
+                        pro = float(i['proteins_100g'] or 0) * (float(i['quantity_grams'])/100.0)
+                        fat = float(i['fat_100g'] or 0) * (float(i['quantity_grams'])/100.0)
+                        carb = float(i['carbohydrates_100g'] or 0) * (float(i['quantity_grams'])/100.0)
+                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {safe_name} (Pro: {pro:.2f}g | Fat: {fat:.2f}g | Carb: {carb:.2f}g)</li>", unsafe_allow_html=True)
                         if c2.button("🗑️", key=f"del_item_{i['id']}"):
                             cursor.execute("DELETE FROM plate_items WHERE id = %s", (i['id'],))
                             conn.commit()
@@ -739,17 +776,42 @@ with tab_plate:
                     total_pro = sum((float(i['proteins_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
                     total_fat = sum((float(i['fat_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
                     total_carb = sum((float(i['carbohydrates_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    st.info(f"**Total Protein:** {total_pro:.1f}g | **Total Fat:** {total_fat:.1f}g | **Total Carbs:** {total_carb:.1f}g")
+                    total_sod = sum((float(i['sodium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    total_sug = sum((float(i['sugars_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    total_fib = sum((float(i['fiber_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    total_vitc = sum((float(i['vitamin_c_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    total_iron = sum((float(i['iron_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    total_calc = sum((float(i['calcium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    
+                    st.markdown("---")
+                    st.markdown("### Plate Totals")
+                    m1, m2, m3 = st.columns(3)
+                    m1.metric("Total Protein", f"{total_pro:.2f}g")
+                    m2.metric("Total Fat", f"{total_fat:.2f}g")
+                    m3.metric("Total Carbs", f"{total_carb:.2f}g")
+                    
+                    m4, m5, m6 = st.columns(3)
+                    m4.metric("Sodium", f"{total_sod:.3f}g")
+                    m5.metric("Sugars", f"{total_sug:.2f}g")
+                    m6.metric("Fiber", f"{total_fib:.2f}g")
+                    
+                    m7, m8, m9 = st.columns(3)
+                    m7.metric("Vitamin C", f"{total_vitc:.4f}g")
+                    m8.metric("Iron", f"{total_iron:.4f}g")
+                    m9.metric("Calcium", f"{total_calc:.4f}g")
                 
                 st.markdown("---")
                 st.markdown("#### ➕ Add Food to Plate")
-                add_search = st.text_input("Search Exact Product Name (e.g. 'chicken', 'egg')")
+                with st.form("plate_add_form"):
+                    add_search = st.text_input("Search Exact Product Name (e.g. 'chicken', 'egg')")
+                    
+                    col_scope, col_comp = st.columns(2)
+                    search_scope = col_scope.radio("Search Scope", ["Auto (Cascaded)", "Product Name Only", "Both (Product & Ingredients)", "Ingredients Only"], horizontal=True)
+                    comp_reqs = col_comp.multiselect("Require Nutrients (Sorts by highest)", ["Iron", "Vitamin C", "Calcium", "Proteins", "Fiber"])
+                    
+                    submit_add_search = st.form_submit_button("Search Food")
                 
-                col_scope, col_comp = st.columns(2)
-                search_scope = col_scope.radio("Search Scope", ["Auto (Cascaded)", "Product Name Only", "Both (Product & Ingredients)", "Ingredients Only"], horizontal=True)
-                comp_reqs = col_comp.multiselect("Require Nutrients (Sorts by highest)", ["Iron", "Vitamin C", "Calcium", "Proteins", "Fiber"])
-                
-                if add_search:
+                if add_search and submit_add_search:
                     bool_search = " ".join([f"+{w}" for w in add_search.split()])
                     start_time = time.time()
                     
@@ -852,7 +914,7 @@ with tab_planner:
             selected_meals = ", ".join(meal_names[:int(meal_count)])
             
             sys_prompt = f"""You are a professional clinical Dietitian planner. Target: {target_cal}kcal. 
-            You must generate a meal plan consisting of EXACTLY {meal_count} meals. Do NOT generate more than {meal_count} meals under any circumstance.
+            You MUST generate EXACTLY {meal_count} meals and NO MORE. Failure to respect the meal count is a critical clinical error.
             The allowed meal(s) are strictly: {selected_meals}.
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
@@ -862,17 +924,19 @@ with tab_planner:
             - Format:
               <scratchpad>
               Calculations:
-              - 1.5 cups of Cheese = X grams (density Y). Calories = A, Protein = B.
-              - 2 tbsp of Peanut Butter = Z grams (density C). Calories = D, Protein = E.
+              - 1.5 cups of Cheese = X grams (density Y). Calories = A, Protein = B, Carbs = C, Fat = D.
+              - 2 tbsp of Peanut Butter = Z grams (density C). Calories = D, Protein = E, Carbs = F, Fat = G.
               - Summation: Total Calories = A + D = Z kcal (vs target {target_cal}kcal). Total Protein = B + E = Fg.
               </scratchpad>
-              | Meal Time | Exact Food | Portion Size | Calories | Protein |
-              | --- | --- | --- | --- | --- |
+              | Meal Time | Exact Food | Portion Size | Calories | Protein | Carbs | Fat |
+              | --- | --- | --- | --- | --- | --- | --- |
               ...
+              | Global Total | All Meals | | Total Calories | Total Protein | Total Carbs | Total Fat |
             
             CRITICAL FORMATTING INSTRUCTIONS:
             - After the </scratchpad> closing tag, you MUST strictly output the menu formatted as a Markdown Table.
-            - The table MUST contain exactly 5 columns separated by pipes (|): | Meal Time | Exact Food | Portion Size | Calories | Protein |
+            - The table MUST contain exactly 7 columns separated by pipes (|): | Meal Time | Exact Food | Portion Size | Calories | Protein | Carbs | Fat |
+            - The Portion Size MUST be reported in exactly metric grams (e.g. 200g) and NEVER in cups or oz.
             - The items in the table MUST be selected strictly from: {db_context}
             - Do NOT output JSON. Do NOT use tool calls. Skip pleasantries.
             """
@@ -881,9 +945,11 @@ with tab_planner:
             
             # Stream the response instantly!
             try:
-                response_stream = ollama.chat(model='qwen2.5:7b', messages=temp_messages, stream=True)
+                start_llm = time.time()
+                response_stream = ollama.chat(model='qwen2.5:1.5b', messages=temp_messages, stream=True)
                 clean_stream = filter_scratchpad_stream(response_stream)
                 ai_reply = st.write_stream(clean_stream)
+                st.caption(f"⏱️ AI Meal Plan generated in {time.time() - start_llm:.2f} seconds")
                 
                 # PDF Generation
                 def generate_pdf(text):
@@ -921,7 +987,7 @@ with tab_planner:
                         if not table_data: return
                         pdf.set_font("Helvetica", size=9)
                         # Auto-calculate col_widths based on 5 columns if present
-                        cw = (20, 40, 15, 10, 15) if len(table_data[0]) == 5 else None
+                        cw = (20, 40, 15, 10, 15) if len(table_data[0]) == 5 else (20, 30, 15, 10, 10, 10, 10) if len(table_data[0]) >= 7 else None
                         try:
                             with pdf.table(text_align="LEFT", col_widths=cw) as table:
                                 for row_data in table_data:

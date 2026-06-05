@@ -31,6 +31,7 @@ def main():
 # NETWORK_MODE: Controls network call execution.
 # Possible values: 'local' (or 'server')
 NETWORK_MODE=server
+LLM_MODEL=your_llm_model
 
 # ------------------------------------------
 # 2. DATABASE CREDENTIALS (MySQL)

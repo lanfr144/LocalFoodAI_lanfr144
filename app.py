@@ -24,6 +24,9 @@ import smtplib
 from email.message import EmailMessage
 from typing import Optional, List, Dict, Any, Tuple
 import threading
+import os
+
+ACTIVE_MODEL = os.environ.get('LLM_MODEL', 'llama3.2-vision:11b')
 
 def strip_scratchpad(text: str) -> str:
     import re
@@ -65,7 +68,7 @@ def filter_scratchpad_stream(stream):
         yield buffer
 
 def pull_model_bg():
-    try: ollama.pull('qwen2.5:1.5b')
+    try: ollama.pull(ACTIVE_MODEL)
     except: pass
 threading.Thread(target=pull_model_bg, daemon=True).start()
 
@@ -471,7 +474,7 @@ with tab_chat:
         try:
             temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
             start_llm = time.time()
-            response_stream = ollama.chat(model='qwen2.5:1.5b', messages=temp_messages, stream=True)
+            response_stream = ollama.chat(model=ACTIVE_MODEL, messages=temp_messages, stream=True)
             
             with st.chat_message("assistant"):
                 ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
@@ -685,7 +688,7 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response = ollama.chat(model='llama3.2-vision:11b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response = ollama.chat(model=ACTIVE_MODEL, messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response)
                                 except Exception as e:
                                     error_msg = str(e).lower()
@@ -946,7 +949,7 @@ with tab_planner:
             # Stream the response instantly!
             try:
                 start_llm = time.time()
-                response = ollama.chat(model='llama3.2-vision:11b', messages=[
+                response = ollama.chat(model=ACTIVE_MODEL, messages=[
                     {'role': 'system', 'content': sys_prompt},
                     {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}
                 ], stream=True)

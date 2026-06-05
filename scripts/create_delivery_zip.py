@@ -21,7 +21,18 @@ def main():
     zip_path = os.path.join(repo_root, "delivery.zip")
     print(f"Building {zip_path}...")
     
-    dummy_env = """# ==========================================
+    network_mode = 'server'
+    llm_model = 'your_llm_model'
+    env_path = os.path.join(repo_root, ".env")
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                if line.startswith('NETWORK_MODE='):
+                    network_mode = line.strip().split('=', 1)[1]
+                elif line.startswith('LLM_MODEL='):
+                    llm_model = line.strip().split('=', 1)[1]
+    
+    dummy_env = f"""# ==========================================
 # LOCAL FOOD AI - DUMMY CONFIGURATION
 # ==========================================
 
@@ -30,8 +41,8 @@ def main():
 # ------------------------------------------
 # NETWORK_MODE: Controls network call execution.
 # Possible values: 'local' (or 'server')
-NETWORK_MODE=server
-LLM_MODEL=your_llm_model
+NETWORK_MODE={network_mode}
+LLM_MODEL={llm_model}
 
 # ------------------------------------------
 # 2. DATABASE CREDENTIALS (MySQL)

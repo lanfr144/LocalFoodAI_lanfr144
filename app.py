@@ -283,7 +283,7 @@ def render_version():
     st.caption(f"🚀 Version: {git_version}")
     
     try:
-        git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h']).decode('utf-8').strip()
+        git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h', 'app.py']).decode('utf-8').strip()
     except Exception:
         git_id = "Unknown"
     st.caption(f"📅 Git ID: {git_id}")

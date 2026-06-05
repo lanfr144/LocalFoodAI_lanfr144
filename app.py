@@ -685,7 +685,7 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response = ollama.chat(model='llama3.2:11b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response = ollama.chat(model='llama3.2-vision:11b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response)
                                 except Exception as e:
                                     error_msg = str(e).lower()
@@ -946,7 +946,7 @@ with tab_planner:
             # Stream the response instantly!
             try:
                 start_llm = time.time()
-                response = ollama.chat(model='llama3.2:11b', messages=[
+                response = ollama.chat(model='llama3.2-vision:11b', messages=[
                     {'role': 'system', 'content': sys_prompt},
                     {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}
                 ], stream=True)

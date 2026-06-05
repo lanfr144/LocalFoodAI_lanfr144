@@ -276,9 +276,14 @@ def reset_password(username: str, email: str) -> Any:
 # UI Theming
 def render_version():
     st.markdown("---")
-    st.caption("🚀 Version: v1.3.0")
     try:
-        git_id = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').strip()
+        git_version = subprocess.check_output(['git', 'describe', '--tags']).decode('utf-8').strip()
+    except Exception:
+        git_version = "v1.3.0"
+    st.caption(f"🚀 Version: {git_version}")
+    
+    try:
+        git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h']).decode('utf-8').strip()
     except Exception:
         git_id = "Unknown"
     st.caption(f"📅 Git ID: {git_id}")

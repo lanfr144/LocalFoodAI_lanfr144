@@ -60,6 +60,7 @@ EMAIL_PASS=your_email_app_password
 # ------------------------------------------
 # 5. TAIGA PROJECT MANAGEMENT CREDENTIALS
 # ------------------------------------------
+TAIGA_URL=your_taiga_url
 TAIGA_USER=your_taiga_user
 TAIGA_PASS=your_taiga_pass
 """

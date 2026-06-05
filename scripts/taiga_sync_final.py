@@ -8,8 +8,9 @@ urllib3.disable_warnings()
 
 TAIGA_USER = os.environ.get('TAIGA_USER', 'FrancoisLange')
 TAIGA_PASS = os.environ.get('TAIGA_PASS', '')
+TAIGA_URL = os.environ.get('TAIGA_URL', 'https://192.168.130.161/taiga')
 
-base_url = 'https://192.168.130.161/taiga/api/v1'
+base_url = f"{TAIGA_URL.rstrip('/')}/api/v1"
 
 def run_sync():
     if os.environ.get('NETWORK_MODE', 'server') == 'local':

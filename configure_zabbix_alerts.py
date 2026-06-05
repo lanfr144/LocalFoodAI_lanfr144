@@ -1,13 +1,14 @@
 import json
+#ident "@(#)$Format:LocalFoodAI:configure_zabbix_alerts.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import urllib.request
 import os
 
 ZABBIX_URL = os.environ.get('ZABBIX_URL', 'http://192.168.130.170:8081/api_jsonrpc.php')
-ZABBIX_USER = 'Admin'
-ZABBIX_PASS = 'zabbix'
-DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1504740323576774739/2-MNclIGcYSxtLrQ-jzIXWl6miW3dOFTvB6KZsTQIX1FFis6JFoszATegAJoosJD7CMT'
-EMAIL_USER = 'lanfr144@gmail.com'
-EMAIL_PASS = '321iaSTB'
+ZABBIX_USER = os.environ.get('ZABBIX_USER', 'Admin')
+ZABBIX_PASS = os.environ.get('ZABBIX_PASS', '')
+DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK', '')
+EMAIL_USER = os.environ.get('EMAIL_USER', 'lanfr144@gmail.com')
+EMAIL_PASS = os.environ.get('EMAIL_PASS', '')
 
 def zabbix_request(method, params, auth=None):
     payload = {

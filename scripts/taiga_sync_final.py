@@ -1,4 +1,5 @@
 import requests
+#ident "@(#)$Format:LocalFoodAI:taiga_sync_final.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import urllib3
 import os
 import re
@@ -6,11 +7,14 @@ import re
 urllib3.disable_warnings()
 
 TAIGA_USER = os.environ.get('TAIGA_USER', 'FrancoisLange')
-TAIGA_PASS = os.environ.get('TAIGA_PASS', 'BTSai123')
+TAIGA_PASS = os.environ.get('TAIGA_PASS', '')
 
 base_url = 'https://192.168.130.161/taiga/api/v1'
 
 def run_sync():
+    if os.environ.get('NETWORK_MODE', 'server') == 'local':
+        print("[OFFLINE MODE] Bypassing Taiga Synchronization.")
+        return
     auth_resp = requests.post(f'{base_url}/auth', json={'type': 'normal', 'username': TAIGA_USER, 'password': TAIGA_PASS}, verify=False)
     if auth_resp.status_code != 200:
         print("Auth failed!")

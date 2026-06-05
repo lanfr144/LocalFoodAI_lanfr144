@@ -685,8 +685,8 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response_stream = ollama.chat(model='qwen2.5:1.5b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
-                                    st.write_stream(chunk['message']['content'] for chunk in response_stream)
+                                    response = ollama.chat(model='llama3.2:11b', messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    st.write_stream(chunk['message']['content'] for chunk in response)
                                 except Exception as e:
                                     error_msg = str(e).lower()
                                     if "404" in error_msg or "not found" in error_msg:
@@ -767,7 +767,7 @@ with tab_plate:
                         pro = float(i['proteins_100g'] or 0) * (float(i['quantity_grams'])/100.0)
                         fat = float(i['fat_100g'] or 0) * (float(i['quantity_grams'])/100.0)
                         carb = float(i['carbohydrates_100g'] or 0) * (float(i['quantity_grams'])/100.0)
-                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {safe_name} (Pro: {pro:.2f}g | Fat: {fat:.2f}g | Carb: {carb:.2f}g)</li>", unsafe_allow_html=True)
+                        c1.markdown(f"<li><b>{i['quantity_grams']}g</b> of {i['product_name']} (Pro: {pro:.2f}g | Fat: {fat:.2f}g | Carb: {carb:.2f}g)</li>", unsafe_allow_html=True)
                         if c2.button("🗑️", key=f"del_item_{i['id']}"):
                             cursor.execute("DELETE FROM plate_items WHERE id = %s", (i['id'],))
                             conn.commit()
@@ -941,13 +941,16 @@ with tab_planner:
             - Do NOT output JSON. Do NOT use tool calls. Skip pleasantries.
             """
             
-            temp_messages = [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}]
+            st.info("🧠 AI is analyzing nutritional synergies and generating your plan...")
             
             # Stream the response instantly!
             try:
                 start_llm = time.time()
-                response_stream = ollama.chat(model='qwen2.5:1.5b', messages=temp_messages, stream=True)
-                clean_stream = filter_scratchpad_stream(response_stream)
+                response = ollama.chat(model='llama3.2:11b', messages=[
+                    {'role': 'system', 'content': sys_prompt},
+                    {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}
+                ], stream=True)
+                clean_stream = filter_scratchpad_stream(response)
                 ai_reply = st.write_stream(clean_stream)
                 st.caption(f"⏱️ AI Meal Plan generated in {time.time() - start_llm:.2f} seconds")
                 

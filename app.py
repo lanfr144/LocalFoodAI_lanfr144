@@ -277,23 +277,26 @@ def reset_password(username: str, email: str) -> Any:
 def render_version():
     st.markdown("---")
     try:
-        git_version = subprocess.check_output(['git', 'describe', '--tags']).decode('utf-8').strip()
+        if os.path.exists('git_version.txt'):
+            with open('git_version.txt', 'r') as f: git_version = f.read().strip()
+        else:
+            git_version = subprocess.check_output(['git', 'describe', '--tags']).decode('utf-8').strip()
     except Exception:
         git_version = "v1.3.0"
     st.caption(f"🚀 Version: {git_version}")
     
     try:
-        git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h', 'app.py']).decode('utf-8').strip()
+        if os.path.exists('git_id.txt'):
+            with open('git_id.txt', 'r') as f: git_id = f.read().strip()
+        else:
+            git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h', 'app.py']).decode('utf-8').strip()
     except Exception:
         git_id = "Unknown"
     st.caption(f"📅 Git ID: {git_id}")
 
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
 
-@st.cache_resource
-def get_manager():
-    return stx.CookieManager()
-cookie_manager = get_manager()
+cookie_manager = stx.CookieManager(key="cookie_manager")
 
 if cookie_manager.get(cookie="auth_user"):
     st.session_state["authenticated_user"] = cookie_manager.get(cookie="auth_user")
@@ -575,6 +578,7 @@ with tab_explore:
                         # Fetch EAV Medical Profile
                         eav_profile = get_eav_profile(st.session_state["authenticated_user"])
                         df = pd.DataFrame(results)
+                        df.replace('', pd.NA, inplace=True)
                         
                         st.markdown("### 🛠️ Dynamic Column Display")
                         default_columns = [
@@ -759,7 +763,15 @@ with tab_plate:
                     SELECT i.id, i.product_code, MAX(i.quantity_grams) as quantity_grams, MAX(p.product_name) as product_name, 
                            MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, 
                            MAX(m.sodium_100g) as sodium_100g, MAX(m.sugars_100g) as sugars_100g, MAX(m.fiber_100g) as fiber_100g,
-                           MAX(v.`vitamin-c_100g`) as vitamin_c_100g, MAX(min.iron_100g) as iron_100g, MAX(min.calcium_100g) as calcium_100g
+                           MAX(v.`vitamin-a_100g`) as vitamin_a_100g, MAX(v.`vitamin-b1_100g`) as vitamin_b1_100g, 
+                           MAX(v.`vitamin-b2_100g`) as vitamin_b2_100g, MAX(v.`vitamin-pp_100g`) as vitamin_pp_100g, 
+                           MAX(v.`vitamin-b6_100g`) as vitamin_b6_100g, MAX(v.`vitamin-b9_100g`) as vitamin_b9_100g, 
+                           MAX(v.`vitamin-b12_100g`) as vitamin_b12_100g, MAX(v.`vitamin-c_100g`) as vitamin_c_100g, 
+                           MAX(v.`vitamin-d_100g`) as vitamin_d_100g, MAX(v.`vitamin-e_100g`) as vitamin_e_100g, 
+                           MAX(v.`vitamin-k_100g`) as vitamin_k_100g,
+                           MAX(min.calcium_100g) as calcium_100g, MAX(min.iron_100g) as iron_100g, 
+                           MAX(min.magnesium_100g) as magnesium_100g, MAX(min.potassium_100g) as potassium_100g, 
+                           MAX(min.zinc_100g) as zinc_100g
                     FROM plate_items i 
                     LEFT JOIN products_core p ON i.product_code = p.code 
                     LEFT JOIN products_macros m ON i.product_code = m.code 
@@ -781,32 +793,40 @@ with tab_plate:
                             conn.commit()
                             st.rerun()
                             
-                    total_pro = sum((float(i['proteins_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_fat = sum((float(i['fat_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_carb = sum((float(i['carbohydrates_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_sod = sum((float(i['sodium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_sug = sum((float(i['sugars_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_fib = sum((float(i['fiber_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_vitc = sum((float(i['vitamin_c_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_iron = sum((float(i['iron_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
-                    total_calc = sum((float(i['calcium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items)
+                    totals = {
+                        "Total Protein (g)": sum((float(i['proteins_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Total Fat (g)": sum((float(i['fat_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Total Carbs (g)": sum((float(i['carbohydrates_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Sodium (g)": sum((float(i['sodium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Sugars (g)": sum((float(i['sugars_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Fiber (g)": sum((float(i['fiber_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin A (g)": sum((float(i['vitamin_a_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin B1 (g)": sum((float(i['vitamin_b1_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin B2 (g)": sum((float(i['vitamin_b2_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin B3/PP (g)": sum((float(i['vitamin_pp_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin B6 (g)": sum((float(i['vitamin_b6_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin B9 (g)": sum((float(i['vitamin_b9_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin B12 (g)": sum((float(i['vitamin_b12_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin C (g)": sum((float(i['vitamin_c_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin D (g)": sum((float(i['vitamin_d_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin E (g)": sum((float(i['vitamin_e_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Vitamin K (g)": sum((float(i['vitamin_k_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Calcium (g)": sum((float(i['calcium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Iron (g)": sum((float(i['iron_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Magnesium (g)": sum((float(i['magnesium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Potassium (g)": sum((float(i['potassium_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                        "Zinc (g)": sum((float(i['zinc_100g'] or 0) * (float(i['quantity_grams'])/100.0)) for i in items),
+                    }
                     
                     st.markdown("---")
                     st.markdown("### Plate Totals")
-                    m1, m2, m3 = st.columns(3)
-                    m1.metric("Total Protein", f"{total_pro:.2f}g")
-                    m2.metric("Total Fat", f"{total_fat:.2f}g")
-                    m3.metric("Total Carbs", f"{total_carb:.2f}g")
-                    
-                    m4, m5, m6 = st.columns(3)
-                    m4.metric("Sodium", f"{total_sod:.3f}g")
-                    m5.metric("Sugars", f"{total_sug:.2f}g")
-                    m6.metric("Fiber", f"{total_fib:.2f}g")
-                    
-                    m7, m8, m9 = st.columns(3)
-                    m7.metric("Vitamin C", f"{total_vitc:.4f}g")
-                    m8.metric("Iron", f"{total_iron:.4f}g")
-                    m9.metric("Calcium", f"{total_calc:.4f}g")
+                    metrics = list(totals.items())
+                    for idx in range(0, len(metrics), 3):
+                        cols = st.columns(3)
+                        for j in range(3):
+                            if idx + j < len(metrics):
+                                name, val = metrics[idx + j]
+                                cols[j].metric(name, f"{val:.5f}" if val < 0.1 else f"{val:.2f}")
                 
                 st.markdown("---")
                 st.markdown("#### ➕ Add Food to Plate")
@@ -869,26 +889,30 @@ with tab_plate:
                         
                     elapsed = time.time() - start_time
                     st.caption(f"⏱️ Plate Search Executed in {elapsed:.3f} seconds")
-                    if search_res:
-                        options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
-                        selected_str = st.selectbox("Select Product", list(options.keys()))
-                        selected_product = options[selected_str]
-                        
-                        add_amount_str = st.text_input("Portion Quantity (e.g., '100g', '2 tbsp', '1.5 cups', '1 pinch')", value="100g")
-                        
-                        if st.button("Add Item to Plate"):
-                            # Use UnitConverter to parse
-                            grams = UnitConverter.parse_and_convert(add_amount_str, product_name=selected_product['product_name'])
-                            if grams is not None:
-                                cursor.execute("INSERT INTO plate_items (plate_id, product_code, quantity_grams) VALUES (%s, %s, %s)", 
-                                              (active_p_id, selected_product['code'], grams))
-                                conn.commit()
-                                st.success(f"Added {grams}g of {selected_product['product_name']}!")
-                                st.rerun()
-                            else:
-                                st.error("Could not parse unit. Please use format like '100g' or '1 cup'.")
-                    else:
-                        st.warning("No products found.")
+                    st.session_state['plate_search_res'] = search_res
+
+                if st.session_state.get('plate_search_res'):
+                    search_res = st.session_state['plate_search_res']
+                    options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
+                    selected_str = st.selectbox("Select Product", list(options.keys()))
+                    selected_product = options[selected_str]
+                    
+                    add_amount_str = st.text_input("Portion Quantity (e.g., '100g', '2 tbsp', '1.5 cups', '1 pinch')", value="100g")
+                    
+                    if st.button("Add Item to Plate"):
+                        # Use UnitConverter to parse
+                        grams = UnitConverter.parse_and_convert(add_amount_str, product_name=selected_product['product_name'])
+                        if grams is not None:
+                            cursor.execute("INSERT INTO plate_items (plate_id, product_code, quantity_grams) VALUES (%s, %s, %s)", 
+                                          (active_p_id, selected_product['code'], grams))
+                            conn.commit()
+                            st.success(f"Added {grams}g of {selected_product['product_name']}!")
+                            st.session_state.pop('plate_search_res', None)
+                            st.rerun()
+                        else:
+                            st.error("Could not parse unit. Please use format like '100g' or '1 cup'.")
+                elif add_search and submit_add_search:
+                    st.warning("No products found.")
 
 with tab_planner:
     st.subheader("🤖 AI Meal Planner")

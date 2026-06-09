@@ -34,22 +34,26 @@ def strip_scratchpad(text: str) -> str:
     clean_text = re.sub(r'<scratchpad>.*?</scratchpad>', '', text, flags=re.DOTALL)
     return clean_text.strip()
 
-def filter_scratchpad_stream(stream):
+def filter_scratchpad_stream(stream, raw_accumulator=None):
     buffer = ""
     in_scratchpad = False
     for chunk in stream:
         content = chunk['message']['content']
+        if raw_accumulator is not None:
+            raw_accumulator.append(content)
         buffer += content
         
         while True:
             if not in_scratchpad:
                 start_idx = buffer.find("<scratchpad>")
                 if start_idx != -1:
-                    yield buffer[:start_idx]
-                    buffer = buffer[start_idx:]
+                    if start_idx > 0:
+                        yield buffer[:start_idx]
+                    yield "\n\n> 💭 **AI Thinking Process:**\n> "
+                    buffer = buffer[start_idx + 12:]
                     in_scratchpad = True
                 else:
-                    yield_len = max(0, len(buffer) - 11)
+                    yield_len = len(buffer) - 11
                     if yield_len > 0:
                         yield buffer[:yield_len]
                         buffer = buffer[yield_len:]
@@ -57,15 +61,25 @@ def filter_scratchpad_stream(stream):
             else:
                 end_idx = buffer.find("</scratchpad>")
                 if end_idx != -1:
+                    scratch_content = buffer[:end_idx]
+                    scratch_content_formatted = scratch_content.replace("\n", "\n> ")
+                    yield scratch_content_formatted
+                    yield "\n\n"
                     buffer = buffer[end_idx + 13:]
                     in_scratchpad = False
                 else:
-                    keep_len = 12
-                    if len(buffer) > keep_len:
-                        buffer = buffer[-keep_len:]
+                    yield_len = len(buffer) - 12
+                    if yield_len > 0:
+                        scratch_content = buffer[:yield_len]
+                        scratch_content_formatted = scratch_content.replace("\n", "\n> ")
+                        yield scratch_content_formatted
+                        buffer = buffer[yield_len:]
                     break
-    if not in_scratchpad and buffer:
-        yield buffer
+    if buffer:
+        if in_scratchpad:
+            yield buffer.replace("\n", "\n> ")
+        else:
+            yield buffer
 
 def pull_model_bg():
     try: ollama.pull(ACTIVE_MODEL)
@@ -298,11 +312,15 @@ st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide
 
 cookie_manager = stx.CookieManager(key="cookie_manager")
 
-if cookie_manager.get_all() is None:
-    st.stop() # Wait for React component to mount
+# Wait for cookies to load
+cookies = cookie_manager.get_all()
+if cookies is None:
+    st.stop()
 
-if cookie_manager.get(cookie="auth_user"):
-    st.session_state["authenticated_user"] = cookie_manager.get(cookie="auth_user")
+# If the cookie has auth_user, set/restore session state
+cookie_user = cookie_manager.get(cookie="auth_user")
+if cookie_user:
+    st.session_state["authenticated_user"] = cookie_user
 elif "authenticated_user" not in st.session_state:
     st.session_state["authenticated_user"] = None
 
@@ -392,6 +410,14 @@ with st.sidebar:
                 if verify_login(l_user, l_pass):
                     notifier.send_alert(f"User Login Success: {l_user}")
                     st.session_state["authenticated_user"] = l_user
+                    import datetime
+                    # Set cookie with 30 days expiration
+                    cookie_manager.set(
+                        "auth_user",
+                        l_user,
+                        expires_at=datetime.datetime.now() + datetime.timedelta(days=30)
+                    )
+                    time.sleep(0.2)
                     st.rerun()
                 else:
                     notifier.send_alert(f"User Login Failed: {l_user}")
@@ -582,6 +608,9 @@ with tab_explore:
                         eav_profile = get_eav_profile(st.session_state["authenticated_user"])
                         df = pd.DataFrame(results)
                         df.replace(r'^\s*$', None, regex=True, inplace=True)
+                        for col in df.columns:
+                            if col.endswith('_100g'):
+                                df[col] = pd.to_numeric(df[col], errors='coerce')
                         
                         st.markdown("### 🛠️ Dynamic Column Display")
                         default_columns = [
@@ -686,7 +715,10 @@ with tab_explore:
                             warnings_col.append(" | ".join(list(set(warns))) if warns else "✅ Safe for Profile")
                             
                         df_display.insert(0, 'Medical Warning', warnings_col)
-                        df_display.fillna("", inplace=True)
+                        # Only fillna with empty string on object columns to avoid Arrow float64 conversion errors
+                        for col in df_display.columns:
+                            if df_display[col].dtype == 'object':
+                                df_display[col] = df_display[col].fillna("")
                         df_display.index = range(1, len(df_display) + 1)
                         styled_df = df_display.style.apply(highlight_medical_warnings, axis=1)
 
@@ -840,9 +872,11 @@ with tab_plate:
                                 alg_clean = alg.strip().lower()
                                 if alg_clean and alg_clean != 'none':
                                     all_allergens.add(alg_clean.title())
+                    st.markdown("---")
                     if all_allergens:
-                        st.markdown("---")
                         st.warning(f"⚠️ **Plate Allergens Detected:** {', '.join(all_allergens)}")
+                    else:
+                        st.success("✅ **No Allergens Detected**")
                 
                 st.markdown("---")
                 st.markdown("#### ➕ Add Food to Plate")
@@ -998,8 +1032,10 @@ with tab_planner:
                     {'role': 'system', 'content': sys_prompt},
                     {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}
                 ], stream=True)
-                clean_stream = filter_scratchpad_stream(response)
+                raw_chunks = []
+                clean_stream = filter_scratchpad_stream(response, raw_chunks)
                 ai_reply = st.write_stream(clean_stream)
+                raw_reply = "".join(raw_chunks)
                 st.caption(f"⏱️ AI Meal Plan generated in {time.time() - start_llm:.2f} seconds")
                 
                 # PDF Generation
@@ -1086,7 +1122,7 @@ with tab_planner:
                 
                 st.download_button(
                     label="📄 Download PDF Export",
-                    data=generate_pdf(strip_scratchpad(ai_reply)),
+                    data=generate_pdf(strip_scratchpad(raw_reply)),
                     file_name="Clinical_Meal_Plan.pdf",
                     mime="application/pdf",
                     type="primary"

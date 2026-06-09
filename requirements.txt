@@ -10,3 +10,4 @@ requests
 fpdf2
 extra-streamlit-components
 pathspec
+paramiko

@@ -75,6 +75,13 @@ EMAIL_PASS=your_email_app_password
 TAIGA_URL=your_taiga_url
 TAIGA_USER=your_taiga_user
 TAIGA_PASS=your_taiga_pass
+
+# ------------------------------------------
+# 6. SERVER DEPLOYMENT CREDENTIALS
+# ------------------------------------------
+SERVER_HOST=your_server_host
+SERVER_USER=your_server_user
+SERVER_PASS=your_server_pass
 """
     
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:

@@ -298,6 +298,9 @@ st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide
 
 cookie_manager = stx.CookieManager(key="cookie_manager")
 
+if cookie_manager.get_all() is None:
+    st.stop() # Wait for React component to mount
+
 if cookie_manager.get(cookie="auth_user"):
     st.session_state["authenticated_user"] = cookie_manager.get(cookie="auth_user")
 elif "authenticated_user" not in st.session_state:
@@ -578,7 +581,7 @@ with tab_explore:
                         # Fetch EAV Medical Profile
                         eav_profile = get_eav_profile(st.session_state["authenticated_user"])
                         df = pd.DataFrame(results)
-                        df.replace('', pd.NA, inplace=True)
+                        df.replace(r'^\s*$', None, regex=True, inplace=True)
                         
                         st.markdown("### 🛠️ Dynamic Column Display")
                         default_columns = [
@@ -721,11 +724,11 @@ with tab_plate:
     5. Use the 🗑️ buttons to delete incorrect items or entire plates.
     
     *Example Plates:*
-    1. `150g White Rice` + `50g Chicken Breast` + `100g Green Beans`
-    2. `200g Potatoes` + `100g Tomatoes` + `100g Beef`
-    3. `100g Spinach Salad` + `50g Feta Cheese`
-    4. `200g Lentils` + `100g Quinoa`
-    5. `100g Apple` + `30g Almonds`
+    1. `add White Rice use 150g then add Chicken Breast use 50g add Green Beans use 100g`
+    2. `add Potatoes use 200g then add Tomatoes use 100g add Beef use 100g`
+    3. `add Spinach Salad use 100g then add Feta Cheese use 50g`
+    4. `add Lentils use 200g then add Quinoa use 100g`
+    5. `add Apple use 100g then add Almonds use 30g`
     """)
     uid = get_user_id(st.session_state["authenticated_user"])
     conn = get_db_connection('app_auth')
@@ -771,12 +774,14 @@ with tab_plate:
                            MAX(v.`vitamin-k_100g`) as vitamin_k_100g,
                            MAX(min.calcium_100g) as calcium_100g, MAX(min.iron_100g) as iron_100g, 
                            MAX(min.magnesium_100g) as magnesium_100g, MAX(min.potassium_100g) as potassium_100g, 
-                           MAX(min.zinc_100g) as zinc_100g
+                           MAX(min.zinc_100g) as zinc_100g,
+                           GROUP_CONCAT(DISTINCT a.allergens SEPARATOR ', ') as allergens
                     FROM plate_items i 
                     LEFT JOIN products_core p ON i.product_code = p.code 
                     LEFT JOIN products_macros m ON i.product_code = m.code 
                     LEFT JOIN products_vitamins v ON i.product_code = v.code
                     LEFT JOIN products_minerals min ON i.product_code = min.code
+                    LEFT JOIN products_allergens a ON i.product_code = a.code
                     WHERE i.plate_id = %s
                     GROUP BY i.id, i.product_code
                 """, (active_p_id,))
@@ -827,6 +832,17 @@ with tab_plate:
                             if idx + j < len(metrics):
                                 name, val = metrics[idx + j]
                                 cols[j].metric(name, f"{val:.5f}" if val < 0.1 else f"{val:.2f}")
+
+                    all_allergens = set()
+                    for i in items:
+                        if i.get('allergens'):
+                            for alg in str(i['allergens']).split(','):
+                                alg_clean = alg.strip().lower()
+                                if alg_clean and alg_clean != 'none':
+                                    all_allergens.add(alg_clean.title())
+                    if all_allergens:
+                        st.markdown("---")
+                        st.warning(f"⚠️ **Plate Allergens Detected:** {', '.join(all_allergens)}")
                 
                 st.markdown("---")
                 st.markdown("#### ➕ Add Food to Plate")
@@ -1041,7 +1057,10 @@ with tab_planner:
                             pdf.ln(h=2)
                             continue
                         
-                        if line.startswith('|') and line.endswith('|'):
+                        if line.startswith('|') or ('|' in line and 'Total' in line):
+                            if not line.endswith('|'): line += ' |'
+                            if not line.startswith('|'): line = '| ' + line
+                            
                             if '---' in line: continue
                             cols = [col.strip() for col in line.strip('|').split('|')]
                             

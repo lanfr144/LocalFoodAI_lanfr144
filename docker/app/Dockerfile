@@ -13,8 +13,8 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY *.py ./
+# Copy application code and version files
+COPY *.py *.txt ./
 
 EXPOSE 8501
 

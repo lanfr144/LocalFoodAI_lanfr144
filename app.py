@@ -34,6 +34,78 @@ def strip_scratchpad(text: str) -> str:
     clean_text = re.sub(r'<scratchpad>.*?</scratchpad>', '', text, flags=re.DOTALL)
     return clean_text.strip()
 
+def detect_allergens_from_text(name: str, ingredients: str) -> set:
+    import re
+    detected = set()
+    text = (name + " " + ingredients).lower()
+    mappings = {
+        "peanut": "Peanuts",
+        "cacahuète": "Peanuts",
+        "cacahuete": "Peanuts",
+        "egg": "Eggs",
+        "oeuf": "Eggs",
+        "œuf": "Eggs",
+        "milk": "Milk",
+        "lait": "Milk",
+        "butter": "Milk",
+        "beurre": "Milk",
+        "cheese": "Milk",
+        "fromage": "Milk",
+        "cream": "Milk",
+        "crème": "Milk",
+        "creme": "Milk",
+        "wheat": "Wheat",
+        "blé": "Wheat",
+        "ble": "Wheat",
+        "gluten": "Gluten",
+        "soy": "Soy",
+        "soja": "Soy",
+        "almond": "Tree Nuts",
+        "amande": "Tree Nuts",
+        "cashew": "Tree Nuts",
+        "walnut": "Tree Nuts",
+        "noix": "Tree Nuts",
+        "hazelnut": "Tree Nuts",
+        "noisette": "Tree Nuts",
+        "pecan": "Tree Nuts",
+        "pistachio": "Tree Nuts",
+        "pistache": "Tree Nuts",
+        "fish": "Fish",
+        "poisson": "Fish",
+        "salmon": "Fish",
+        "saumon": "Fish",
+        "tuna": "Fish",
+        "thon": "Fish",
+        "shrimp": "Shellfish",
+        "crevette": "Shellfish",
+        "crab": "Shellfish",
+        "crabe": "Shellfish",
+        "lobster": "Shellfish",
+        "homard": "Shellfish",
+        "mussel": "Shellfish",
+        "moule": "Shellfish",
+        "oyster": "Shellfish",
+        "huître": "Shellfish",
+        "huitre": "Shellfish",
+        "sesame": "Sesame",
+        "sésame": "Sesame",
+        "mustard": "Mustard",
+        "moutarde": "Mustard",
+        "celery": "Celery",
+        "céleri": "Celery",
+        "celeri": "Celery",
+        "lupin": "Lupin",
+        "mollusc": "Molluscs",
+        "mollusque": "Molluscs",
+        "sulphite": "Sulphites",
+        "sulfite": "Sulphites"
+    }
+    for keyword, allergen in mappings.items():
+        pattern = r'\b' + re.escape(keyword) + r's?\b'
+        if re.search(pattern, text):
+            detected.add(allergen)
+    return detected
+
 def filter_scratchpad_stream(stream, raw_accumulator=None):
     buffer = ""
     in_scratchpad = False
@@ -795,7 +867,8 @@ with tab_plate:
                     st.rerun()
                 
                 cursor.execute("""
-                    SELECT i.id, i.product_code, MAX(i.quantity_grams) as quantity_grams, MAX(p.product_name) as product_name, 
+                    SELECT i.id, i.product_code, MAX(i.quantity_grams) as quantity_grams, 
+                           MAX(p.product_name) as product_name, MAX(p.ingredients_text) as ingredients_text,
                            MAX(m.proteins_100g) as proteins_100g, MAX(m.fat_100g) as fat_100g, MAX(m.carbohydrates_100g) as carbohydrates_100g, 
                            MAX(m.sodium_100g) as sodium_100g, MAX(m.sugars_100g) as sugars_100g, MAX(m.fiber_100g) as fiber_100g,
                            MAX(v.`vitamin-a_100g`) as vitamin_a_100g, MAX(v.`vitamin-b1_100g`) as vitamin_b1_100g, 
@@ -867,11 +940,21 @@ with tab_plate:
 
                     all_allergens = set()
                     for i in items:
+                        # 1. Parse database allergens if available
                         if i.get('allergens'):
                             for alg in str(i['allergens']).split(','):
                                 alg_clean = alg.strip().lower()
+                                if alg_clean.startswith('en:'):
+                                    alg_clean = alg_clean[3:]
                                 if alg_clean and alg_clean != 'none':
-                                    all_allergens.add(alg_clean.title())
+                                    all_allergens.add(alg_clean.replace('-', ' ').title())
+                        
+                        # 2. Text heuristics fallback for common allergens
+                        prod_name = str(i.get('product_name') or '')
+                        ing_text = str(i.get('ingredients_text') or '')
+                        heuristics = detect_allergens_from_text(prod_name, ing_text)
+                        all_allergens.update(heuristics)
+                        
                     st.markdown("---")
                     if all_allergens:
                         st.warning(f"⚠️ **Plate Allergens Detected:** {', '.join(all_allergens)}")

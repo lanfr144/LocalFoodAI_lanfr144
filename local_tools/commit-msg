@@ -1,0 +1,22 @@
+#!/bin/sh
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+# Skip checking merge commits or empty commits
+if echo "$commit_msg" | grep -qE "^Merge "; then
+    exit 0
+fi
+
+# Regex pattern to check if the commit message starts with TG-<num>, US#<num>, or [#<num>]
+if echo "$commit_msg" | grep -qE "^(TG-[0-9]+|US#[0-9]+|\[#[0-9]+\])"; then
+    exit 0
+else
+    echo "❌ Error: Commit message must start with a Taiga task/story tag (e.g., TG-123, US#123, or [#123])."
+    echo "Your commit message was:"
+    echo "--------------------------------------------------"
+    echo "$commit_msg"
+    echo "--------------------------------------------------"
+    exit 1
+fi

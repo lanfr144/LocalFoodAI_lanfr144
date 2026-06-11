@@ -1,6 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-
-# $Id$
+# $Id: 1701828b122e0c319e59134ca6511a42ecad9297 Lange François lanfr144@school.lu 2026/06/11 08:26:59 Lange François lanfr144@school.lu 2026/06/11 08:26:59   [TG-131] Purge database passwords from tracked files and format application versioning [PreRelease-1.0-26-g1701828] $
 # Final Project Report (Living Document)
 
 ## What Has Been Done
@@ -8,7 +6,7 @@ The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%c
 2. **Database Optimization**: Successfully loaded OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
 3. **Clinical Subquery Strategy**: Refactored the core Pandas/SQL query pipeline to use subquery limiting, resolving Cartesian join explosions and reducing query latency to ~0.04s.
 4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors proxy and server health, dynamically handling SNMP/alert loops in local/offline fallback mode.
-5. **Git Versioning**: Implemented Git `.gitattributes` to push `$Id$` tracking directly into the Python Application UI.
+5. **Git Versioning**: Implemented Git `.gitattributes` to push `$Id: 1701828b122e0c319e59134ca6511a42ecad9297 Lange François lanfr144@school.lu 2026/06/11 08:26:59 Lange François lanfr144@school.lu 2026/06/11 08:26:59   [TG-131] Purge database passwords from tracked files and format application versioning [PreRelease-1.0-26-g1701828] $` tracking directly into the Python Application UI.
 
 ## What Needs To Be Done (Day 2 Operations)
 1. **SSL/TLS Certificates**: The Nginx proxy is functional on HTTP port 80. Port 443 (HTTPS) must be configured with a Let's Encrypt certificate for true production encryption.

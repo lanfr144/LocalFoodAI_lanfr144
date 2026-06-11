@@ -2,7 +2,7 @@
 # $Id$
 # $Author$
 # $log$
-#ident "@(#)LocalFoodAI:app.py:$Format:%D:%ci:%cN:%h$"
+#ident "@(#)LocalFoodAI:app.py:$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import streamlit as st
 import extra_streamlit_components as stx
@@ -361,6 +361,16 @@ def reset_password(username: str, email: str) -> Any:
     return False
 
 # UI Theming
+def is_valid_image_url(url):
+    if not url or not isinstance(url, str):
+        return False
+    url = url.strip()
+    if not url.startswith(('http://', 'https://')):
+        return False
+    if 'invalid' in url.lower():
+        return False
+    return True
+
 def reformat_git_date(date_str):
     from datetime import datetime
     try:
@@ -376,35 +386,53 @@ def reformat_git_date(date_str):
 
 def render_version():
     st.markdown("---")
-    try:
-        if os.path.exists('git_version.txt'):
-            with open('git_version.txt', 'r') as f: git_version = f.read().strip()
-        else:
-            git_version = subprocess.check_output(['git', 'describe', '--tags']).decode('utf-8').strip()
-    except Exception:
-        git_version = "v1.3.0"
-        
-    formatted_version = reformat_git_date(git_version)
-    st.caption(f"🚀 Version: {formatted_version}")
+    git_version = None
+    git_hash = None
     
+    # 1. Parse from the smudged ident header in app.py
     try:
-        if os.path.exists('git_id.txt'):
-            with open('git_id.txt', 'r') as f: git_id = f.read().strip()
-        else:
-            git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h', 'app.py']).decode('utf-8').strip()
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        app_path = os.path.join(current_dir, 'app.py')
+        if os.path.exists(app_path):
+            with open(app_path, 'r', encoding='utf-8') as f:
+                import re
+                for _ in range(15):
+                    line = f.readline()
+                    if not line:
+                        break
+                    if "$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$Format:LocalFoodAI:app\.py:(.*?)\$', line)
+                        if match:
+                            parts = match.group(1).split(':')
+                            if len(parts) >= 7 and not parts[0].startswith('%an'):
+                                git_version = parts[5] # %cd (committer date)
+                                git_hash = parts[6][:7] if parts[6] else ""
+                                break
     except Exception:
-        git_id = "Unknown"
+        pass
         
-    parts = git_id.strip().split()
-    if len(parts) >= 6:
-        date_part = " ".join(parts[:6])
-        hash_part = parts[6] if len(parts) > 6 else ""
-        formatted_date = reformat_git_date(date_part)
-        formatted_id = f"{formatted_date} {hash_part}".strip()
-    else:
-        formatted_id = git_id
-        
-    st.caption(f"📅 Git ID: {formatted_id}")
+    # 2. Fallback using git log command
+    if not git_version or not git_hash:
+        try:
+            git_version = subprocess.check_output(
+                ['git', 'log', '-1', '--date=format:%Y/%m/%d %H:%M:%S', '--format=%cd', 'app.py'],
+                stderr=subprocess.DEVNULL
+            ).decode('utf-8').strip()
+            git_hash = subprocess.check_output(
+                ['git', 'log', '-1', '--format=%h', 'app.py'],
+                stderr=subprocess.DEVNULL
+            ).decode('utf-8').strip()
+        except Exception:
+            pass
+
+    # 3. Default fallback values
+    if not git_version:
+        git_version = "2026/06/11 08:26:59"
+    if not git_hash:
+        git_hash = "1701828"
+
+    st.caption(f"🚀 Version: {git_version}")
+    st.caption(f"📅 Git ID: {git_version} {git_hash}")
+    st.caption(f"Model: {ACTIVE_MODEL}")
 
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
 
@@ -672,12 +700,16 @@ with tab_explore:
                     l_str = "" if limit_rc == "All" else f"LIMIT {limit_rc}"
                     query = f"""
                         SELECT c.code, c.product_name, c.generic_name, c.brands, c.ingredients_text,
+                               c.url, c.image_url, c.image_small_url, c.image_ingredients_url, 
+                               c.image_ingredients_small_url, c.image_nutrition_url, c.image_nutrition_small_url,
                                a.allergens,
                                m.`energy-kcal_100g`, m.proteins_100g, m.fat_100g, m.carbohydrates_100g, m.sugars_100g, m.fiber_100g, m.sodium_100g, m.salt_100g, m.cholesterol_100g,
                                v.`vitamin-a_100g`, v.`vitamin-b1_100g`, v.`vitamin-b2_100g`, v.`vitamin-pp_100g`, v.`vitamin-b6_100g`, v.`vitamin-b9_100g`, v.`vitamin-b12_100g`, v.`vitamin-c_100g`, v.`vitamin-d_100g`, v.`vitamin-e_100g`, v.`vitamin-k_100g`,
                                min.calcium_100g, min.iron_100g, min.magnesium_100g, min.potassium_100g, min.zinc_100g
                         FROM (
-                            SELECT code, product_name, generic_name, brands, ingredients_text
+                            SELECT code, product_name, generic_name, brands, ingredients_text,
+                                   url, image_url, image_small_url, image_ingredients_url, 
+                                   image_ingredients_small_url, image_nutrition_url, image_nutrition_small_url
                             FROM food_db.products_core
                             WHERE (MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE) OR product_name LIKE %s)
                             AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
@@ -699,7 +731,7 @@ with tab_explore:
                     cursor.execute(query, (sq_bool, sq_like, sq_bool, sq_bool, min_pro, min_fat, min_carb, max_sug))
                     results = cursor.fetchall()
                     elapsed = time.time() - start_time
-                    st.caption(f"⏱️ DB Query Executed in {elapsed:.3f} seconds")
+                    st.caption(f"⏱️ Execution Trace: Module=MySQL | Time={elapsed:.3f} seconds")
                     
                     if results:
                         # Fetch EAV Medical Profile
@@ -712,7 +744,7 @@ with tab_explore:
                         
                         st.markdown("### 🛠️ Dynamic Column Display")
                         default_columns = [
-                            'code', 'product_name', 'generic_name', 'brands', 'allergens', 'ingredients_text',
+                            'code', 'product_name', 'generic_name', 'brands', 'image_small_url', 'allergens', 'ingredients_text',
                             'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'sodium_100g', 'energy-kcal_100g',
                             'vitamin-c_100g', 'iron_100g', 'calcium_100g'
                         ]
@@ -813,6 +845,12 @@ with tab_explore:
                             warnings_col.append(" | ".join(list(set(warns))) if warns else "✅ Safe for Profile")
                             
                         df_display.insert(0, 'Medical Warning', warnings_col)
+                        # Clean image URLs in df_display before displaying
+                        for col in df_display.columns:
+                            if 'image' in col.lower():
+                                df_display[col] = df_display[col].apply(lambda x: x if is_valid_image_url(x) else "")
+                        # Replace None values with &nsbp
+                        df_display.replace(to_replace=r'^None$', value='&nsbp', regex=True, inplace=True)
                         # Only fillna with empty string on object columns to avoid Arrow float64 conversion errors
                         for col in df_display.columns:
                             if df_display[col].dtype == 'object':
@@ -820,18 +858,26 @@ with tab_explore:
                         df_display.index = range(1, len(df_display) + 1)
                         styled_df = df_display.style.apply(highlight_medical_warnings, axis=1)
 
+                        col_configs = {}
+                        for col in df_display.columns:
+                            if 'image' in col.lower():
+                                col_configs[col] = st.column_config.ImageColumn(col.replace('_', ' ').title())
+
                         st.success(f"Analysed {len(results)} records utilizing dynamic Partitions!")
-                        st.dataframe(styled_df, use_container_width=True, hide_index=True)
+                        st.dataframe(styled_df, column_config=col_configs, use_container_width=True, hide_index=True)
                         
                         if st.button("🤖 Ask AI to Evaluate This Table"):
                             with st.spinner("AI is dynamically evaluating these records against your profile..."):
                                 user_eav = get_eav_profile(st.session_state["authenticated_user"])
                                 profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
+                                start_eval = time.time()
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
-                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Provide a direct, readable clinical summary. Do not output raw JSON."
+                                eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Be extremely precise regarding carbohydrate content and do not hallucinate any values. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
                                     response = ollama.chat(model=ACTIVE_MODEL, messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response)
+                                    elapsed_eval = time.time() - start_eval
+                                    st.caption(f"⏱️ Execution Trace: Module=Ollama | Time={elapsed_eval:.2f} seconds")
                                 except Exception as e:
                                     error_msg = str(e).lower()
                                     if "404" in error_msg or "not found" in error_msg:
@@ -995,6 +1041,7 @@ with tab_plate:
                     col_scope, col_comp = st.columns(2)
                     search_scope = col_scope.radio("Search Scope", ["Auto (Cascaded)", "Product Name Only", "Both (Product & Ingredients)", "Ingredients Only"], horizontal=True)
                     comp_reqs = col_comp.multiselect("Require Nutrients (Sorts by highest)", ["Iron", "Vitamin C", "Calcium", "Proteins", "Fiber"])
+                    raw_ingredient_filter = col_scope.radio("Raw Ingredient Only?", ["No", "Yes"], horizontal=True)
                     
                     submit_add_search = st.form_submit_button("Search Food")
                 
@@ -1021,13 +1068,18 @@ with tab_plate:
                         wh_comp = " AND " + " AND ".join(r_clauses) if r_clauses else ""
                         order_by = "ORDER BY " + ", ".join(o_clauses) if o_clauses else ""
                         
+                        raw_clause = ""
+                        if raw_ingredient_filter == "Yes":
+                            raw_clause = "AND (image_ingredients_url IS NULL OR image_ingredients_url = '') AND (image_ingredients_small_url IS NULL OR image_ingredients_small_url = '')"
+                        
                         sql = f"""
-                            SELECT c.code, c.product_name
+                            SELECT c.code, c.product_name, c.image_small_url, c.image_ingredients_small_url, c.image_nutrition_small_url
                             FROM (
-                                SELECT code, product_name
+                                SELECT code, product_name, image_small_url, image_ingredients_small_url, image_nutrition_small_url
                                 FROM food_db.products_core
                                 WHERE MATCH({m_col}) AGAINST(%s IN BOOLEAN MODE)
                                 AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
+                                {raw_clause}
                                 ORDER BY LENGTH(product_name) ASC
                             ) c
                             JOIN food_db.products_macros m ON c.code = m.code
@@ -1047,11 +1099,36 @@ with tab_plate:
                         search_res = execute_search("ingredients_text")
                         
                     elapsed = time.time() - start_time
-                    st.caption(f"⏱️ Plate Search Executed in {elapsed:.3f} seconds")
+                    st.caption(f"⏱️ Execution Trace: Module=MySQL | Time={elapsed:.3f} seconds")
                     st.session_state['plate_search_res'] = search_res
 
                 if st.session_state.get('plate_search_res'):
                     search_res = st.session_state['plate_search_res']
+                    
+                    # Select Product Table Gallery
+                    st.markdown("##### 🔍 Found Products Preview")
+                    df_rows = []
+                    for r in search_res:
+                        df_rows.append({
+                            "Code": r['code'],
+                            "Product Name": r['product_name'],
+                            "Image": r.get('image_small_url') if is_valid_image_url(r.get('image_small_url')) else "",
+                            "Ingredients Image": r.get('image_ingredients_small_url') if is_valid_image_url(r.get('image_ingredients_small_url')) else "",
+                            "Nutrition Image": r.get('image_nutrition_small_url') if is_valid_image_url(r.get('image_nutrition_small_url')) else "",
+                        })
+                    gallery_df = pd.DataFrame(df_rows)
+                    gallery_df.replace(to_replace=r'^None$', value='&nsbp', regex=True, inplace=True)
+                    st.dataframe(
+                        gallery_df,
+                        column_config={
+                            "Image": st.column_config.ImageColumn("Image"),
+                            "Ingredients Image": st.column_config.ImageColumn("Ingredients"),
+                            "Nutrition Image": st.column_config.ImageColumn("Nutrition"),
+                        },
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                    
                     options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
                     selected_str = st.selectbox("Select Product", list(options.keys()))
                     selected_product = options[selected_str]
@@ -1059,6 +1136,7 @@ with tab_plate:
                     add_amount_str = st.text_input("Portion Quantity (e.g., '100g', '2 tbsp', '1.5 cups', '1 pinch')", value="100g")
                     
                     if st.button("Add Item to Plate"):
+                        start_add = time.time()
                         # Use UnitConverter to parse
                         grams = UnitConverter.parse_and_convert(add_amount_str, product_name=selected_product['product_name'])
                         if grams is not None:
@@ -1066,6 +1144,8 @@ with tab_plate:
                                           (active_p_id, selected_product['code'], grams))
                             conn.commit()
                             st.success(f"Added {grams}g of {selected_product['product_name']}!")
+                            elapsed_add = time.time() - start_add
+                            st.caption(f"⏱️ Execution Trace: Module=UnitConverter, MySQL | Time={elapsed_add:.3f} seconds")
                             st.session_state.pop('plate_search_res', None)
                             st.rerun()
                         else:
@@ -1110,6 +1190,11 @@ with tab_planner:
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
             
+            CARBOHYDRATE PRECISION & NO HALLUCINATION:
+            - The customer is extremely interested in carbohydrates, so you MUST be very precise. 
+            - Under no circumstances should you hallucinate any nutritional values. No hallucinations. 
+            - Base all calculations and values strictly on the database context provided: {db_context}.
+            
             COGNITIVE SCRATCHPAD INSTRUCTIONS:
             - You MUST perform all your intermediate thinking, unit conversions (e.g. converting cups, tablespoons, or ounces to exact metric grams based on food density), and calorie/protein mathematical additions inside a `<scratchpad>` tag.
             - Format:
@@ -1145,7 +1230,7 @@ with tab_planner:
                 clean_stream = filter_scratchpad_stream(response, raw_chunks)
                 ai_reply = st.write_stream(clean_stream)
                 raw_reply = "".join(raw_chunks)
-                st.caption(f"⏱️ AI Meal Plan generated in {time.time() - start_llm:.2f} seconds")
+                st.caption(f"⏱️ Execution Trace: Module=Ollama, MySQL | Time={time.time() - start_llm:.2f} seconds")
                 
                 # PDF Generation
                 def generate_pdf(text):

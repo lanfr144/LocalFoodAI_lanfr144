@@ -1,5 +1,38 @@
 #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-*.py ident export-subst
-*.sh ident export-subst
-*.sql ident export-subst
-*.md ident export-subst
+* text=auto
+# # 1. Forcer le format de date requis YYYY/MM/DD HH:MM:SS
+# git config log.date "format:%Y/%m/%d %H:%M:%S"
+# 
+# # 2. Configurer le filtre "Smudge" (Injection lors du checkout / pull)
+# git config filter.ident-dynamic.smudge '
+#   proj=$(basename "$(git rev-parse --show-toplevel)");
+#   file="%f";
+#   perl -pe "s|\\\$Format:PROJECT_NAME:FILE_NAME:(.*?)\\\$|\\\$Format:\$proj:\$file:\$1\\\$|g" | \
+#   git archive --subst-vars | cat
+# '
+# 
+# # 3. Configurer le filtre "Clean" (Nettoyage avant le commit pour éviter les conflits)
+# # The LEFT PART OF THE PIPE MUST BE "$Format:PROJECT_NAME:FILE_NAME"
+# git config filter.ident-dynamic.clean '
+#   perl -pe "s|\\\$Format:[^:]+:[^:]+(:.*?)\\\$|\\\$Format:PROJECT_NAME:FILE_NAME\$1\\\$|g"
+# '
+# 
+# 1. Protection du script de filtre pour Unix/WSL
+# Force LF on checkout for all text files (prevents CRLF on Windows)
+* text eol=lf
+
+# Force CRLF and apply ident-dynamic filter for Windows batch files
+*.bat filter=ident-dynamic eol=crlf
+
+# Git filter configurations for dynamic identifiers
+git-ident-filter.py text eol=lf
+*.md filter=ident-dynamic
+*.py filter=ident-dynamic
+*.sh filter=ident-dynamic
+*.txt filter=ident-dynamic
+*.yml filter=ident-dynamic
+.env filter=ident-dynamic
+.env.example filter=ident-dynamic
+*.sql filter=ident-dynamic
+.gitignore filter=ident-dynamic
+Dockerfile filter=ident-dynamic

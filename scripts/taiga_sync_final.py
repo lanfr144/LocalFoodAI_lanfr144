@@ -1,9 +1,15 @@
 #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import requests
-#ident "@(#)$Format:LocalFoodAI:taiga_sync_final.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import urllib3
 import os
 import re
+import sys
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
 
 urllib3.disable_warnings()
 

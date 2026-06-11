@@ -1,6 +1,6 @@
 #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import re
-#ident "@(#)$Format:LocalFoodAI:unit_converter.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 class UnitConverter:
     """
@@ -28,7 +28,6 @@ class UnitConverter:
         'pinch': 0.36, # rough estimate
         'dash': 0.72,
         'xl': 64.0,
-        'l': 50.0,
         'm': 44.0,
         's': 38.0,
         'extra': 64.0,
@@ -91,6 +90,8 @@ class UnitConverter:
     # Direct weight conversions (already in weight, just need unit conversion)
     WEIGHT_UNITS_G = {
         'g': 1.0,
+        'gr': 1.0,
+        'grs': 1.0,
         'gram': 1.0,
         'kg': 1000.0,
         'kilo': 1000.0,

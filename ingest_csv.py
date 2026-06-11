@@ -47,12 +47,37 @@ def ingest_file(filename, engine):
 
     # Define the groupings
     groups = {
-        'products_core': ['code', 'product_name', 'generic_name', 'brands', 'ingredients_text'],
+        'products_core': [
+            'code', 'product_name', 'generic_name', 'brands', 'ingredients_text',
+            'url', 'image_url', 'image_small_url', 'image_ingredients_url', 
+            'image_ingredients_small_url', 'image_nutrition_url', 'image_nutrition_small_url'
+        ],
         'products_allergens': ['code', 'allergens'],
         'products_macros': ['code', 'energy-kcal_100g', 'proteins_100g', 'fat_100g', 'carbohydrates_100g', 'sugars_100g', 'fiber_100g', 'sodium_100g', 'salt_100g', 'cholesterol_100g'],
         'products_vitamins': ['code', 'vitamin-a_100g', 'vitamin-b1_100g', 'vitamin-b2_100g', 'vitamin-pp_100g', 'vitamin-b6_100g', 'vitamin-b9_100g', 'vitamin-b12_100g', 'vitamin-c_100g', 'vitamin-d_100g', 'vitamin-e_100g', 'vitamin-k_100g'],
         'products_minerals': ['code', 'calcium_100g', 'iron_100g', 'magnesium_100g', 'potassium_100g', 'zinc_100g']
     }
+
+    # Schema Auto-Migration: check if columns mismatch, and drop table for clean recreation
+    try:
+        with engine.connect() as conn:
+            for table_name, columns in groups.items():
+                try:
+                    res = conn.execute(text(f"DESCRIBE {table_name}"))
+                    existing_cols = [row[0] for row in res.fetchall()]
+                    mismatch = False
+                    for col in columns:
+                        if col not in existing_cols:
+                            mismatch = True
+                            break
+                    if mismatch:
+                        print(f"⚠️ Columns mismatch for table {table_name}. Dropping table for recreation.")
+                        conn.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
+                        conn.commit()
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"Warning: Could not connect to database for schema check: {e}")
 
     # Pre-calculate what to read
     all_required_cols = list(set([col for cols in groups.values() for col in cols]))
@@ -67,6 +92,33 @@ def ingest_file(filename, engine):
             if 'code' not in chunk.columns:
                 continue
             df = chunk.dropna(subset=['code']).drop_duplicates(subset=['code']).copy()
+            
+            # Clean and consolidate CSV data
+            # 1. Clean code (must be numeric digits/characters, strip whitespace)
+            df['code'] = df['code'].astype(str).str.strip()
+            df = df[df['code'] != '']
+            
+            # 2. Clean product_name: strip whitespace, fill empty with generic name or brand, or skip if completely empty
+            if 'product_name' in df.columns:
+                df['product_name'] = df['product_name'].astype(str).str.strip()
+                if 'generic_name' in df.columns:
+                    df['product_name'] = df['product_name'].fillna(df['generic_name'].astype(str).str.strip())
+                if 'brands' in df.columns:
+                    df['product_name'] = df['product_name'].fillna(df['brands'].astype(str).str.strip())
+                # Replace string representations of "nan" / "none"
+                df['product_name'] = df['product_name'].replace(['nan', 'NaN', 'None', 'none', ''], None)
+                
+            # 3. Drop rows with missing or null product_name (consolidate only valid food items)
+            df = df.dropna(subset=['product_name'])
+            
+            # 4. Clean URL columns: if not starts with http/https or contains 'invalid', set to None
+            url_cols = [c for c in df.columns if 'url' in c.lower()]
+            for col in url_cols:
+                df[col] = df[col].astype(str).str.strip()
+                df[col] = df[col].replace(['nan', 'NaN', 'None', 'none', ''], None)
+                # Validate URL structure
+                is_valid_url = df[col].str.startswith(('http://', 'https://'), na=False) & ~df[col].str.contains('invalid', case=False, na=False)
+                df.loc[~is_valid_url, col] = None
             
             # Ensure all required columns exist in the chunk (fill with None if missing)
             for col in all_required_cols:

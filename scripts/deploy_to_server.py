@@ -18,9 +18,12 @@ def deploy():
     user = os.environ.get('SERVER_USER')
     password = os.environ.get('SERVER_PASS')
 
-    if not all([host, user, password]):
+    if not all([host, user]):
         print("Error: Server credentials not found in .env file.")
         return
+
+    if password == "your_db_password_here" or password == "your_password_here" or not password:
+        password = None
 
     print(f"Connecting to {user}@{host}...")
     
@@ -31,7 +34,7 @@ def deploy():
         ssh.connect(host, username=user, password=password, timeout=10)
         print("Connected successfully!")
         
-        command = "cd food_project && rm -f git_version.txt git_id.txt && git pull && git log -1 --date='format:%Y/%m/%d %H:%M:%S' --format='%cd' > git_version.txt && git log -1 --date='format:%Y/%m/%d %H:%M:%S' --format='%cd %h' app.py > git_id.txt && docker-compose up -d --build"
+        command = "cd food_project && rm -f git_version.txt git_id.txt && git pull && docker-compose up -d --build"
         print(f"Executing: {command}")
         
         stdin, stdout, stderr = ssh.exec_command(command)

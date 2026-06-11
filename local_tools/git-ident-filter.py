@@ -47,12 +47,11 @@ def get_git_info(file_path):
 if mode == "clean":
     # CLEAN Mode: Replaces any smudged $Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$ tag back to the standard neutral git representation
     content = sys.stdin.read()
-    # Non-greedy substitution to restore standard placeholder format for Git storage
-    cleaned = re.sub(
-        r'\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$)?[^$]*?\$', 
-        r'$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$', 
-        content
-    )
+    # Non-greedy substitution to restore standard placeholder format for Git storage.
+    # We construct the search pattern and replacement dynamically to avoid matching our own code.
+    pattern = r'\$Format' + r':.*?(:\s*%[a-zA-Z]|\$)?[^$]*?\$'
+    repl = r'$Format' + r':LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
+    cleaned = re.sub(pattern, repl, content)
     sys.stdout.write(cleaned)
 
 else:
@@ -72,14 +71,11 @@ else:
         info = get_git_info(file_name)
 
         # Format replacement string using LocalFoodAI and app.py
-        replacement = f"$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+        replacement = f"$Format" + f":LocalFoodAI:app.py:{info[0]}:{info[1]}:{info[2]}:{info[3]}:{info[4]}:{info[5]}:{info[6]}:{info[7]}:{info[8]}$"
 
         # Regex replacement targeting the dynamic format placeholders
-        smudged = re.sub(
-            r'\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$', 
-            replacement, 
-            content
-        )
+        pattern = r'\$Format' + r':[^:]+:[^:]+:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N\$'
+        smudged = re.sub(pattern, replacement, content)
         sys.stdout.write(smudged)
 
     except Exception:

@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import socket
 #ident "@(#)$Format:LocalFoodAI:snmp_notifier.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
@@ -26,4 +27,3 @@ class SNMPNotifier:
 
 # Singleton instance
 notifier = SNMPNotifier()
-

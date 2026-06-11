@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 use_default_settings: true
 
 search:
@@ -8,4 +9,3 @@ server:
   port: 8080
   bind_address: "0.0.0.0"
   secret_key: "local_food_ai_secret"
-

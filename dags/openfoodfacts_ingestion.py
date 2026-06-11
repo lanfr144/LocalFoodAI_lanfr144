@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.docker.operators.docker import DockerOperator
@@ -101,7 +102,7 @@ t2_ingest = DockerOperator(
     environment={
         'DB_HOST': 'mysql',
         'DB_USER': 'food_loader',
-        'DB_PASS': 'BTSai123'
+        'DB_PASS': 'your_db_password_here'
     },
     mount_tmp_dir=False,
     dag=dag,

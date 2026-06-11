@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import pandas as pd
 import myloginpath
 import urllib.parse

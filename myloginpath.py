@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 
 def parse(login_path: str):

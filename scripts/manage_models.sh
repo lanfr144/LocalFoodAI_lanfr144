@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:manage_models.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 echo "Pulling the new efficient billion-parameter model (llama3.2-vision:11b)..."
 docker exec food-ollama-1 ollama pull llama3.2-vision:11b

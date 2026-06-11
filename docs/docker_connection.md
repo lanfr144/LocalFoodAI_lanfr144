@@ -1,5 +1,5 @@
 # Docker Connection & Health Check Guide
-#ident "@(#)$Format:LocalFoodAI:docker_connection.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 This document explains how to interact with the various Docker containers that power the Local Food AI system.
 

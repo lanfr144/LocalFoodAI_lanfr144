@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import json
 #ident "@(#)$Format:LocalFoodAI:configure_zabbix_alerts.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import urllib.request

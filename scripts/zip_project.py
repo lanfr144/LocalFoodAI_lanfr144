@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#ident "@(#)$Format:LocalFoodAI:zip_project.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # Alias for create_delivery_zip.py
 import os
 import sys

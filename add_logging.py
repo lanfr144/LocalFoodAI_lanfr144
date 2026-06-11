@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 
 files_to_update = ['scripts/setup_deploy.py', 'docker-compose.yml', 'docker/zabbix/docker-compose.yml']

@@ -1,3 +1,5 @@
+The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
 # Local Food AI 🍔
 
 A strictly local, privacy-first AI Medical Dietitian and Food Explorer. This project leverages the OpenFoodFacts dataset and local LLMs (Ollama) to provide medically sound dietary advice, recipe parsing, and menu planning without sending any user data to the cloud.

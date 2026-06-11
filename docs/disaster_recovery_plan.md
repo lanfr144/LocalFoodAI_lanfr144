@@ -1,3 +1,5 @@
+The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
 # Disaster Recovery & Backup Plan
 
 This document outlines the backup and restore procedures, as well as the Disaster Recovery (DR) plan for the Local Food AI stack.

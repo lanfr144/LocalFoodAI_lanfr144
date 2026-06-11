@@ -1,3 +1,5 @@
+The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
 # Local Food AI: Retro Planning
 
 *Document compiled in accordance with BTS-AI DOPRO Guidelines on Backward/Reverse Planning.*

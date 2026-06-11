@@ -1,4 +1,5 @@
 #!/bin/bash
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # -----------------------------------------------------------------------------
 # Naked Environment Deployment Script for Ubuntu 24.04
 # Run this script to seamlessly fully provision the server for the AI Web App.

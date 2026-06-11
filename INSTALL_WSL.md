@@ -1,3 +1,5 @@
+The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
 # 🚀 WSL2 Port-Shifted Installation Guide (Local Food AI)
 
 This guide provides step-by-step instructions to install and run the **Local Food AI** system on Windows Subsystem for Linux (WSL2).
@@ -36,11 +38,11 @@ cd LocalFoodAI_lanfr144
 Create the required `.env` file at the root of the repository to feed standard local credentials to the containers:
 ```bash
 cat <<EOF > .env
-MYSQL_ROOT_PASSWORD=BTSai123
-DB_READER_PASS=BTSai123
-DB_LOADER_PASS=BTSai123
-DB_APP_AUTH_PASS=BTSai123
-MYSQL_ZABBIX_PASSWORD=BTSai123
+MYSQL_ROOT_PASSWORD=your_db_password_here
+DB_READER_PASS=your_db_password_here
+DB_LOADER_PASS=your_db_password_here
+DB_APP_AUTH_PASS=your_db_password_here
+MYSQL_ZABBIX_PASSWORD=your_db_password_here
 EOF
 ```
 

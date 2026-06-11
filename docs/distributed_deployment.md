@@ -1,3 +1,5 @@
+The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
 # Distributed Deployment Guide
 
 This document outlines the procedure to deploy the Local Food AI stack across a mixed topology of Windows 11 subsystems and hypervisors on the same local network.

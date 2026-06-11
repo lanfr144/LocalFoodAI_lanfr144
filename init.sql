@@ -1,3 +1,4 @@
+--ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 -- Create databases
 CREATE DATABASE IF NOT EXISTS food_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
@@ -6,21 +7,21 @@ CREATE DATABASE IF NOT EXISTS zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 SET GLOBAL log_bin_trust_function_creators = 1;
 
 -- Create/update root user for remote connections
-CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'BTSai123';
-ALTER USER 'root'@'%' IDENTIFIED BY 'BTSai123';
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'your_db_password_here';
+ALTER USER 'root'@'%' IDENTIFIED BY 'your_db_password_here';
 
 -- Create app users
-CREATE USER IF NOT EXISTS 'food_reader'@'%' IDENTIFIED BY 'BTSai123';
-ALTER USER 'food_reader'@'%' IDENTIFIED BY 'BTSai123';
+CREATE USER IF NOT EXISTS 'food_reader'@'%' IDENTIFIED BY 'your_db_password_here';
+ALTER USER 'food_reader'@'%' IDENTIFIED BY 'your_db_password_here';
 
-CREATE USER IF NOT EXISTS 'food_loader'@'%' IDENTIFIED BY 'BTSai123';
-ALTER USER 'food_loader'@'%' IDENTIFIED BY 'BTSai123';
+CREATE USER IF NOT EXISTS 'food_loader'@'%' IDENTIFIED BY 'your_db_password_here';
+ALTER USER 'food_loader'@'%' IDENTIFIED BY 'your_db_password_here';
 
-CREATE USER IF NOT EXISTS 'food_app_auth'@'%' IDENTIFIED BY 'BTSai123';
-ALTER USER 'food_app_auth'@'%' IDENTIFIED BY 'BTSai123';
+CREATE USER IF NOT EXISTS 'food_app_auth'@'%' IDENTIFIED BY 'your_db_password_here';
+ALTER USER 'food_app_auth'@'%' IDENTIFIED BY 'your_db_password_here';
 
-CREATE USER IF NOT EXISTS 'zabbix'@'%' IDENTIFIED BY 'BTSai123';
-ALTER USER 'zabbix'@'%' IDENTIFIED BY 'BTSai123';
+CREATE USER IF NOT EXISTS 'zabbix'@'%' IDENTIFIED BY 'your_db_password_here';
+ALTER USER 'zabbix'@'%' IDENTIFIED BY 'your_db_password_here';
 
 -- Grant privileges
 GRANT ALL PRIVILEGES ON food_db.* TO 'food_loader'@'%';

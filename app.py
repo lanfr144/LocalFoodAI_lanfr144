@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # $Id$
 # $Author$
 # $log$
@@ -360,6 +361,19 @@ def reset_password(username: str, email: str) -> Any:
     return False
 
 # UI Theming
+def reformat_git_date(date_str):
+    from datetime import datetime
+    try:
+        import email.utils
+        dt = email.utils.parsedate_to_datetime(date_str)
+        return dt.strftime("%Y/%m/%d %H:%M:%S")
+    except Exception:
+        try:
+            dt = datetime.strptime(date_str.strip(), "%a %b %d %H:%M:%S %Y %z")
+            return dt.strftime("%Y/%m/%d %H:%M:%S")
+        except Exception:
+            return date_str
+
 def render_version():
     st.markdown("---")
     try:
@@ -369,7 +383,9 @@ def render_version():
             git_version = subprocess.check_output(['git', 'describe', '--tags']).decode('utf-8').strip()
     except Exception:
         git_version = "v1.3.0"
-    st.caption(f"🚀 Version: {git_version}")
+        
+    formatted_version = reformat_git_date(git_version)
+    st.caption(f"🚀 Version: {formatted_version}")
     
     try:
         if os.path.exists('git_id.txt'):
@@ -378,7 +394,17 @@ def render_version():
             git_id = subprocess.check_output(['git', 'log', '-1', '--format=%cd %h', 'app.py']).decode('utf-8').strip()
     except Exception:
         git_id = "Unknown"
-    st.caption(f"📅 Git ID: {git_id}")
+        
+    parts = git_id.strip().split()
+    if len(parts) >= 6:
+        date_part = " ".join(parts[:6])
+        hash_part = parts[6] if len(parts) > 6 else ""
+        formatted_date = reformat_git_date(date_part)
+        formatted_id = f"{formatted_date} {hash_part}".strip()
+    else:
+        formatted_id = git_id
+        
+    st.caption(f"📅 Git ID: {formatted_id}")
 
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
 

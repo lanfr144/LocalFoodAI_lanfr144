@@ -1,4 +1,5 @@
 #!/bin/bash
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # data_sync.sh - Automated Data Freshness Pipeline
 
 LOG_DIR="./logs"

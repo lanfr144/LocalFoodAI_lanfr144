@@ -1,3 +1,4 @@
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import myloginpath
 import pymysql
 import bcrypt
@@ -23,6 +24,6 @@ with conn.cursor() as c:
     c.execute("SELECT * FROM users WHERE username='Admin'")
     admin = c.fetchone()
     if admin:
-        print("Admin check BTSai123:", bcrypt.checkpw(b'BTSai123', admin['password_hash'].encode('utf-8')))
+        print("Admin check your_db_password_here:", bcrypt.checkpw(b'your_db_password_here', admin['password_hash'].encode('utf-8')))
 
 conn.close()

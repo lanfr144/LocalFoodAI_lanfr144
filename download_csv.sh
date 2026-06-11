@@ -1,4 +1,5 @@
 #!/bin/bash
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # download latest OpenFoodFacts CSVs if not present or if newer version exists
 DATA_DIR="$(dirname "$0")/data"
 mkdir -p "$DATA_DIR"

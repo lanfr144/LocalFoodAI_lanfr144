@@ -1,4 +1,5 @@
 #!/bin/bash
+#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # ==============================================================================
 # $Id$
 # File: manage_services.sh
@@ -55,7 +56,7 @@ start_services() {
     
     # Wait for MySQL to become fully ready and accept connections
     log_info "Waiting for MySQL database socket to be available..."
-    until docker compose -f "$COMPOSE_FILE" exec mysql mysqladmin ping -h"localhost" -u"root" -p"BTSai123" --silent; do
+    until docker compose -f "$COMPOSE_FILE" exec mysql mysqladmin ping -h"localhost" -u"root" -p"your_db_password_here" --silent; do
         sleep 2
         echo -n "."
     done

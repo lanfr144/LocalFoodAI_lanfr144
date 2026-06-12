@@ -2,7 +2,7 @@
 # $Id$
 # $Author$
 # $log$
-#ident "@(#)LocalFoodAI:app.py:$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)LocalFoodAI:app.py:$Format:%D:%ci:%cN:%h$"
 #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import streamlit as st
 import extra_streamlit_components as stx
@@ -400,7 +400,8 @@ def render_version():
                     line = f.readline()
                     if not line:
                         break
-                    if "$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$Format:LocalFoodAI:app\.py:(.*?)\$', line)
+                    if "$Form" + "at:LocalFoodAI:app.py:" in line:
+                        match = re.search(r'\$For' + r'mat:LocalFoodAI:app\.py:(.*?)\$', line)
                         if match:
                             parts = match.group(1).split(':')
                             if len(parts) >= 7 and not parts[0].startswith('%an'):

@@ -45,13 +45,12 @@ def get_git_info(file_path):
     return [author_name, author_email, now_str, author_name, author_email, now_str, "Not Committed Yet", "local", "none"]
 
 if mode == "clean":
-    # CLEAN Mode: Replaces any smudged $Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$ tag back to the standard neutral git representation
+    # CLEAN Mode: Replaces any smudged $Format:...$ tag back to the standard neutral git representation
     content = sys.stdin.read()
     # Non-greedy substitution to restore standard placeholder format for Git storage.
     # We construct the search pattern and replacement dynamically to avoid matching our own code.
-    pattern = r'\$Format' + r':.*?(:\s*%[a-zA-Z]|\$)?[^$]*?\$'
-    repl = r'$Format' + r':LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
-    cleaned = re.sub(pattern, repl, content)
+    pattern = r'\$Format' + r':([^%:\r\n]+):([^%:\r\n]+):[^\r\n$]*?\$'
+    cleaned = re.sub(pattern, r'$Format:\1:\2:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$', content)
     sys.stdout.write(cleaned)
 
 else:
@@ -63,6 +62,7 @@ else:
 
         # Get the relative path of the file being smudged
         file_name = sys.argv[2] if len(sys.argv) > 2 else "unknown_file"
+        file_name = file_name.replace('\\', '/')
 
         # Read the file content sent by Git on stdin
         content = sys.stdin.read()
@@ -70,11 +70,11 @@ else:
         # Query git log metadata or local fallbacks
         info = get_git_info(file_name)
 
-        # Format replacement string using LocalFoodAI and app.py
-        replacement = f"$Format" + f":LocalFoodAI:app.py:{info[0]}:{info[1]}:{info[2]}:{info[3]}:{info[4]}:{info[5]}:{info[6]}:{info[7]}:{info[8]}$"
+        # Format replacement string using dynamic project and file name
+        replacement = f"$Format" + f":{project_name}:{file_name}:{info[0]}:{info[1]}:{info[2]}:{info[3]}:{info[4]}:{info[5]}:{info[6]}:{info[7]}:{info[8]}$"
 
         # Regex replacement targeting the dynamic format placeholders
-        pattern = r'\$Format' + r':[^:]+:[^:]+:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N\$'
+        pattern = r'\$Format' + r':([^%:\r\n]+):([^%:\r\n]+):%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N\$'
         smudged = re.sub(pattern, replacement, content)
         sys.stdout.write(smudged)
 

@@ -62,6 +62,9 @@ services:
       - APP_AUTH_PASS=${DB_APP_AUTH_PASS}
       - OLLAMA_HOST=http://ollama:11434
       - SEARXNG_HOST=http://searxng:8080
+      - LLM_MODEL=${LLM_MODEL}
+    volumes:
+      - ./.env:/app/.env
     restart: always
 
   nginx:

@@ -65,22 +65,33 @@ def query_plate_allergens(unique_aliments: list) -> list:
         res_content = response['message']['content'].strip()
         data = json.loads(res_content)
         
+        # Robust dictionary-or-list JSON parser
+        aliments_array = []
         if isinstance(data, list):
-            for entry in data:
-                aliment = entry.get('aliment')
-                allergens = entry.get('allergen') or entry.get('allergens') or []
-                if aliment:
-                    if isinstance(allergens, list) and allergens:
-                        cleaned_algs = [str(alg).strip().title() for alg in allergens if alg]
-                        table_data.append({
-                            "Aliment (Ingredient)": aliment.strip().title(),
-                            "Allergen Kind(s)": ", ".join(cleaned_algs)
-                        })
-                    elif isinstance(allergens, str) and allergens.strip():
-                        table_data.append({
-                            "Aliment (Ingredient)": aliment.strip().title(),
-                            "Allergen Kind(s)": allergens.strip().title()
-                        })
+            aliments_array = data
+        elif isinstance(data, dict):
+            for val in data.values():
+                if isinstance(val, list):
+                    aliments_array = val
+                    break
+                    
+        if aliments_array:
+            for entry in aliments_array:
+                if isinstance(entry, dict):
+                    aliment = entry.get('aliment')
+                    allergens = entry.get('allergen') or entry.get('allergens') or []
+                    if aliment:
+                        if isinstance(allergens, list) and allergens:
+                            cleaned_algs = [str(alg).strip().title() for alg in allergens if alg]
+                            table_data.append({
+                                "Aliment (Ingredient)": aliment.strip().title(),
+                                "Allergen Kind(s)": ", ".join(cleaned_algs)
+                            })
+                        elif isinstance(allergens, str) and allergens.strip():
+                            table_data.append({
+                                "Aliment (Ingredient)": aliment.strip().title(),
+                                "Allergen Kind(s)": allergens.strip().title()
+                            })
     except Exception:
         pass
     return table_data
@@ -134,13 +145,25 @@ def detect_allergens_from_text(name: str, ingredients: str) -> set:
         )
         res_content = response['message']['content'].strip()
         data = json.loads(res_content)
+        
+        # Robust dictionary-or-list JSON parser
+        aliments_array = []
         if isinstance(data, list):
-            for entry in data:
-                aliment = entry.get('aliment')
-                allergens = entry.get('allergen') or entry.get('allergens') or []
-                if aliment:
-                    if allergens and len(allergens) > 0:
-                        detected.add(aliment.strip().title())
+            aliments_array = data
+        elif isinstance(data, dict):
+            for val in data.values():
+                if isinstance(val, list):
+                    aliments_array = val
+                    break
+                    
+        if aliments_array:
+            for entry in aliments_array:
+                if isinstance(entry, dict):
+                    aliment = entry.get('aliment')
+                    allergens = entry.get('allergen') or entry.get('allergens') or []
+                    if aliment and allergens:
+                        if (isinstance(allergens, list) and len(allergens) > 0) or (isinstance(allergens, str) and allergens.strip()):
+                            detected.add(aliment.strip().title())
     except Exception:
         pass
     return detected

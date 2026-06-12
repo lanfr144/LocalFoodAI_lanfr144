@@ -27,7 +27,17 @@ from typing import Optional, List, Dict, Any, Tuple
 import threading
 import os
 
-ACTIVE_MODEL = os.environ.get('LLM_MODEL', 'llama3.2-vision:11b')
+def get_active_model() -> str:
+    try:
+        from dotenv import load_dotenv
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        env_path = os.path.join(current_dir, '.env')
+        load_dotenv(dotenv_path=env_path, override=True)
+    except Exception:
+        pass
+    return os.environ.get('LLM_MODEL', 'llama3.2-vision:11b')
+
+ACTIVE_MODEL = get_active_model()
 
 def strip_scratchpad(text: str) -> str:
     import re
@@ -155,7 +165,7 @@ def filter_scratchpad_stream(stream, raw_accumulator=None):
             yield buffer
 
 def pull_model_bg():
-    try: ollama.pull(ACTIVE_MODEL)
+    try: ollama.pull(get_active_model())
     except: pass
 threading.Thread(target=pull_model_bg, daemon=True).start()
 
@@ -433,7 +443,7 @@ def render_version():
 
     st.caption(f"🚀 Version: {git_version}")
     st.caption(f"📅 Git ID: {git_version} {git_hash}")
-    st.caption(f"Model: {ACTIVE_MODEL}")
+    st.caption(f"Model: {get_active_model()}")
 
 st.set_page_config(page_title="Food AI Explorer", page_icon="🍔", layout="wide")
 
@@ -638,7 +648,7 @@ with tab_chat:
         try:
             temp_messages = [{"role": "system", "content": sys_prompt}] + [m for m in st.session_state.messages if m["role"] != "tool"]
             start_llm = time.time()
-            response_stream = ollama.chat(model=ACTIVE_MODEL, messages=temp_messages, stream=True)
+            response_stream = ollama.chat(model=get_active_model(), messages=temp_messages, stream=True)
             
             with st.chat_message("assistant"):
                 ai_reply = st.write_stream(chunk['message']['content'] for chunk in response_stream)
@@ -879,7 +889,7 @@ with tab_explore:
                                 minimal_records = df_display[['product_name', 'Medical Warning']].head(10).to_dict('records')
                                 eval_prompt = f"The user has this profile: {profile_text}. Evaluate these top foods and state which are highly recommended or strictly forbidden: {minimal_records}. Be extremely precise regarding carbohydrate content and do not hallucinate any values. Provide a direct, readable clinical summary. Do not output raw JSON."
                                 try:
-                                    response = ollama.chat(model=ACTIVE_MODEL, messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
+                                    response = ollama.chat(model=get_active_model(), messages=[{'role': 'user', 'content': eval_prompt}], stream=True)
                                     st.write_stream(chunk['message']['content'] for chunk in response)
                                     elapsed_eval = time.time() - start_eval
                                     st.caption(f"⏱️ Execution Trace: Module=Ollama | Time={elapsed_eval:.2f} seconds")
@@ -1225,7 +1235,7 @@ with tab_planner:
             # Stream the response instantly!
             try:
                 start_llm = time.time()
-                response = ollama.chat(model=ACTIVE_MODEL, messages=[
+                response = ollama.chat(model=get_active_model(), messages=[
                     {'role': 'system', 'content': sys_prompt},
                     {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}
                 ], stream=True)

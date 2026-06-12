@@ -39,3 +39,18 @@ This project leverages specialized AI skills to maintain code quality, documenta
 - **Refactor Coach**: Refactors code to improve readability, performance, and modularity without changing external behavior.
 - **SQL Optimizer**: Enforces DBA standards for MySQL, Oracle, and PostgreSQL, ensuring proper indexing, transaction management, and secure access.
 - **Test Generator**: Generates comprehensive unit and integration tests focusing on boundary conditions and logical coverage.
+
+## Grading
+There will be 6 grades in total: 3 for Project Management 1 (PM1) and 3 for Domain-specifc Project 1 (DSP1).
+
+### PM1:
+* Requirements analysis and assessment.
+* Overall project planning and execution.
+* Project presentation.
+
+### DSP1:
+* The final product shipped to the customer.
+* The product documentation:
+  * **Technical document**, explaining how to install and configure the final product as well as the technologies used (LLM, DB, etc.) for an IT audience. Explain which Antigravity models you used for which tasks as well as how and why you configured agent permissions. Also reflect on what Antigravity struggled with and you handled this. Explain which local LLM the app uses and why. Explain the app infrastructure via a diagram showing how the app components communicate locally. Explain how you've verified that no user data leaves the server.
+  * **User manual**, explaining how to use the final product from an end user (non developer) perspective.
+* The presentation to the customer.

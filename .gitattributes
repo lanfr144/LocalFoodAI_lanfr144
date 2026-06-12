@@ -7,14 +7,14 @@
 # git config filter.ident-dynamic.smudge '
 #   proj=$(basename "$(git rev-parse --show-toplevel)");
 #   file="%f";
-#   perl -pe "s|\\\$Format:PROJECT_NAME:FILE_NAME:(.*?)\\\$|\\\$Format:\$proj:\$file:\$1\\\$|g" | \
+#   perl -pe "s|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$proj:\$file:\$1\\\$|g" | \
 #   git archive --subst-vars | cat
 # '
 # 
 # # 3. Configurer le filtre "Clean" (Nettoyage avant le commit pour éviter les conflits)
 # # The LEFT PART OF THE PIPE MUST BE "$Format:PROJECT_NAME:FILE_NAME"
 # git config filter.ident-dynamic.clean '
-#   perl -pe "s|\\\$Format:[^:]+:[^:]+(:.*?)\\\$|\\\$Format:PROJECT_NAME:FILE_NAME\$1\\\$|g"
+#   perl -pe "s|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$1\\\$|g"
 # '
 # 
 # 1. Protection du script de filtre pour Unix/WSL
@@ -25,7 +25,8 @@
 *.bat filter=ident-dynamic eol=crlf
 
 # Git filter configurations for dynamic identifiers
-git-ident-filter.py text eol=lf
+.gitattributes filter=ident-dynamic
+local_tools/git-ident-filter.py filter=ident-dynamic eol=lf
 *.md filter=ident-dynamic
 *.py filter=ident-dynamic
 *.sh filter=ident-dynamic

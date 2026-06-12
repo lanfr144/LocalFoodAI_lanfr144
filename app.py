@@ -2,7 +2,7 @@
 # $Id$
 # $Author$
 # $log$
-#ident "@(#)LocalFoodAI:app.py:$Format:%D:%ci:%cN:%h$"
+#ident "@(#)LocalFoodAI:app.py:$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import streamlit as st
 import extra_streamlit_components as stx
@@ -410,13 +410,13 @@ def render_version():
                     line = f.readline()
                     if not line:
                         break
-                    if "$Form" + "at:LocalFoodAI:app.py:" in line:
-                        match = re.search(r'\$For' + r'mat:LocalFoodAI:app\.py:(.*?)\$', line)
+                    if "$Form" + "at:" in line:
+                        match = re.search(r'\$For' + r'mat:[^:]+:[^:]+:(.*?)\$', line)
                         if match:
                             parts = match.group(1).split(':')
-                            if len(parts) >= 7 and not parts[0].startswith('%an'):
-                                git_version = parts[5] # %cd (committer date)
-                                git_hash = parts[6][:7] if parts[6] else ""
+                            if len(parts) >= 11 and not parts[0].startswith('%an'):
+                                git_version = f"{parts[7]}:{parts[8]}:{parts[9]}" # %cd (committer date)
+                                git_hash = parts[10][:7] if parts[10] else ""
                                 break
     except Exception:
         pass
@@ -434,12 +434,6 @@ def render_version():
             ).decode('utf-8').strip()
         except Exception:
             pass
-
-    # 3. Default fallback values
-    if not git_version:
-        git_version = "2026/06/11 08:26:59"
-    if not git_hash:
-        git_hash = "1701828"
 
     st.caption(f"🚀 Version: {git_version}")
     st.caption(f"📅 Git ID: {git_version} {git_hash}")

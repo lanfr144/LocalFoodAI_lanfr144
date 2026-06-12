@@ -913,8 +913,7 @@ with tab_explore:
                         for col in df_display.columns:
                             if 'image' in col.lower():
                                 df_display[col] = df_display[col].apply(lambda x: x if is_valid_image_url(x) else "")
-                        # Replace None values with &nbsp;
-                        df_display.replace(to_replace=r'^None$', value='&nbsp;', regex=True, inplace=True)
+                        df_display.replace(to_replace=[None, 'None', 'nan', 'NaN'], value='&nbsp;', inplace=True)
                         # Only fillna with empty string on object columns to avoid Arrow float64 conversion errors
                         for col in df_display.columns:
                             if df_display[col].dtype == 'object':
@@ -1189,7 +1188,7 @@ with tab_plate:
                             "Nutrition Image": r.get('image_nutrition_small_url') if is_valid_image_url(r.get('image_nutrition_small_url')) else "",
                         })
                     gallery_df = pd.DataFrame(df_rows)
-                    gallery_df.replace(to_replace=r'^None$', value='&nbsp;', regex=True, inplace=True)
+                    gallery_df.replace(to_replace=[None, 'None', 'nan', 'NaN'], value='&nbsp;', inplace=True)
                     gallery_df.index = range(1, len(gallery_df) + 1)
                     st.dataframe(
                         gallery_df,
@@ -1331,8 +1330,8 @@ with tab_planner:
                         if any(w in cols[0].lower() or w in cols[1].lower() for w in ['total', 'summation', 'global']):
                             continue
                         def clean_num(val):
-                            m = re.search(r'([0-9]+(?:\.[0-9]+)?)', val)
-                            return float(m.group(1)) if m else 0.0
+                            nums = re.findall(r'([0-9]+(?:\.[0-9]+)?)', val)
+                            return float(nums[-1]) if nums else 0.0
                         total_cal += clean_num(cols[3])
                         total_pro += clean_num(cols[4])
                         total_carb += clean_num(cols[5])

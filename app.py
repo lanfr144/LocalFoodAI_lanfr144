@@ -466,9 +466,10 @@ def render_version():
                         match = re.search(r'\$For' + r'mat:(.*?)\$', line)
                         if match:
                             parts = match.group(1).split(':')
-                            if len(parts) >= 11 and not parts[2].startswith('%an'):
-                                git_version = f"{parts[7]}" # %cd (committer date)
-                                git_hash = parts[8][:7] if parts[8] else ""
+                            if len(parts) >= 13 and not parts[2].startswith('%an'):
+                                git_version = f"{parts[9]}:{parts[10]}:{parts[11]}"
+                                h = parts[12]
+                                git_hash = f"{h[:2]}{h[-2:]}" if h else ""
                                 break
     except Exception:
         pass
@@ -480,10 +481,12 @@ def render_version():
                 ['git', 'log', '-1', '--date=format:%Y/%m/%d %H:%M:%S', '--format=%cd', 'app.py'],
                 stderr=subprocess.DEVNULL
             ).decode('utf-8').strip()
-            git_hash = subprocess.check_output(
-                ['git', 'log', '-1', '--format=%h', 'app.py'],
+            git_hash_full = subprocess.check_output(
+                ['git', 'log', '-1', '--format=%H', 'app.py'],
                 stderr=subprocess.DEVNULL
             ).decode('utf-8').strip()
+            if git_hash_full:
+                git_hash = f"{git_hash_full[:2]}{git_hash_full[-2:]}"
         except Exception:
             pass
 
@@ -769,8 +772,8 @@ with tab_explore:
                                min.calcium_100g, min.iron_100g, min.magnesium_100g, min.potassium_100g, min.zinc_100g
                         FROM (
                             SELECT code, product_name, generic_name, brands, ingredients_text,
-                                   NULL AS url, NULL AS image_url, NULL AS image_small_url, NULL AS image_ingredients_url, 
-                                   NULL AS image_ingredients_small_url, NULL AS image_nutrition_url, NULL AS image_nutrition_small_url
+                                   url, image_url, image_small_url, image_ingredients_url, 
+                                   image_ingredients_small_url, image_nutrition_url, image_nutrition_small_url
                             FROM food_db.products_core
                             WHERE (MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE) OR product_name LIKE %s)
                             AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
@@ -910,8 +913,8 @@ with tab_explore:
                         for col in df_display.columns:
                             if 'image' in col.lower():
                                 df_display[col] = df_display[col].apply(lambda x: x if is_valid_image_url(x) else "")
-                        # Replace None values with &nsbp
-                        df_display.replace(to_replace=r'^None$', value='&nsbp', regex=True, inplace=True)
+                        # Replace None values with &nbsp;
+                        df_display.replace(to_replace=r'^None$', value='&nbsp;', regex=True, inplace=True)
                         # Only fillna with empty string on object columns to avoid Arrow float64 conversion errors
                         for col in df_display.columns:
                             if df_display[col].dtype == 'object':
@@ -1144,7 +1147,7 @@ with tab_plate:
                         sql = f"""
                             SELECT c.code, c.product_name, c.image_small_url, c.image_ingredients_small_url, c.image_nutrition_small_url
                             FROM (
-                                SELECT code, product_name, NULL AS image_small_url, NULL AS image_ingredients_small_url, NULL AS image_nutrition_small_url
+                                SELECT code, product_name, image_small_url, image_ingredients_small_url, image_nutrition_small_url
                                 FROM food_db.products_core
                                 WHERE MATCH({m_col}) AGAINST(%s IN BOOLEAN MODE)
                                 AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
@@ -1186,7 +1189,8 @@ with tab_plate:
                             "Nutrition Image": r.get('image_nutrition_small_url') if is_valid_image_url(r.get('image_nutrition_small_url')) else "",
                         })
                     gallery_df = pd.DataFrame(df_rows)
-                    gallery_df.replace(to_replace=r'^None$', value='&nsbp', regex=True, inplace=True)
+                    gallery_df.replace(to_replace=r'^None$', value='&nbsp;', regex=True, inplace=True)
+                    gallery_df.index = range(1, len(gallery_df) + 1)
                     st.dataframe(
                         gallery_df,
                         column_config={
@@ -1194,8 +1198,7 @@ with tab_plate:
                             "Ingredients Image": st.column_config.ImageColumn("Ingredients"),
                             "Nutrition Image": st.column_config.ImageColumn("Nutrition"),
                         },
-                        use_container_width=True,
-                        hide_index=True
+                        use_container_width=True
                     )
                     
                     options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
@@ -1289,14 +1292,57 @@ with tab_planner:
             # Stream the response instantly!
             try:
                 start_llm = time.time()
+                placeholder = st.empty()
                 response = ollama.chat(model=get_active_model(), messages=[
                     {'role': 'system', 'content': sys_prompt},
                     {'role': 'user', 'content': 'Generate my meal plan as a markdown table.'}
                 ], stream=True)
                 raw_chunks = []
                 clean_stream = filter_scratchpad_stream(response, raw_chunks)
-                ai_reply = st.write_stream(clean_stream)
+                ai_reply = placeholder.write_stream(clean_stream)
                 raw_reply = "".join(raw_chunks)
+                
+                # Strip scratchpad and calculate totals
+                clean_reply = strip_scratchpad(raw_reply)
+                
+                def add_total_row_to_markdown_table(text):
+                    import re
+                    lines = text.split('\n')
+                    table_start = -1
+                    table_end = -1
+                    for i, line in enumerate(lines):
+                        line_s = line.strip()
+                        if line_s.startswith('|') and line_s.endswith('|'):
+                            if 'Meal Time' in line or 'Exact Food' in line or 'Portion' in line:
+                                if table_start == -1:
+                                    table_start = i
+                            if table_start != -1:
+                                table_end = i
+                    if table_start == -1 or table_end == -1:
+                        return text
+                    total_cal, total_pro, total_carb, total_fat = 0.0, 0.0, 0.0, 0.0
+                    for idx in range(table_start + 2, table_end + 1):
+                        line = lines[idx].strip()
+                        if not (line.startswith('|') and line.endswith('|')):
+                            continue
+                        cols = [c.strip() for c in line.strip('|').split('|')]
+                        if len(cols) < 7:
+                            continue
+                        if any(w in cols[0].lower() or w in cols[1].lower() for w in ['total', 'summation', 'global']):
+                            continue
+                        def clean_num(val):
+                            m = re.search(r'([0-9]+(?:\.[0-9]+)?)', val)
+                            return float(m.group(1)) if m else 0.0
+                        total_cal += clean_num(cols[3])
+                        total_pro += clean_num(cols[4])
+                        total_carb += clean_num(cols[5])
+                        total_fat += clean_num(cols[6])
+                    total_row = f"| **Total Summary** | **All Meals** | **-** | **{total_cal:.1f} kcal** | **{total_pro:.1f}g** | **{total_carb:.1f}g** | **{total_fat:.1f}g** |"
+                    lines.insert(table_end + 1, total_row)
+                    return "\n".join(lines)
+
+                final_reply = add_total_row_to_markdown_table(clean_reply)
+                placeholder.markdown(final_reply)
                 st.caption(f"⏱️ Execution Trace: Module=Ollama, MySQL | Time={time.time() - start_llm:.2f} seconds")
                 
                 # PDF Generation
@@ -1304,7 +1350,7 @@ with tab_planner:
                     import re
                     # Aggressive sanitization: if a table row has 4 columns and the last contains a comma or space before 'g', split it
                     sanitized_lines = []
-                    for line in text.split('\\n'):
+                    for line in text.split('\n'):
                         line = line.strip()
                         if line.startswith('|') and line.endswith('|') and '---' not in line:
                             cols = [c.strip() for c in line.strip('|').split('|')]
@@ -1321,7 +1367,7 @@ with tab_planner:
                             sanitized_lines.append('| ' + ' | '.join(cols) + ' |')
                         else:
                             sanitized_lines.append(line)
-                    text = '\\n'.join(sanitized_lines)
+                    text = '\n'.join(sanitized_lines)
 
                     pdf = FPDF()
                     pdf.add_page()
@@ -1383,7 +1429,7 @@ with tab_planner:
                 
                 st.download_button(
                     label="📄 Download PDF Export",
-                    data=generate_pdf(strip_scratchpad(raw_reply)),
+                    data=generate_pdf(final_reply),
                     file_name="Clinical_Meal_Plan.pdf",
                     mime="application/pdf",
                     type="primary"

@@ -35,7 +35,7 @@ def deploy():
         print("Connected successfully!")
         
         local_model = os.environ.get('LLM_MODEL', 'llama3.2-vision:11b')
-        command = f"cd food_project && git stash && rm -f git_version.txt git_id.txt && git -c filter.ident-dynamic.clean= -c filter.ident-dynamic.smudge= pull && git stash clear && sed -i 's/^LLM_MODEL=.*/LLM_MODEL={local_model}/' .env && docker-compose up -d --build"
+        command = f"cd food_project && git stash && rm -f git_version.txt git_id.txt && git pull && git stash clear && sed -i 's/^LLM_MODEL=.*/LLM_MODEL={local_model}/' .env && docker-compose up -d --build"
         print(f"Executing: {command}")
         
         stdin, stdout, stderr = ssh.exec_command(command)

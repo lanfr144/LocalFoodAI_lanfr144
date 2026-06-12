@@ -646,7 +646,11 @@ with tab_chat:
             
             st.session_state.messages.append({"role": "assistant", "content": ai_reply})
         except Exception as e: 
-            ai_reply = f"Hold on! Engine execution fault: {e}"
+            error_msg = str(e)
+            if "not found" in error_msg.lower() or "404" in error_msg.lower():
+                ai_reply = f"Hold on! Engine execution fault: {e}. Please check the LLM_MODEL variable in your .env file."
+            else:
+                ai_reply = f"Hold on! Engine execution fault: {e}"
             st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             st.chat_message("assistant").write(ai_reply)
 
@@ -1191,8 +1195,6 @@ with tab_planner:
             Dietary constraint: {diet_pref}. Additional notes: {extra_notes}.
             Health profile: {profile_text}. 
             
-            CARBOHYDRATE PRECISION & NO HALLUCINATION:
-            - The customer is extremely interested in carbohydrates, so you MUST be very precise. 
             - Under no circumstances should you hallucinate any nutritional values. No hallucinations. 
             - Base all calculations and values strictly on the database context provided: {db_context}.
             

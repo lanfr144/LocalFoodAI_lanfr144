@@ -35,7 +35,7 @@ def get_active_model() -> str:
         load_dotenv(dotenv_path=env_path, override=True)
     except Exception:
         pass
-    return os.environ.get('LLM_MODEL', 'llama3.2-vision:11b')
+    return os.environ.get('LLM_MODEL', 'llama3.2:3b')
 
 ACTIVE_MODEL = get_active_model()
 
@@ -45,77 +45,79 @@ def strip_scratchpad(text: str) -> str:
     clean_text = re.sub(r'<scratchpad>.*?</scratchpad>', '', text, flags=re.DOTALL)
     return clean_text.strip()
 
+@st.cache_data(show_spinner=False)
 def detect_allergens_from_text(name: str, ingredients: str) -> set:
     import re
+    import ollama
     detected = set()
-    text = (name + " " + ingredients).lower()
-    mappings = {
-        "peanut": "Peanuts",
-        "cacahuète": "Peanuts",
-        "cacahuete": "Peanuts",
-        "egg": "Eggs",
-        "oeuf": "Eggs",
-        "œuf": "Eggs",
-        "milk": "Milk",
-        "lait": "Milk",
-        "butter": "Milk",
-        "beurre": "Milk",
-        "cheese": "Milk",
-        "fromage": "Milk",
-        "cream": "Milk",
-        "crème": "Milk",
-        "creme": "Milk",
-        "wheat": "Wheat",
-        "blé": "Wheat",
-        "ble": "Wheat",
-        "gluten": "Gluten",
-        "soy": "Soy",
-        "soja": "Soy",
-        "almond": "Tree Nuts",
-        "amande": "Tree Nuts",
-        "cashew": "Tree Nuts",
-        "walnut": "Tree Nuts",
-        "noix": "Tree Nuts",
-        "hazelnut": "Tree Nuts",
-        "noisette": "Tree Nuts",
-        "pecan": "Tree Nuts",
-        "pistachio": "Tree Nuts",
-        "pistache": "Tree Nuts",
-        "fish": "Fish",
-        "poisson": "Fish",
-        "salmon": "Fish",
-        "saumon": "Fish",
-        "tuna": "Fish",
-        "thon": "Fish",
-        "shrimp": "Shellfish",
-        "crevette": "Shellfish",
-        "crab": "Shellfish",
-        "crabe": "Shellfish",
-        "lobster": "Shellfish",
-        "homard": "Shellfish",
-        "mussel": "Shellfish",
-        "moule": "Shellfish",
-        "oyster": "Shellfish",
-        "huître": "Shellfish",
-        "huitre": "Shellfish",
-        "sesame": "Sesame",
-        "sésame": "Sesame",
-        "mustard": "Mustard",
-        "moutarde": "Mustard",
-        "celery": "Celery",
-        "céleri": "Celery",
-        "celeri": "Celery",
-        "lupin": "Lupin",
-        "mollusc": "Molluscs",
-        "mollusque": "Molluscs",
-        "sulphite": "Sulphites",
-        "sulfite": "Sulphites"
-    }
-    for keyword, allergen in mappings.items():
-        pattern = r'\b' + re.escape(keyword) + r's?\b'
-        if re.search(pattern, text):
-            detected.add(allergen)
+    
+    # Extract candidate terms from name and ingredients
+    candidates = []
+    if ingredients:
+        # Split by typical separators: commas, semicolons, parentheses, newlines
+        parts = re.split(r'[,;()\[\]\n\r]', ingredients)
+        for p in parts:
+            p_clean = re.sub(r'[*_\d%]+', '', p).strip()
+            # Remove empty or common placeholder ingredients/non-ingredients
+            if len(p_clean) > 2 and p_clean.lower() not in ['ingredients', 'and', 'contains', 'may contain', 'natural', 'artificial', 'flavors', 'flavor', 'preservative', 'color', 'colors']:
+                candidates.append(p_clean)
+                
+    if name:
+        name_clean = re.sub(r'[*_\d%]+', '', name).strip()
+        if len(name_clean) > 2:
+            candidates.append(name_clean)
+            for word in re.split(r'\s+', name_clean):
+                w_clean = word.strip()
+                if len(w_clean) > 2 and w_clean.lower() not in ['with', 'and', 'for', 'the', 'bar', 'cup', 'can', 'bag', 'mix']:
+                    candidates.append(w_clean)
+                    
+    # Deduplicate candidates while keeping order
+    seen = set()
+    unique_candidates = []
+    for c in candidates:
+        c_low = c.lower()
+        if c_low not in seen:
+            seen.add(c_low)
+            unique_candidates.append(c)
+            
+    if not unique_candidates:
+        return detected
+        
+    prompt_lines = [
+        "You are a food safety expert. For each item in the list below, answer the question exactly.",
+        "Respond with 'Yes' or 'No'. Format the output exactly as:",
+        "ItemName: Yes/No",
+        "\nQuestions:"
+    ]
+    for c in unique_candidates:
+        prompt_lines.append(f"Answer by yes or no, if it is in some case answer yes : Are {c} allergens.")
+        
+    prompt = "\n".join(prompt_lines)
+    
+    try:
+        response = ollama.chat(model=get_active_model(), messages=[
+            {'role': 'user', 'content': prompt}
+        ])
+        content = response['message']['content']
+        for line in content.split('\n'):
+            if ':' in line:
+                parts = line.split(':')
+                left = parts[0].strip().lower()
+                right = parts[1].strip().lower()
+                
+                for c in unique_candidates:
+                    c_low = c.lower()
+                    if c_low in left and 'yes' in right:
+                        detected.add(c.title())
+            else:
+                for c in unique_candidates:
+                    c_low = c.lower()
+                    if f"are {c} allergens" in line.lower() and 'yes' in line.lower():
+                        detected.add(c.title())
+    except Exception:
+        pass
     return detected
+
 
 def filter_scratchpad_stream(stream, raw_accumulator=None):
     buffer = ""

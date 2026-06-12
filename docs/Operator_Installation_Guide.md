@@ -1,4 +1,4 @@
-# $Id: 03cbc893f143c3ae43fc35e97913bedb89b41e23 Lange François lanfr144@school.lu 2026/06/11 10:38:26 Lange François lanfr144@school.lu 2026/06/11 10:38:26   [#1] chore: fix git-ident-filter self-modification regex bug by concatenating search strings [PreRelease-1.0-28-g03cbc89] $
+# $Id$
 # Local Food AI - Detailed Operator Installation Guide
 
 This document is a step-by-step installation, mapping, configuration, and verification manual for deploying the **Local Food AI** system in an enterprise environment. It covers hybrid hypervisor infrastructure (WSL2, Hyper-V, and VirtualBox), cross-node networking, SNMPv3 monitoring, alert channels, and acceptance testing.
@@ -179,6 +179,6 @@ Run these test cases to verify the installation:
 | :--- | :--- | :--- | :---: |
 | **TC-OP-01** | Search 'Cheese' on Search Tab | 10+ records returned in <0.04s. Listeria warning flags on unpasteurized. | `[ ]` |
 | **TC-OP-02** | Enter '1.5 cups' in Plate Tab | Parsed and converted to metric grams based on density index. | `[ ]` |
-| **TC-OP-03** | Ask Chat: 'Can I eat sushi?' | llama3.2-vision:11b retrieves database context and flags raw fish as forbidden for pregnancy. | `[ ]` |
+| **TC-OP-03** | Ask Chat: 'Can I eat sushi?' | llama3.2:3b retrieves database context and flags raw fish as forbidden for pregnancy. | `[ ]` |
 | **TC-OP-04** | Trigger manual db backup | Timestamped compressed .sql.gz created inside backups/ folder. | `[ ]` |
 | **TC-OP-05** | Terminate Ollama Container | Zabbix PROBLEM active alert generated on dashboard in < 30 seconds. | `[ ]` |

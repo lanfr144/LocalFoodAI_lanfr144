@@ -41,7 +41,8 @@ This project leverages specialized AI skills to maintain code quality, documenta
 - **Test Generator**: Generates comprehensive unit and integration tests focusing on boundary conditions and logical coverage.
 
 ## Grading
-There will be 6 grades in total: 3 for Project Management 1 (PM1) and 3 for Domain-specifc Project 1 (DSP1).
+
+There will be 6 grades in total: 3 for Project Management 1 (PM1) and 3 for Domain-specific Project 1 (DSP1).
 
 ### PM1:
 * Requirements analysis and assessment.

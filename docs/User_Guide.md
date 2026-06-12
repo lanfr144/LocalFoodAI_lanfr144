@@ -1,5 +1,5 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-# Local Food AI - Clinician User Manual
+# $Id$
+Local Food AI - Clinician User Manual
 
 Welcome to the **Local Food AI** clinical dietitian explorer. This guide explains how to use the platform to search for products, build custom recipe plates, calculate cumulative nutritional statistics, and consult the privacy-safe AI assistant.
 

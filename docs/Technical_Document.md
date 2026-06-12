@@ -1,5 +1,5 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-# Local Food AI - Capstone Technical Document
+# $Id$
+Local Food AI - Capstone Technical Document
 
 This document provides a comprehensive technical overview of the **Local Food AI** system. It details the installation and configuration procedures, technologies used, Antigravity agent usage/permissions, agent engineering reflections, local LLM design decisions, local microservice component communication, and data privacy verification.
 
@@ -32,19 +32,26 @@ flowchart TD
     end
 
     subgraph "Gateway & Application Nodes"
-        Nginx["Nginx Reverse Proxy\n(Port 80)"]
-        Streamlit["Streamlit Web App\n(Port 8502 / Docker Container)"]
+        Nginx["Nginx Reverse Proxy
+(Port 80)"]
+        Streamlit["Streamlit Web App
+(Port 8502 / Docker Container)"]
     end
 
     subgraph "Intelligence & Search Nodes"
-        Ollama["Ollama Daemon\n(Port 11434 / Docker Container)"]
-        SearXNG["SearXNG Meta-Search\n(Port 8085 / Docker Container)"]
+        Ollama["Ollama Daemon
+(Port 11434 / Docker Container)"]
+        SearXNG["SearXNG Meta-Search
+(Port 8085 / Docker Container)"]
     end
 
     subgraph "Data Storage & Observability Nodes"
-        MySQL["MySQL Database Server\n(Port 3306 / Docker Container)"]
-        Zabbix["Zabbix Server & Agent\n(Ports 10051 & 10050)"]
-        ZabbixWeb["Zabbix Web Dashboard\n(Port 8081)"]
+        MySQL["MySQL Database Server
+(Port 3306 / Docker Container)"]
+        Zabbix["Zabbix Server & Agent
+(Ports 10051 & 10050)"]
+        ZabbixWeb["Zabbix Web Dashboard
+(Port 8081)"]
     end
 
     %% Communication paths
@@ -144,7 +151,8 @@ During the deployment and configuration phases, the Antigravity agent encountere
 ### 5.1 Regex Greediness Corrupting Python Literals
 * **The Struggle**: The dynamic git filter `git-ident-filter.py` used a greedy wildcard matching pattern `.*?[^$]*?$` which matched across lines. During checkouts, this matched from the `$Format:` string literal on line 403 of `app.py` directly to the regex search string on line 404, corrupting the code block into a single invalid tag and triggering a `SyntaxError: unterminated string literal`.
 * **The Resolution**:
-  1. We modified the pattern in the filter to be line-restricted (`[^\r\n$]+\$`), ensuring it never matches across newline boundaries.
+  1. We modified the pattern in the filter to be line-restricted (`[^
+$]+\$`), ensuring it never matches across newline boundaries.
   2. We split the string literal searches inside `app.py` so they are physically split across concatenated strings (e.g. `"$Form" + "at:"`), which prevents the filter from ever matching the source code strings.
 
 ### 5.2 Git Checkout Filter Self-Mod Loops

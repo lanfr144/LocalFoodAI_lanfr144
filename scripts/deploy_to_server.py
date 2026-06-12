@@ -34,7 +34,7 @@ def deploy():
         ssh.connect(host, username=user, password=password, timeout=10)
         print("Connected successfully!")
         
-        command = "cd food_project && git stash && rm -f git_version.txt git_id.txt && git pull && git stash clear && docker-compose up -d --build"
+        command = "cd food_project && git stash && rm -f git_version.txt git_id.txt && git -c filter.ident-dynamic.clean= -c filter.ident-dynamic.smudge= pull && git stash clear && docker-compose up -d --build"
         print(f"Executing: {command}")
         
         stdin, stdout, stderr = ssh.exec_command(command)

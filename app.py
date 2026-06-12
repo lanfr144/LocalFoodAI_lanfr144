@@ -45,6 +45,89 @@ def strip_scratchpad(text: str) -> str:
     clean_text = re.sub(r'<scratchpad>.*?</scratchpad>', '', text, flags=re.DOTALL)
     return clean_text.strip()
 
+def extract_allergens_from_json(data) -> list:
+    table_data = []
+    
+    def add_item(aliment, allergens):
+        if not aliment or not allergens:
+            return
+        if isinstance(allergens, list):
+            cleaned = [str(alg).strip().title() for alg in allergens if alg]
+            if cleaned:
+                table_data.append({
+                    "Aliment (Ingredient)": str(aliment).strip().title(),
+                    "Allergen Kind(s)": ", ".join(cleaned)
+                })
+        elif isinstance(allergens, str) and allergens.strip():
+            table_data.append({
+                "Aliment (Ingredient)": str(aliment).strip().title(),
+                "Allergen Kind(s)": allergens.strip().title()
+            })
+
+    if isinstance(data, list):
+        for entry in data:
+            if isinstance(entry, dict):
+                aliment = entry.get('aliment') or entry.get('name') or entry.get('food')
+                allergens = entry.get('allergen') or entry.get('allergens') or entry.get('kinds') or []
+                if aliment and allergens:
+                    add_item(aliment, allergens)
+                else:
+                    for k, v in entry.items():
+                        if isinstance(v, (list, str)):
+                            add_item(k, v)
+            elif isinstance(entry, list) and len(entry) >= 2:
+                add_item(entry[0], entry[1])
+    elif isinstance(data, dict):
+        al_list = data.get('aliment') or data.get('aliments')
+        all_list = data.get('allergen') or data.get('allergens') or data.get('kinds')
+        
+        if isinstance(al_list, list) and isinstance(all_list, list):
+            for item in all_list:
+                if isinstance(item, dict):
+                    name = item.get('name') or item.get('aliment')
+                    types = item.get('types') or item.get('type') or item.get('kinds') or item.get('allergen') or item.get('allergens')
+                    if name and types:
+                        add_item(name, types)
+                elif isinstance(item, list) and len(item) >= 2:
+                    add_item(item[0], item[1])
+            if not table_data and len(al_list) == len(all_list):
+                for a, alg in zip(al_list, all_list):
+                    add_item(a, alg)
+                    
+        if not table_data:
+            for key, val in data.items():
+                if isinstance(val, list):
+                    for entry in val:
+                        if isinstance(entry, dict):
+                            aliment = entry.get('aliment') or entry.get('name') or entry.get('food')
+                            allergens = entry.get('allergen') or entry.get('allergens') or entry.get('kinds') or []
+                            if aliment and allergens:
+                                add_item(aliment, allergens)
+                            else:
+                                for k, v in entry.items():
+                                    if isinstance(v, (list, str)):
+                                        add_item(k, v)
+                        elif isinstance(entry, list) and len(entry) >= 2:
+                            add_item(entry[0], entry[1])
+                        elif isinstance(entry, str):
+                            if key not in ['aliment', 'aliments', 'allergen', 'allergens', 'kinds', 'types']:
+                                add_item(key, val)
+                                break
+                elif isinstance(val, dict):
+                    for k, v in val.items():
+                        if isinstance(v, (list, str)):
+                            add_item(k, v)
+                        elif isinstance(v, dict):
+                            add_item(k, v.get('allergen') or v.get('allergens') or [])
+                elif isinstance(val, str):
+                    if key not in ['aliment', 'aliments', 'allergen', 'allergens', 'kinds', 'types']:
+                        add_item(key, val)
+        if not table_data:
+            for k, v in data.items():
+                if k not in ['aliment', 'aliments', 'allergen', 'allergens', 'kinds', 'types']:
+                    add_item(k, v)
+    return table_data
+
 @st.cache_data(show_spinner=False)
 def query_plate_allergens(unique_aliments: list) -> list:
     import ollama
@@ -64,34 +147,7 @@ def query_plate_allergens(unique_aliments: list) -> list:
         )
         res_content = response['message']['content'].strip()
         data = json.loads(res_content)
-        
-        # Robust dictionary-or-list JSON parser
-        aliments_array = []
-        if isinstance(data, list):
-            aliments_array = data
-        elif isinstance(data, dict):
-            for val in data.values():
-                if isinstance(val, list):
-                    aliments_array = val
-                    break
-                    
-        if aliments_array:
-            for entry in aliments_array:
-                if isinstance(entry, dict):
-                    aliment = entry.get('aliment')
-                    allergens = entry.get('allergen') or entry.get('allergens') or []
-                    if aliment:
-                        if isinstance(allergens, list) and allergens:
-                            cleaned_algs = [str(alg).strip().title() for alg in allergens if alg]
-                            table_data.append({
-                                "Aliment (Ingredient)": aliment.strip().title(),
-                                "Allergen Kind(s)": ", ".join(cleaned_algs)
-                            })
-                        elif isinstance(allergens, str) and allergens.strip():
-                            table_data.append({
-                                "Aliment (Ingredient)": aliment.strip().title(),
-                                "Allergen Kind(s)": allergens.strip().title()
-                            })
+        table_data = extract_allergens_from_json(data)
     except Exception:
         pass
     return table_data
@@ -145,25 +201,11 @@ def detect_allergens_from_text(name: str, ingredients: str) -> set:
         )
         res_content = response['message']['content'].strip()
         data = json.loads(res_content)
-        
-        # Robust dictionary-or-list JSON parser
-        aliments_array = []
-        if isinstance(data, list):
-            aliments_array = data
-        elif isinstance(data, dict):
-            for val in data.values():
-                if isinstance(val, list):
-                    aliments_array = val
-                    break
-                    
-        if aliments_array:
-            for entry in aliments_array:
-                if isinstance(entry, dict):
-                    aliment = entry.get('aliment')
-                    allergens = entry.get('allergen') or entry.get('allergens') or []
-                    if aliment and allergens:
-                        if (isinstance(allergens, list) and len(allergens) > 0) or (isinstance(allergens, str) and allergens.strip()):
-                            detected.add(aliment.strip().title())
+        parsed = extract_allergens_from_json(data)
+        for item in parsed:
+            name = item.get("Aliment (Ingredient)")
+            if name:
+                detected.add(name)
     except Exception:
         pass
     return detected
@@ -505,10 +547,15 @@ if cookies is None:
 
 # If the cookie has auth_user, set/restore session state
 cookie_user = cookie_manager.get(cookie="auth_user")
-if cookie_user:
-    st.session_state["authenticated_user"] = cookie_user
-elif "authenticated_user" not in st.session_state:
+if st.session_state.get("logged_out"):
     st.session_state["authenticated_user"] = None
+    if not cookie_user:
+        st.session_state["logged_out"] = False
+else:
+    if cookie_user:
+        st.session_state["authenticated_user"] = cookie_user
+    elif "authenticated_user" not in st.session_state:
+        st.session_state["authenticated_user"] = None
 
 st.markdown("""
 <style>
@@ -535,6 +582,7 @@ with st.sidebar:
     if st.session_state["authenticated_user"]:
         st.success(f"Logged in as: {st.session_state['authenticated_user']}")
         if st.button("Logout"):
+            st.session_state["logged_out"] = True
             st.session_state["authenticated_user"] = None
             cookie_manager.delete("auth_user")
             time.sleep(0.5)
@@ -913,7 +961,7 @@ with tab_explore:
                         for col in df_display.columns:
                             if 'image' in col.lower():
                                 df_display[col] = df_display[col].apply(lambda x: x if is_valid_image_url(x) else "")
-                        df_display.replace(to_replace=[None, 'None', 'nan', 'NaN'], value='&nbsp;', inplace=True)
+                        df_display.replace(to_replace=[None, 'None', 'nan', 'NaN'], value='\u00a0', inplace=True)
                         # Only fillna with empty string on object columns to avoid Arrow float64 conversion errors
                         for col in df_display.columns:
                             if df_display[col].dtype == 'object':
@@ -1188,20 +1236,37 @@ with tab_plate:
                             "Nutrition Image": r.get('image_nutrition_small_url') if is_valid_image_url(r.get('image_nutrition_small_url')) else "",
                         })
                     gallery_df = pd.DataFrame(df_rows)
-                    gallery_df.replace(to_replace=[None, 'None', 'nan', 'NaN'], value='&nbsp;', inplace=True)
+                    gallery_df.replace(to_replace=[None, 'None', 'nan', 'NaN'], value='\u00a0', inplace=True)
                     gallery_df.index = range(1, len(gallery_df) + 1)
-                    st.dataframe(
+                    event = st.dataframe(
                         gallery_df,
                         column_config={
                             "Image": st.column_config.ImageColumn("Image"),
                             "Ingredients Image": st.column_config.ImageColumn("Ingredients"),
                             "Nutrition Image": st.column_config.ImageColumn("Nutrition"),
                         },
-                        use_container_width=True
+                        use_container_width=True,
+                        on_select="rerun",
+                        selection_mode="single_row",
+                        key="product_preview_table"
                     )
                     
+                    selected_row_idx = None
+                    if event and hasattr(event, "selection"):
+                        sel = event.selection
+                        if isinstance(sel, dict) and sel.get("rows"):
+                            selected_row_idx = sel["rows"][0]
+                        elif hasattr(sel, "get") and sel.get("rows"):
+                            selected_row_idx = sel.get("rows")[0]
+                    
                     options = {f"{r['product_name']} ({r['code']})": r for r in search_res}
-                    selected_str = st.selectbox("Select Product", list(options.keys()))
+                    options_list = list(options.keys())
+                    
+                    default_idx = 0
+                    if selected_row_idx is not None and selected_row_idx < len(options_list):
+                        default_idx = selected_row_idx
+                        
+                    selected_str = st.selectbox("Select Product", options_list, index=default_idx)
                     selected_product = options[selected_str]
                     
                     add_amount_str = st.text_input("Portion Quantity (e.g., '100g', '2 tbsp', '1.5 cups', '1 pinch')", value="100g")
@@ -1244,6 +1309,10 @@ with tab_planner:
     extra_notes = st.text_input("Any additional allergies or goals?")
     
     if st.button("Generate Professional Menu"):
+        st.session_state.pop("generated_meal_plan", None)
+        st.session_state.pop("meal_plan_pdf_data", None)
+        st.session_state.pop("meal_plan_elapsed", None)
+        
         with st.spinner("Executing Lightning-Fast Context RAG..."):
             user_eav = get_eav_profile(st.session_state["authenticated_user"])
             profile_text = ", ".join([f"{p['name']}: {p['value']}" for p in user_eav]) if user_eav else "None"
@@ -1272,7 +1341,7 @@ with tab_planner:
               - 1.5 cups of Cheese = X grams (density Y). Calories = A, Protein = B, Carbs = C, Fat = D.
               - 2 tbsp of Peanut Butter = Z grams (density C). Calories = D, Protein = E, Carbs = F, Fat = G.
               - Summation: Total Calories = A + D = Z kcal (vs target {target_cal}kcal). Total Protein = B + E = Fg.
-              </scratchpad>
+              - </scratchpad>
               | Meal Time | Exact Food | Portion Size | Calories | Protein | Carbs | Fat |
               | --- | --- | --- | --- | --- | --- | --- |
               ...
@@ -1336,13 +1405,31 @@ with tab_planner:
                         total_pro += clean_num(cols[4])
                         total_carb += clean_num(cols[5])
                         total_fat += clean_num(cols[6])
-                    total_row = f"| **Total Summary** | **All Meals** | **-** | **{total_cal:.1f} kcal** | **{total_pro:.1f}g** | **{total_carb:.1f}g** | **{total_fat:.1f}g** |"
+                    total_row = f"| Total Summary | All Meals | - | {total_cal:.1f} kcal | {total_pro:.1f}g | {total_carb:.1f}g | {total_fat:.1f}g |"
                     lines.insert(table_end + 1, total_row)
                     return "\n".join(lines)
 
                 final_reply = add_total_row_to_markdown_table(clean_reply)
-                placeholder.markdown(final_reply)
-                st.caption(f"⏱️ Execution Trace: Module=Ollama, MySQL | Time={time.time() - start_llm:.2f} seconds")
+                
+                # Align numeric columns on the right
+                def align_markdown_table(text):
+                    lines = text.split('\n')
+                    for i, line in enumerate(lines):
+                        line_s = line.strip()
+                        if line_s.startswith('|') and line_s.endswith('|') and '---' in line_s:
+                            parts = [p.strip() for p in line_s.strip('|').split('|')]
+                            if len(parts) >= 7:
+                                new_parts = []
+                                for idx, part in enumerate(parts):
+                                    if idx < 3:
+                                        new_parts.append('---')
+                                    else:
+                                        new_parts.append('---:')
+                                lines[i] = '| ' + ' | '.join(new_parts) + ' |'
+                                break
+                    return '\n'.join(lines)
+                
+                final_reply = align_markdown_table(final_reply)
                 
                 # PDF Generation
                 def generate_pdf(text):
@@ -1373,7 +1460,6 @@ with tab_planner:
                     pdf.set_font("Helvetica", 'B', 16)
                     pdf.cell(0, 10, "Strict Clinical Meal Plan", new_x="LMARGIN", new_y="NEXT", align='C')
                     pdf.ln(h=5)
-                    in_table = False
                     table_data = []
                     
                     def flush_table():
@@ -1381,8 +1467,9 @@ with tab_planner:
                         pdf.set_font("Helvetica", size=9)
                         # Auto-calculate col_widths based on 5 columns if present
                         cw = (20, 40, 15, 10, 15) if len(table_data[0]) == 5 else (20, 30, 15, 10, 10, 10, 10) if len(table_data[0]) >= 7 else None
+                        alignments = ("LEFT", "LEFT", "LEFT", "RIGHT", "RIGHT", "RIGHT", "RIGHT") if len(table_data[0]) >= 7 else ("LEFT", "LEFT", "LEFT", "RIGHT", "RIGHT") if len(table_data[0]) == 5 else "LEFT"
                         try:
-                            with pdf.table(text_align="LEFT", col_widths=cw) as table:
+                            with pdf.table(text_align=alignments, col_widths=cw) as table:
                                 for row_data in table_data:
                                     row = table.row()
                                     for datum in row_data:
@@ -1421,18 +1508,18 @@ with tab_planner:
                             
                     flush_table()
                             
-                    pdf_path = "/tmp/meal_plan.pdf"
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    tmp_dir = os.path.join(current_dir, "tmp")
+                    os.makedirs(tmp_dir, exist_ok=True)
+                    pdf_path = os.path.join(tmp_dir, "meal_plan.pdf")
                     pdf.output(pdf_path)
                     with open(pdf_path, "rb") as f:
                         return f.read()
-                
-                st.download_button(
-                    label="📄 Download PDF Export",
-                    data=generate_pdf(final_reply),
-                    file_name="Clinical_Meal_Plan.pdf",
-                    mime="application/pdf",
-                    type="primary"
-                )
+
+                st.session_state['generated_meal_plan'] = final_reply
+                st.session_state['meal_plan_pdf_data'] = generate_pdf(final_reply)
+                st.session_state['meal_plan_elapsed'] = time.time() - start_llm
+                st.rerun()
                 
             except Exception as e:
                 error_msg = str(e).lower()
@@ -1440,5 +1527,20 @@ with tab_planner:
                     st.warning("⚠️ The AI engine is currently downloading its core models in the background. Please wait a minute and try again!")
                 else:
                     st.error(f"AI Generation Failed: {e}")
+
+    # Outside the button, render the session state if exists
+    if 'generated_meal_plan' in st.session_state:
+        st.info("🧠 AI is analyzing nutritional synergies and generating your plan...")
+        st.markdown(st.session_state['generated_meal_plan'])
+        if st.session_state.get('meal_plan_elapsed'):
+            st.caption(f"⏱️ Execution Trace: Module=Ollama, MySQL | Time={st.session_state['meal_plan_elapsed']:.2f} seconds")
+            
+        st.download_button(
+            label="📄 Download PDF Export",
+            data=st.session_state['meal_plan_pdf_data'],
+            file_name="Clinical_Meal_Plan.pdf",
+            mime="application/pdf",
+            type="primary"
+        )
 
 if conn_reader: conn_reader.close()

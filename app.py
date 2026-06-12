@@ -1247,7 +1247,7 @@ with tab_plate:
                         },
                         use_container_width=True,
                         on_select="rerun",
-                        selection_mode="single_row",
+                        selection_mode="single-row",
                         key="product_preview_table"
                     )
                     

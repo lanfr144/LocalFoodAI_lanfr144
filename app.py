@@ -46,19 +46,58 @@ def strip_scratchpad(text: str) -> str:
     return clean_text.strip()
 
 @st.cache_data(show_spinner=False)
+def query_plate_allergens(unique_aliments: list) -> list:
+    import ollama
+    import json
+    table_data = []
+    if not unique_aliments:
+        return table_data
+        
+    aliments_str = ", ".join(unique_aliments)
+    prompt = f"In these aliments : {aliments_str} are there allergens and if it is the case also said the allergen kinds. Return the answer as json array with two variables aliment and the associate allergen in an array find inside it. focus on the list, do not add or delete aliments."
+    
+    try:
+        response = ollama.chat(
+            model=get_active_model(),
+            messages=[{'role': 'user', 'content': prompt}],
+            format='json'
+        )
+        res_content = response['message']['content'].strip()
+        data = json.loads(res_content)
+        
+        if isinstance(data, list):
+            for entry in data:
+                aliment = entry.get('aliment')
+                allergens = entry.get('allergen') or entry.get('allergens') or []
+                if aliment:
+                    if isinstance(allergens, list) and allergens:
+                        cleaned_algs = [str(alg).strip().title() for alg in allergens if alg]
+                        table_data.append({
+                            "Aliment (Ingredient)": aliment.strip().title(),
+                            "Allergen Kind(s)": ", ".join(cleaned_algs)
+                        })
+                    elif isinstance(allergens, str) and allergens.strip():
+                        table_data.append({
+                            "Aliment (Ingredient)": aliment.strip().title(),
+                            "Allergen Kind(s)": allergens.strip().title()
+                        })
+    except Exception:
+        pass
+    return table_data
+
+@st.cache_data(show_spinner=False)
 def detect_allergens_from_text(name: str, ingredients: str) -> set:
     import re
     import ollama
+    import json
     detected = set()
     
     # Extract candidate terms from name and ingredients
     candidates = []
     if ingredients:
-        # Split by typical separators: commas, semicolons, parentheses, newlines
         parts = re.split(r'[,;()\[\]\n\r]', ingredients)
         for p in parts:
             p_clean = re.sub(r'[*_\d%]+', '', p).strip()
-            # Remove empty or common placeholder ingredients/non-ingredients
             if len(p_clean) > 2 and p_clean.lower() not in ['ingredients', 'and', 'contains', 'may contain', 'natural', 'artificial', 'flavors', 'flavor', 'preservative', 'color', 'colors']:
                 candidates.append(p_clean)
                 
@@ -83,37 +122,25 @@ def detect_allergens_from_text(name: str, ingredients: str) -> set:
     if not unique_candidates:
         return detected
         
-    prompt_lines = [
-        "You are a food safety expert. For each item in the list below, answer the question exactly.",
-        "Respond with 'Yes' or 'No'. Format the output exactly as:",
-        "ItemName: Yes/No",
-        "\nQuestions:"
-    ]
-    for c in unique_candidates:
-        prompt_lines.append(f"Answer by yes or no, if it is in some case answer yes : Are {c} allergens.")
-        
-    prompt = "\n".join(prompt_lines)
+    # Ask the LLM using the JSON array prompt format
+    aliments_str = ", ".join(unique_candidates)
+    prompt = f"In these aliments : {aliments_str} are there allergens and if it is the case also said the allergen kinds. Return the answer as json array with two variables aliment and the associate allergen in an array find inside it. focus on the list, do not add or delete aliments."
     
     try:
-        response = ollama.chat(model=get_active_model(), messages=[
-            {'role': 'user', 'content': prompt}
-        ])
-        content = response['message']['content']
-        for line in content.split('\n'):
-            if ':' in line:
-                parts = line.split(':')
-                left = parts[0].strip().lower()
-                right = parts[1].strip().lower()
-                
-                for c in unique_candidates:
-                    c_low = c.lower()
-                    if c_low in left and 'yes' in right:
-                        detected.add(c.title())
-            else:
-                for c in unique_candidates:
-                    c_low = c.lower()
-                    if f"are {c} allergens" in line.lower() and 'yes' in line.lower():
-                        detected.add(c.title())
+        response = ollama.chat(
+            model=get_active_model(),
+            messages=[{'role': 'user', 'content': prompt}],
+            format='json'
+        )
+        res_content = response['message']['content'].strip()
+        data = json.loads(res_content)
+        if isinstance(data, list):
+            for entry in data:
+                aliment = entry.get('aliment')
+                allergens = entry.get('allergen') or entry.get('allergens') or []
+                if aliment:
+                    if allergens and len(allergens) > 0:
+                        detected.add(aliment.strip().title())
     except Exception:
         pass
     return detected
@@ -413,12 +440,12 @@ def render_version():
                     if not line:
                         break
                     if "$Form" + "at:" in line:
-                        match = re.search(r'\$For' + r'mat:[^:]+:[^:]+:(.*?)\$', line)
+                        match = re.search(r'\$For' + r'mat:(.*?)\$', line)
                         if match:
                             parts = match.group(1).split(':')
-                            if len(parts) >= 11 and not parts[0].startswith('%an'):
-                                git_version = f"{parts[7]}:{parts[8]}:{parts[9]}" # %cd (committer date)
-                                git_hash = parts[10][:7] if parts[10] else ""
+                            if len(parts) >= 11 and not parts[2].startswith('%an'):
+                                git_version = f"{parts[7]}" # %cd (committer date)
+                                git_hash = parts[8][:7] if parts[8] else ""
                                 break
     except Exception:
         pass
@@ -719,8 +746,8 @@ with tab_explore:
                                min.calcium_100g, min.iron_100g, min.magnesium_100g, min.potassium_100g, min.zinc_100g
                         FROM (
                             SELECT code, product_name, generic_name, brands, ingredients_text,
-                                   url, image_url, image_small_url, image_ingredients_url, 
-                                   image_ingredients_small_url, image_nutrition_url, image_nutrition_small_url
+                                   NULL AS url, NULL AS image_url, NULL AS image_small_url, NULL AS image_ingredients_url, 
+                                   NULL AS image_ingredients_small_url, NULL AS image_nutrition_url, NULL AS image_nutrition_small_url
                             FROM food_db.products_core
                             WHERE (MATCH(product_name, ingredients_text) AGAINST(%s IN BOOLEAN MODE) OR product_name LIKE %s)
                             AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'
@@ -1021,26 +1048,35 @@ with tab_plate:
                                 name, val = metrics[idx + j]
                                 cols[j].metric(name, f"{val:.5f}" if val < 0.1 else f"{val:.2f}")
 
-                    all_allergens = set()
+                    aliments_list = []
                     for i in items:
-                        # 1. Parse database allergens if available
-                        if i.get('allergens'):
-                            for alg in str(i['allergens']).split(','):
-                                alg_clean = alg.strip().lower()
-                                if alg_clean.startswith('en:'):
-                                    alg_clean = alg_clean[3:]
-                                if alg_clean and alg_clean != 'none':
-                                    all_allergens.add(alg_clean.replace('-', ' ').title())
-                        
-                        # 2. Text heuristics fallback for common allergens
-                        prod_name = str(i.get('product_name') or '')
-                        ing_text = str(i.get('ingredients_text') or '')
-                        heuristics = detect_allergens_from_text(prod_name, ing_text)
-                        all_allergens.update(heuristics)
-                        
+                        prod_name = str(i.get('product_name') or '').strip()
+                        if prod_name and prod_name.lower() not in ['none', '']:
+                            aliments_list.append(prod_name)
+                        ing_text = str(i.get('ingredients_text') or '').strip()
+                        if ing_text:
+                            import re
+                            parts = re.split(r'[,;()\[\]\n\r]', ing_text)
+                            for p in parts:
+                                p_clean = re.sub(r'[*_\d%]+', '', p).strip()
+                                if len(p_clean) > 2 and p_clean.lower() not in ['ingredients', 'and', 'contains', 'may contain', 'natural', 'artificial', 'flavors', 'flavor', 'preservative', 'color', 'colors']:
+                                    aliments_list.append(p_clean)
+                                    
+                    seen = set()
+                    unique_aliments = []
+                    for a in aliments_list:
+                        a_low = a.lower()
+                        if a_low not in seen:
+                            seen.add(a_low)
+                            unique_aliments.append(a)
+                            
+                    table_data = query_plate_allergens(unique_aliments)
+                    
                     st.markdown("---")
-                    if all_allergens:
-                        st.warning(f"⚠️ **Plate Allergens Detected:** {', '.join(all_allergens)}")
+                    if table_data:
+                        st.warning("⚠️ **Plate Allergens Detected:**")
+                        import pandas as pd
+                        st.table(pd.DataFrame(table_data))
                     else:
                         st.success("✅ **No Allergens Detected**")
                 
@@ -1080,13 +1116,12 @@ with tab_plate:
                         order_by = "ORDER BY " + ", ".join(o_clauses) if o_clauses else ""
                         
                         raw_clause = ""
-                        if raw_ingredient_filter == "Yes":
-                            raw_clause = "AND (image_ingredients_url IS NULL OR image_ingredients_url = '') AND (image_ingredients_small_url IS NULL OR image_ingredients_small_url = '')"
+                        # Note: raw ingredient filter is bypassed since image columns are omitted on the server schema
                         
                         sql = f"""
                             SELECT c.code, c.product_name, c.image_small_url, c.image_ingredients_small_url, c.image_nutrition_small_url
                             FROM (
-                                SELECT code, product_name, image_small_url, image_ingredients_small_url, image_nutrition_small_url
+                                SELECT code, product_name, NULL AS image_small_url, NULL AS image_ingredients_small_url, NULL AS image_nutrition_small_url
                                 FROM food_db.products_core
                                 WHERE MATCH({m_col}) AGAINST(%s IN BOOLEAN MODE)
                                 AND product_name IS NOT NULL AND product_name != '' AND product_name != 'None'

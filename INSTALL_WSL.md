@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:INSTALL_WSL.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:INSTALL_WSL.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 # 🚀 WSL2 Port-Shifted Installation Guide (Local Food AI)
 
@@ -29,8 +29,16 @@ Ensure you have WSL2 enabled and are using an Ubuntu 24.04 shell instance.
 
 ### Step 2: Clone the Git Repository
 Run the following commands inside your WSL Ubuntu home directory to clone the project:
+
+**Primary Repository (Internal Network)**:
 ```bash
 git clone https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git
+cd LocalFoodAI_lanfr144
+```
+
+**Alternative Repository (Worldwide Access - Clone of the Primary)**:
+```bash
+git clone https://github.com/lanfr144/LocalFoodAI_lanfr144.git
 cd LocalFoodAI_lanfr144
 ```
 

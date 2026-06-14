@@ -1,9 +1,9 @@
-#ident "@(#)$Format:LocalFoodAI:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # $Id$
 # $Author$
 # $log$
 import os
-#ident "@(#)$Format:LocalFoodAI:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import subprocess
 
 docs_dir = "docs"
@@ -278,8 +278,8 @@ q" | sudo ed /etc/wsl.conf
 ## 4. Repository Clones & Branch Governance
 
 There are two repositories configured for this project:
-- Production Repository: `https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
-- GitHub Mirror (Clone): `https://github.com/lanfr144/LocalFoodAI_lanfr144`
+- Primary Git Repository: `https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
+- Alternative Git Repository (Worldwide Access - Clone): `https://github.com/lanfr144/LocalFoodAI_lanfr144.git`
 
 Clone the primary repository inside your home directory:
 ```bash

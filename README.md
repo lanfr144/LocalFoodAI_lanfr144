@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:README.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:README.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 # Local Food AI 🍔
 
@@ -38,7 +38,12 @@ This project is fully optimized to run on Windows Subsystem for Linux (WSL2) wit
    Navigate to the repository home directory inside WSL:
    ```bash
    cd ~
+   # Option A: Clone from the Primary Repository (Internal Network)
    git clone https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git
+   
+   # Option B: Clone from the Alternative Repository (Worldwide Access - Clone)
+   # git clone https://github.com/lanfr144/LocalFoodAI_lanfr144.git
+   
    cd LocalFoodAI_lanfr144
    
    # Always ensure you are on the primary main branch:

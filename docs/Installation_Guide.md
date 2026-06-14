@@ -118,8 +118,8 @@ q" | sudo ed /etc/wsl.conf
 ## 4. Repository Clones & Branch Governance
 
 There are two repositories configured for this project:
-- Production Repository: `https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
-- GitHub Mirror (Clone): `https://github.com/lanfr144/LocalFoodAI_lanfr144`
+- Primary Git Repository: `https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
+- Alternative Git Repository (Worldwide Access - Clone): `https://github.com/lanfr144/LocalFoodAI_lanfr144.git`
 
 Clone the primary repository inside your home directory:
 ```bash

@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:deploy.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # -----------------------------------------------------------------------------
 # Naked Environment Deployment Script for Ubuntu 24.04
 # Run this script to seamlessly fully provision the server for the AI Web App.
@@ -56,5 +56,5 @@ echo "=========================================================="
 echo ""
 echo "Next steps:"
 echo "1. Activate your virtual environment manually:  source venv/bin/activate"
-echo "2. Check your config.ini file details."
-echo "3. Run your setup script to configure database users:  python setup_db.py"
+echo "2. Check your .env file details."
+echo "3. Run database migrations:  alembic upgrade head"

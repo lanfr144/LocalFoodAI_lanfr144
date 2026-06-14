@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:git-ident-filter.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import sys
 import os
 import subprocess
@@ -78,10 +78,13 @@ if mode == "clean":
     # Read the file's contents directly from standard input (passed by Git)
     content = sys.stdin.read()
     
+    # Get the basename of the file being cleaned
+    file_name = os.path.basename(sys.argv[2]) if len(sys.argv) > 2 else "app.py"
+    
     # Non-greedy substitution to restore standard placeholder format for Git storage.
     # We construct the search pattern and replacement dynamically to avoid matching our own code.
     pattern = r'\$F' + r'ormat:[^\r\n$]+\$'
-    repl = r'$F' + r'ormat:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
+    repl = f"$F" + f"ormat:LocalFoodAI:{file_name}:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
     
     # Run regular expression search and replace
     cleaned = re.sub(pattern, repl, content)
@@ -109,11 +112,11 @@ else:
 
         # Format replacement string using dynamic project name and relative file path
         # This replaces the placeholder metadata fields with actual git variables
-        replacement = f"$F" + f"ormat:{project_name}:{file_name}:{info[0]}:{info[1]}:{info[2]}:{info[3]}:{info[4]}:{info[5]}:{info[6]}:{info[7]}:{info[8]}$"
+        replacement = f"$F" + f"ormat:{project_name}:{os.path.basename(file_name)}:{info[0]}:{info[1]}:{info[2]}:{info[3]}:{info[4]}:{info[5]}:{info[6]}:{info[7]}:{info[8]}$"
 
         # Regex replacement targeting the dynamic format placeholders
-        # Pattern explanation: Matches "$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-        pattern = r'\$F' + r'ormat:LocalFoodAI:app\.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N\$'
+        # Pattern explanation: Matches "$Format:LocalFoodAI:git-ident-filter.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+        pattern = r'\$F' + r'ormat:[^:]+:[^:]+:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N\$'
         smudged = re.sub(pattern, replacement, content)
         
         # Write smudged file contents to stdout so Git can output the file onto the filesystem

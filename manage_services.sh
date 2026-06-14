@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:manage_services.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # ==============================================================================
 # $Id$
 # File: manage_services.sh
@@ -17,6 +17,10 @@ set -e
 # SHUTDOWN: 1. Zabbix & Airflow -> 2. Nginx & App -> 3. SearXNG & Ollama -> 4. MySQL
 
 COMPOSE_FILE="docker-compose.yml"
+# Auto-detect WSL context and use port-shifted docker-compose-wsl.yml
+if [ -f "docker-compose-wsl.yml" ] && (grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null || grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null); then
+    COMPOSE_FILE="docker-compose-wsl.yml"
+fi
 
 # Colors for output logging
 GREEN='\033[0;32m'
@@ -56,7 +60,14 @@ start_services() {
     
     # Wait for MySQL to become fully ready and accept connections
     log_info "Waiting for MySQL database socket to be available..."
-    until docker compose -f "$COMPOSE_FILE" exec mysql mysqladmin ping -h"localhost" -u"root" -p"your_db_password_here" --silent; do
+    DB_ROOT_PASS="your_db_password_here"
+    if [ -f "./.env" ]; then
+        ENV_PASS=$(grep '^[ \t]*MYSQL_ROOT_PASSWORD[ \t]*=' .env | sed 's/^.*=//' | tr -d '\r\n ')
+        if [ ! -z "$ENV_PASS" ]; then
+            DB_ROOT_PASS="$ENV_PASS"
+        fi
+    fi
+    until docker compose -f "$COMPOSE_FILE" exec mysql mysqladmin ping -h"localhost" -u"root" -p"$DB_ROOT_PASS" --silent; do
         sleep 2
         echo -n "."
     done

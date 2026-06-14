@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI:README.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 # Local Food AI 🍔
 
@@ -13,6 +13,7 @@ A strictly local, privacy-first AI Medical Dietitian and Food Explorer. This pro
 
 ## Documentation (Capstone Deliverables)
 Please refer to the `docs/` folder for detailed guides:
+- [Detailed WSL Installation Guide (PDF)](docs/Installation_Guide.pdf) | [Markdown Version](docs/Installation_Guide.md)
 - [Architecture Map](docs/architecture.md)
 - [Distributed Deployment Procedure (PoC)](docs/distributed_deployment.md)
 - [Disaster Recovery & Backup Plan](docs/disaster_recovery_plan.md)
@@ -20,6 +21,40 @@ Please refer to the `docs/` folder for detailed guides:
 - [Agile Retro Planning](docs/retro_planning.md)
 - [Taiga Final Audit Report](docs/taiga_audit_report.md)
 - [Historical Taiga Agile Export](taiga/local-food-ai-1-5947063a-612b-454f-b3f1-6b5858445510.json) (included strictly for documentation and project history purposes)
+
+
+## Quick Start & WSL Installation
+
+This project is fully optimized to run on Windows Subsystem for Linux (WSL2) with Ubuntu 22.04 LTS.
+
+1. **WSL Setup (Windows Host)**:
+   Open an Administrator PowerShell window at the root of the repository and run:
+   ```powershell
+   powershell.exe -ExecutionPolicy Bypass -File setup_wsl.ps1
+   ```
+   *This enables WSL2 features and spins up a dedicated Ubuntu 22.04 LTS instance named `Dopro1` with user `lanfr144`.*
+
+2. **Branch Checkout & App Setup (WSL Environment)**:
+   Navigate to the repository home directory inside WSL:
+   ```bash
+   cd ~
+   git clone https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git
+   cd LocalFoodAI_lanfr144
+   
+   # Always ensure you are on the primary main branch:
+   git checkout main
+   
+   # Launch the installation script to set up Docker, configurations, and permissions:
+   ./setup_app.sh
+   ```
+   
+3. **Run services**:
+   Configure database and app variables in a `.env` file at the root directory, then run:
+   ```bash
+   ./manage_services.sh start
+   ```
+
+For detailed step-by-step instructions, please consult the [Installation Guide PDF](docs/Installation_Guide.pdf).
 
 ## Tech Stack
 - **Frontend**: Streamlit

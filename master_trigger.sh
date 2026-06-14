@@ -1,9 +1,9 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:master_trigger.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # Natively reload all database logic without interactive blocks
 echo "Executing autonomous WSL reload..."
 pip3 install --break-system-packages pymysql pandas sqlalchemy sqlalchemy-utils cryptography openpyxl
-python3 setup_db.py
+python3 -m alembic upgrade head
 echo "Spawning Batch Ingestion into background..."
 nohup bash start_batch_ingest.sh > ingest_log.txt 2>&1 &
 echo "Master pipeline triggered successfully."

@@ -148,7 +148,8 @@ def query_plate_allergens(unique_aliments: list) -> list:
         res_content = response['message']['content'].strip()
         data = json.loads(res_content)
         table_data = extract_allergens_from_json(data)
-    except Exception:
+    except Exception as e:
+        notifier.send_alert(f"LLM query_plate_allergens error: {e}")
         pass
     return table_data
 
@@ -206,7 +207,8 @@ def detect_allergens_from_text(name: str, ingredients: str) -> set:
             name = item.get("Aliment (Ingredient)")
             if name:
                 detected.add(name)
-    except Exception:
+    except Exception as e:
+        notifier.send_alert(f"LLM detect_allergens_from_text error: {e}")
         pass
     return detected
 
@@ -359,6 +361,7 @@ def get_db_connection(login_path):
         conf = myloginpath.parse(login_path)
         if not conf or not conf.get('user'):
             st.error(f"⚠️ MySQL configuration missing for `{login_path}`. If you are testing locally on Windows, this app must be run on the Ubuntu server where `mysql_config_editor` is properly configured.")
+            notifier.send_alert(f"MySQL Config Missing: {login_path}")
             return None
             
         return pymysql.connect(
@@ -370,6 +373,7 @@ def get_db_connection(login_path):
         )
     except Exception as e:
         st.error(f"Connection Failed: {e}")
+        notifier.send_alert(f"Database Connection Failed ({login_path}): {e}")
         return None
 
 from contextlib import contextmanager
@@ -387,6 +391,7 @@ def db_cursor(login_path: str):
     except Exception as e:
         conn.rollback()
         st.error(f"Database query error: {e}")
+        notifier.send_alert(f"Database Query Error ({login_path}): {e}")
         raise e
     finally:
         conn.close()

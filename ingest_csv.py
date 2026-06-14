@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI:ingest_csv.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import pandas as pd
 import myloginpath
 import urllib.parse
@@ -32,6 +32,20 @@ def get_loader_engine():
     except Exception as e:
         print(f"❌ Failed to parse myloginpath or create engine: {e}")
         sys.exit(1)
+
+def init_ingestion_status_table(engine):
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS ingestion_status (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                filename VARCHAR(255),
+                start_time DATETIME,
+                end_time DATETIME,
+                rows_loaded INT,
+                status VARCHAR(50),
+                error_message TEXT
+            )
+        """))
 
 def ingest_file(filename, engine):
     if not os.path.exists(filename):
@@ -164,6 +178,15 @@ def ingest_file(filename, engine):
 
             total_processed += len(df)
             print(f"   Successfully appended {total_processed} rows into grouped tables...", end="\r")
+            
+            # Update rows loaded in database
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    UPDATE ingestion_status 
+                    SET rows_loaded = :rows
+                    WHERE id = :id
+                """), {"rows": total_processed, "id": ingest_id})
+                
             if total_processed % 50000 == 0:
                 notifier.send_alert(f"Ingestion Milestone: {total_processed} rows processed")
         except BaseException as e:

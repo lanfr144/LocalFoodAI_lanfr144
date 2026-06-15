@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#ident "@(#)$Format:LocalFoodAI:zabbix_telemetry.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$""
+#ident "@(#)$Format:LocalFoodAI_lanfr144:zabbix_telemetry.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$""
 import os
 import sys
 import pymysql

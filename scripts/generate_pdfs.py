@@ -1,4 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:generate_pdfs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import glob
 from markdown_pdf import MarkdownPdf
@@ -12,6 +12,34 @@ def main():
         print("No markdown files found in docs/")
         return
         
+    # Resolve dynamic absolute paths for downloaded TrueType fonts
+    fonts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'docs', 'fonts')).replace('\\', '/')
+    regular_font = f"{fonts_dir}/Roboto-Regular.ttf"
+    bold_font = f"{fonts_dir}/Roboto-Bold.ttf"
+    mono_font = f"{fonts_dir}/RobotoMono-Regular.ttf"
+    
+    user_css = f"""
+    @font-face {{
+        font-family: 'Roboto';
+        src: url('{regular_font}');
+    }}
+    @font-face {{
+        font-family: 'Roboto';
+        font-weight: bold;
+        src: url('{bold_font}');
+    }}
+    @font-face {{
+        font-family: 'RobotoMono';
+        src: url('{mono_font}');
+    }}
+    body {{
+        font-family: 'Roboto', sans-serif;
+    }}
+    code, pre {{
+        font-family: 'RobotoMono', monospace;
+    }}
+    """
+
     for md_file in md_files:
         pdf_file = md_file.replace('.md', '.pdf')
         print(f"Converting {os.path.basename(md_file)} to PDF...")
@@ -51,17 +79,17 @@ def main():
                         landscape_part = '## 2. Project File Catalog & Documentation' + parts2[0]
                         portrait_part2 = '## 3. Directory Structure Map' + parts2[1]
                         
-                        pdf.add_section(Section(portrait_part1, paper_size="A4"))
-                        pdf.add_section(Section(landscape_part, paper_size="A4-L"))
-                        pdf.add_section(Section(portrait_part2, paper_size="A4"))
+                        pdf.add_section(Section(portrait_part1, paper_size="A4"), user_css=user_css)
+                        pdf.add_section(Section(landscape_part, paper_size="A4-L"), user_css=user_css)
+                        pdf.add_section(Section(portrait_part2, paper_size="A4"), user_css=user_css)
                     else:
                         print("WARNING: Could not find Directory Structure Map heading. Defaulting to full portrait.")
-                        pdf.add_section(Section(md_content, paper_size="A4"))
+                        pdf.add_section(Section(md_content, paper_size="A4"), user_css=user_css)
                 else:
                     print("WARNING: Could not find Project File Catalog heading. Defaulting to full portrait.")
-                    pdf.add_section(Section(md_content, paper_size="A4"))
+                    pdf.add_section(Section(md_content, paper_size="A4"), user_css=user_css)
             else:
-                pdf.add_section(Section(md_content, paper_size="A4"))
+                pdf.add_section(Section(md_content, paper_size="A4"), user_css=user_css)
                 
             pdf.save(pdf_file)
             print(f"Saved {os.path.basename(pdf_file)}")

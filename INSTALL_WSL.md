@@ -107,4 +107,27 @@ Once the stack is fully running, you can connect to all system components in you
 
 ---
 
+## ⚡ Developer Productivity & Troubleshooting
+
+### 1. Dynamic LLM Pulls (Non-Interactive)
+To pull updates to your reasoning models in a single line without entering an interactive shell, use:
+```bash
+docker exec -it $(docker ps -q -f name=ollama) ollama pull $(grep '^[ \t]*LLM_MODEL[ \t]*=' .env | cut -d'=' -f2)
+```
+
+### 2. Path Resolutions inside WSL
+If you need to configure container volumes or load local files (like the datasets or PDF fonts), remember that the host's `C:` drive is mounted under `/mnt/c/` in WSL:
+* **Windows Path:** `C:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/fonts/`
+* **WSL Path:** `/mnt/c/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/fonts/`
+* *Tip:* Always use forward slashes `/` in path configurations, as they are natively supported by both PowerShell on the Windows host and Bash inside WSL.
+
+### 3. Git Attributes Clean/Smudge Loops
+If running a clean checkout (e.g. `git checkout -f`) triggers an error about a missing `git-ident-filter.py` script, restore the filter script first before executing the checkout:
+```bash
+git checkout HEAD -- local_tools/git-ident-filter.py
+git checkout -f
+```
+
+---
+
 *Prepared by Francois Lange for the Local Food AI Delivery.*

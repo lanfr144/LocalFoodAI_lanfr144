@@ -39,22 +39,22 @@ The left-hand sidebar houses several global settings:
 
 The application dashboard is split into three interactive workspace tabs:
 
-### 4.1. Clinical Data Search Tab 🔍
+### 4.1. Clinical Data Search Tab
 Use this tab to browse the local OpenFoodFacts food database.
 1. **Keyword Input**: Type a product name, brand, or barcode (e.g., "whole wheat bread" or "unpasteurized cheese").
 2. **Dynamic Results**: The database performs a rapid search, displaying the top 10 matched products.
 3. **Nutritional Score**: Shows the Nutri-Score grade (A to E) and details (Proteins, Carbs, Fats, Energy in kcal) per 100g.
 4. **Allergen Warnings**: Shows highlight flags if the product contains common allergens matching your client's needs.
 
-### 4.2. My Plate Builder Tab 🍽️
+### 4.2. My Plate Builder Tab
 Build custom meals or recipe portions to calculate total client nutritional intake.
 1. **Adding Items**: When browsing foods in the Search Tab, click **Add to Plate**.
 2. **Specifying Portions**: Input the quantity using either decimal weights (in grams) or common volume descriptors (e.g., "1.5 cups", "2 tablespoons"). The converter translates volume to metric weight based on the product density.
 3. **Cumulative Intake Table**: The tab renders a table summarizing individual macros and total energy.
 4. **Visual Metrics**: Renders a dynamic bar chart comparing Carbs, Proteins, and Fats against recommended clinical intake thresholds.
-5. **Editing the Plate**: Use the trash bin icon (🗑️) to instantly remove any item from the calculation.
+5. **Editing the Plate**: Use the trash bin icon (Delete) to instantly remove any item from the calculation.
 
-### 4.3. Consultation Chat Tab 💬
+### 4.3. Consultation Chat Tab
 Consult the built-in clinical AI dietitian assistant for recipe validation, medical profile warnings, and meal plans.
 1. **Client Profile Selection**: Select active dietary constraints (e.g., pregnancy, diabetes, kidney disease, vegetarian) in the dropdown.
 2. **Asking Questions**: Type your prompt (e.g., "Is unpasteurized brie cheese safe for a pregnant client?" or "Design a low-sodium, high-protein menu").

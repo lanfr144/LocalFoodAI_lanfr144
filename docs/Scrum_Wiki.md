@@ -7,7 +7,7 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 
 ---
 
-## 📅 Sprint Ceremonies & Logs
+## Sprint Ceremonies & Logs
 
 ### 1. [Sprint Plans (Scrum_Plan.md)](Scrum_Plan.pdf)
 *Contains Sprint Plan formulations, active user stories selection, scope statements, and team capacity bounds for each milestone loop.*
@@ -23,7 +23,7 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 
 ---
 
-## 📊 Deliverables & Quality Assurance
+## Deliverables & Quality Assurance
 
 ### 5. [Scrum Artifacts (Scrum_Artifacts.md)](Scrum_Artifacts.pdf)
 *Indexes sprint velocity metrics, completed story points distributions, burndown coordinates, and final Taiga delivery milestones.*

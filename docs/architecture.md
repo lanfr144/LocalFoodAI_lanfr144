@@ -6,7 +6,7 @@ This document describes the technical architecture, database schema design, AI R
 
 ---
 
-## 🗺️ System Component Architecture
+## System Component Architecture
 
 The platform is designed around a strictly local, privacy-first microservice topology. The components integrate seamlessly to provide nutritional search, RAG-augmented clinical diet evaluations, and DevSecOps observability.
 
@@ -50,7 +50,7 @@ graph TD
 
 ---
 
-## 💾 Database Design: Grouped Vertical Partitioning
+## Database Design: Grouped Vertical Partitioning
 
 To optimize massive dataset ingestion (~24GB OpenFoodFacts dataset) and completely bypass InnoDB row size limits while maintaining sub-second RAG response times, the database utilizes a vertically partitioned structure:
 

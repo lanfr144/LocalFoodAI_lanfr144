@@ -372,22 +372,22 @@ The left-hand sidebar houses several global settings:
 
 The application dashboard is split into three interactive workspace tabs:
 
-### 4.1. Clinical Data Search Tab 🔍
+### 4.1. Clinical Data Search Tab
 Use this tab to browse the local OpenFoodFacts food database.
 1. **Keyword Input**: Type a product name, brand, or barcode (e.g., "whole wheat bread" or "unpasteurized cheese").
 2. **Dynamic Results**: The database performs a rapid search, displaying the top 10 matched products.
 3. **Nutritional Score**: Shows the Nutri-Score grade (A to E) and details (Proteins, Carbs, Fats, Energy in kcal) per 100g.
 4. **Allergen Warnings**: Shows highlight flags if the product contains common allergens matching your client's needs.
 
-### 4.2. My Plate Builder Tab 🍽️
+### 4.2. My Plate Builder Tab
 Build custom meals or recipe portions to calculate total client nutritional intake.
 1. **Adding Items**: When browsing foods in the Search Tab, click **Add to Plate**.
 2. **Specifying Portions**: Input the quantity using either decimal weights (in grams) or common volume descriptors (e.g., "1.5 cups", "2 tablespoons"). The converter translates volume to metric weight based on the product density.
 3. **Cumulative Intake Table**: The tab renders a table summarizing individual macros and total energy.
 4. **Visual Metrics**: Renders a dynamic bar chart comparing Carbs, Proteins, and Fats against recommended clinical intake thresholds.
-5. **Editing the Plate**: Use the trash bin icon (🗑️) to instantly remove any item from the calculation.
+5. **Editing the Plate**: Use the trash bin icon (Delete) to instantly remove any item from the calculation.
 
-### 4.3. Consultation Chat Tab 💬
+### 4.3. Consultation Chat Tab
 Consult the built-in clinical AI dietitian assistant for recipe validation, medical profile warnings, and meal plans.
 1. **Client Profile Selection**: Select active dietary constraints (e.g., pregnancy, diabetes, kidney disease, vegetarian) in the dropdown.
 2. **Asking Questions**: Type your prompt (e.g., "Is unpasteurized brie cheese safe for a pregnant client?" or "Design a low-sodium, high-protein menu").
@@ -611,7 +611,7 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 
 ---
 
-## 📅 Sprint Ceremonies & Logs
+## Sprint Ceremonies & Logs
 
 ### 1. [Sprint Plans (Scrum_Plan.md)](Scrum_Plan.pdf)
 *Contains Sprint Plan formulations, active user stories selection, scope statements, and team capacity bounds for each milestone loop.*
@@ -627,7 +627,7 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 
 ---
 
-## 📊 Deliverables & Quality Assurance
+## Deliverables & Quality Assurance
 
 ### 5. [Scrum Artifacts (Scrum_Artifacts.md)](Scrum_Artifacts.pdf)
 *Indexes sprint velocity metrics, completed story points distributions, burndown coordinates, and final Taiga delivery milestones.*
@@ -702,25 +702,25 @@ Since the system operates entirely locally on local hypervisors, **zero patient 
 
 ## 2. Core Functional Pillars
 
-### 📊 tab 1: Clinical Data Search (🔬 Clinical Search)
+### Tab 1: Clinical Data Search (Clinical Search)
 Allows practitioners to search the 24GB OpenFoodFacts dataset in real time (average query response time < 0.04 seconds).
 - **Dynamic Medical Warnings**: Based on the active patient profile, foods are immediately flagged in the search results:
-  - ⚠️ **Red Warning Flags**: Highlight high-risk ingredients (e.g. Unpasteurized dairy or raw fish for pregnant patients, high-sodium foods for hypertensive patients, or high-sugar foods for diabetic patients).
-  - 💚 **Green Recommendations**: Highlight recommended dietary components (e.g. High iron/calcium for pregnant or breastfeeding mothers, high Vitamin C for scurvy prevention, or high iron for anemia).
+  - [Warning] **Red Warning Flags**: Highlight high-risk ingredients (e.g. Unpasteurized dairy or raw fish for pregnant patients, high-sodium foods for hypertensive patients, or high-sugar foods for diabetic patients).
+  - [Recommended] **Green Recommendations**: Highlight recommended dietary components (e.g. High iron/calcium for pregnant or breastfeeding mothers, high Vitamin C for scurvy prevention, or high iron for anemia).
 - **Flexible Column Customization**: Multi-select column headers to inspect specific macro and micro-nutrients.
 
-### 💬 tab 2: AI Clinical Chat (💬 AI Chat)
+### Tab 2: AI Clinical Chat (AI Chat)
 An interactive NLP dialogue interface powered by a local lightweight LLM (**Qwen2.5:7b**).
 - **RAG-Driven Precision**: The AI dietitian automatically retrieves and reviews local database records and private meta-search results before formulating an answer.
 - **Dynamic Medical Guardrails**: The user's active illnesses, diets, and conditions are injected into the AI's system prompt in the background, forcing the AI to strictly enforce clinical safety constraints.
 
-### 🍽️ tab 3: My Plate Builder (🍽️ My Plate Builder)
+### Tab 3: My Plate Builder (My Plate Builder)
 A recipe formulation utility to calculate combined nutritional intake.
 - **Natural Language Parsing**: Enables entering quantities in natural units (e.g., "1.5 cups", "2 tablespoons", "150g").
 - **Exact Conversion**: The system translates these custom units into metric grams based on product density metrics.
 - **Macro Summaries**: Instantly calculates and displays the total combined Protein, Fat, and Carbohydrates.
 
-### 🤖 tab 4: AI Meal Planner (🤖 AI Meal Planner)
+### Tab 4: AI Meal Planner (AI Planner)
 An automated clinical diet planner.
 - Generates a multi-meal daily menu formatted strictly as a Markdown table.
 - Dynamically enforces user-defined calorie limits and active medical restrictions.

@@ -13,57 +13,54 @@ def main():
         print("No markdown files found in docs/")
         return
         
-    # Resolve dynamic absolute paths for downloaded TrueType fonts
-    fonts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'docs', 'fonts')).replace('\\', '/')
-    regular_font = f"{fonts_dir}/Roboto-Regular.ttf"
-    bold_font = f"{fonts_dir}/Roboto-Bold.ttf"
-    mono_font = f"{fonts_dir}/RobotoMono-Regular.ttf"
+    # Use relative paths for fonts to ensure portability of PDF generation
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')).replace('\\', '/')
     
-    user_css = f"""
-    @font-face {{
+    user_css = """
+    @font-face {
         font-family: 'Roboto';
-        src: url('{regular_font}');
-    }}
-    @font-face {{
+        src: url('docs/fonts/Roboto-Regular.ttf');
+    }
+    @font-face {
         font-family: 'Roboto';
         font-weight: bold;
-        src: url('{bold_font}');
-    }}
-    @font-face {{
+        src: url('docs/fonts/Roboto-Bold.ttf');
+    }
+    @font-face {
         font-family: 'RobotoMono';
-        src: url('{mono_font}');
-    }}
-    * {{
+        src: url('docs/fonts/RobotoMono-Regular.ttf');
+    }
+    * {
         color: #1a1a1a !important;
-    }}
-    body {{
+    }
+    body {
         font-family: 'Roboto', sans-serif;
         color: #1a1a1a !important;
         background-color: #ffffff !important;
-    }}
-    h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {{
+    }
+    h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {
         color: #000000 !important;
-    }}
-    code, pre, code *, pre * {{
+    }
+    code, pre, code *, pre * {
         font-family: 'RobotoMono', monospace !important;
         color: #b02a37 !important;
         background-color: #f8f9fa !important;
-    }}
-    a, a * {{
+    }
+    a, a * {
         color: #0d6efd !important;
-    }}
-    blockquote, blockquote * {{
+    }
+    blockquote, blockquote * {
         color: #555555 !important;
         border-left: 4px solid #ccc !important;
         padding-left: 10px !important;
-    }}
-    table, tr, td, th, table * {{
+    }
+    table, tr, td, th, table * {
         color: #1a1a1a !important;
         border-color: #cccccc !important;
-    }}
-    th {{
+    }
+    th {
         background-color: #f2f2f2 !important;
-    }}
+    }
     """
 
     for md_file in md_files:
@@ -135,24 +132,23 @@ def main():
                         landscape_part = '## 2. Project File Catalog & Documentation' + parts2[0]
                         portrait_part2 = '## 3. Directory Structure Map' + parts2[1]
                         
-                        pdf.add_section(Section(portrait_part1, paper_size="A4"), user_css=user_css)
-                        pdf.add_section(Section(landscape_part, paper_size="A4-L"), user_css=user_css)
-                        pdf.add_section(Section(portrait_part2, paper_size="A4"), user_css=user_css)
+                        pdf.add_section(Section(portrait_part1, paper_size="A4", root=root_dir), user_css=user_css)
+                        pdf.add_section(Section(landscape_part, paper_size="A4-L", root=root_dir), user_css=user_css)
+                        pdf.add_section(Section(portrait_part2, paper_size="A4", root=root_dir), user_css=user_css)
                     else:
                         print("WARNING: Could not find Directory Structure Map heading. Defaulting to full portrait.")
-                        pdf.add_section(Section(md_content, paper_size="A4"), user_css=user_css)
+                        pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
                 else:
                     print("WARNING: Could not find Project File Catalog heading. Defaulting to full portrait.")
-                    pdf.add_section(Section(md_content, paper_size="A4"), user_css=user_css)
+                    pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
             else:
-                pdf.add_section(Section(md_content, paper_size="A4"), user_css=user_css)
+                pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
                 
             pdf.save(pdf_file)
             print(f"Saved {os.path.basename(pdf_file)}")
             
             # Copy to workspace root if applicable
             import shutil
-            root_dir = os.path.join(os.path.dirname(__file__), '..')
             if base_name == 'project_report.md':
                 dest = os.path.join(root_dir, 'Project.pdf')
                 try:

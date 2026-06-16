@@ -41,10 +41,31 @@ def main():
     h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {
         color: #000000 !important;
     }
-    code, pre, code *, pre * {
+    pre {
+        background-color: #212529 !important;
+        border: 1px solid #343a40 !important;
+        padding: 10px !important;
+        border-radius: 4px !important;
+        margin: 10px 0 !important;
+        font-family: 'RobotoMono', monospace !important;
+        white-space: pre-wrap !important;
+        word-break: break-all !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    pre code, pre * {
+        font-family: 'RobotoMono', monospace !important;
+        color: #f8f9fa !important;
+        background-color: #212529 !important;
+        white-space: pre-wrap !important;
+        word-break: break-all !important;
+    }
+    code {
         font-family: 'RobotoMono', monospace !important;
         color: #b02a37 !important;
         background-color: #f8f9fa !important;
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
         white-space: pre-wrap !important;
         word-break: break-all !important;
     }

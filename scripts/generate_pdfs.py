@@ -32,26 +32,36 @@ def main():
         font-family: 'RobotoMono';
         src: url('{mono_font}');
     }}
+    * {{
+        color: #1a1a1a !important;
+    }}
     body {{
         font-family: 'Roboto', sans-serif;
-        color: #1a1a1a;
-        background-color: #ffffff;
+        color: #1a1a1a !important;
+        background-color: #ffffff !important;
     }}
-    h1, h2, h3, h4, h5, h6 {{
-        color: #000000;
+    h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {{
+        color: #000000 !important;
     }}
-    code, pre {{
-        font-family: 'RobotoMono', monospace;
-        color: #b02a37;
-        background-color: #f8f9fa;
+    code, pre, code *, pre * {{
+        font-family: 'RobotoMono', monospace !important;
+        color: #b02a37 !important;
+        background-color: #f8f9fa !important;
     }}
-    a {{
-        color: #0d6efd;
+    a, a * {{
+        color: #0d6efd !important;
     }}
-    blockquote {{
-        color: #555555;
-        border-left: 4px solid #ccc;
-        padding-left: 10px;
+    blockquote, blockquote * {{
+        color: #555555 !important;
+        border-left: 4px solid #ccc !important;
+        padding-left: 10px !important;
+    }}
+    table, tr, td, th, table * {{
+        color: #1a1a1a !important;
+        border-color: #cccccc !important;
+    }}
+    th {{
+        background-color: #f2f2f2 !important;
     }}
     """
 
@@ -80,7 +90,7 @@ def main():
         md_content = md_content.replace('$Id$', git_id)
         
         try:
-            pdf = MarkdownPdf(toc_level=2)
+            pdf = MarkdownPdf(toc_level=2, optimize=True)
             base_name = os.path.basename(md_file)
             
             if base_name == 'project_report.md':

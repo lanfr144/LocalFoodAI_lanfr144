@@ -37,47 +37,33 @@ To install Docker directly inside your WSL Ubuntu instance (without Docker Deskt
 sudo apt remove -y docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc
 ```
 
-### Step 2.2: Add Docker's Official GPG Key & Repository
+### Step 2.2: Add Docker's Official GPG Key & Repository and Install Docker
 ```bash
 sudo apt update
 sudo apt install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
-Types: deb
-URIs: https://download.docker.com/linux/ubuntu
-Suites: \$(. /etc/os-release && echo "\${UBUNTU_CODENAME:-\$VERSION_CODENAME}")
-Components: stable
-Architectures: \$(dpkg --print-architecture)
-Signed-By: /etc/apt/keyrings/docker.asc
-EOF
+echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-### Step 2.3: Install Docker Components
-```bash
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
-
-### Step 2.4: Start and Enable Docker Daemon
+### Step 2.3: Start and Enable Docker Daemon
 ```bash
 sudo systemctl start docker
 sudo systemctl enable docker
 ```
 
-### Step 2.5: Add User to the Docker Group
+### Step 2.4: Add User to the Docker Group
 Ensure you can execute Docker commands without `sudo`:
 ```bash
 grep "^docker:" /etc/group || sudo addgroup docker
-sudo usermod -aG docker \$USER
+sudo usermod -aG docker $USER
 ```
 
-### Step 2.6: Reboot the WSL Instance
+### Step 2.5: Reboot the WSL Instance
 Execute the command below inside WSL to gracefully reboot the instance:
 ```bash
-cd /mnt/c/ && cmd.exe /c start "rebooting WSL" cmd /c "timeout 5 && wsl -d \$WSL_DISTRO_NAME" && wsl.exe --terminate \$WSL_DISTRO_NAME
+cd /mnt/c/ && cmd.exe /c start "rebooting WSL" cmd /c "timeout 5 && wsl -d $WSL_DISTRO_NAME" && wsl.exe --terminate $WSL_DISTRO_NAME
 ```
 
 Upon reconnecting, verify Docker is running by starting the hello-world container:
@@ -111,7 +97,7 @@ echo "\$ a
 [network]
 generateResolvConf = false
 .
-w
+W
 q" | sudo ed /etc/wsl.conf
 ```
 
@@ -125,6 +111,7 @@ There are two repositories configured for this project:
 
 Clone the primary repository inside your home directory:
 ```bash
+cd ~
 git clone https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git
 cd LocalFoodAI_lanfr144
 ```
@@ -160,7 +147,7 @@ chmod +x data_sync.sh backup_db.sh manage_services.sh scripts/manage_models.sh
 
 Follow the standard runbook to initialize credentials and launch services:
 ```bash
-# 1. Create a local .env file based on step 3 guidelines
+# 1. Create a local [.env file](file:///C:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/.env) based on [step 3 guidelines](#3-network-configuration--performance-tuning)
 # 2. Run the service manager to spin up containers
 ./manage_services.sh start
 ```

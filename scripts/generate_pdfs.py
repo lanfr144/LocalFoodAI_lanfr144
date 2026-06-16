@@ -17,24 +17,11 @@ def main():
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')).replace('\\', '/')
     
     user_css = """
-    @font-face {
-        font-family: 'Roboto';
-        src: url('docs/fonts/Roboto-Regular.ttf');
-    }
-    @font-face {
-        font-family: 'Roboto';
-        font-weight: bold;
-        src: url('docs/fonts/Roboto-Bold.ttf');
-    }
-    @font-face {
-        font-family: 'RobotoMono';
-        src: url('docs/fonts/RobotoMono-Regular.ttf');
-    }
     * {
         color: #1a1a1a !important;
     }
     body {
-        font-family: 'Roboto', sans-serif;
+        font-family: 'Helvetica', 'Arial', sans-serif !important;
         color: #1a1a1a !important;
         background-color: #ffffff !important;
     }
@@ -44,24 +31,24 @@ def main():
     pre {
         background-color: #212529 !important;
         border: 1px solid #343a40 !important;
-        padding: 10px !important;
-        border-radius: 4px !important;
-        margin: 10px 0 !important;
-        font-family: 'RobotoMono', monospace !important;
+        padding: 2px !important;
+        border-radius: 3px !important;
+        font-family: 'Courier New', 'Courier', monospace !important;
+        font-size: 10pt !important;
         white-space: pre-wrap !important;
         word-break: break-all !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
     }
     pre code, pre * {
-        font-family: 'RobotoMono', monospace !important;
+        font-family: 'Courier New', 'Courier', monospace !important;
+        font-size: 10pt !important;
         color: #f8f9fa !important;
         background-color: #212529 !important;
         white-space: pre-wrap !important;
         word-break: break-all !important;
     }
     code {
-        font-family: 'RobotoMono', monospace !important;
+        font-family: 'Courier New', 'Courier', monospace !important;
+        font-size: 10pt !important;
         color: #b02a37 !important;
         background-color: #f8f9fa !important;
         padding: 2px 4px !important;
@@ -143,6 +130,9 @@ def main():
         # Clean up absolute file:/// paths to relative paths
         md_content = re.sub(r'file:///.*?/docs/([a-zA-Z0-9_-]+)\.md', r'\1.pdf', md_content, flags=re.IGNORECASE)
         md_content = re.sub(r'file:///.*?/Food/([a-zA-Z0-9_.-]+)', r'../\1', md_content, flags=re.IGNORECASE)
+        
+        # Add <br/> after code blocks to force copy-paste blank line
+        md_content = re.sub(r'(```[a-zA-Z0-9_-]*\n[\s\S]*?\n```)', r'\1\n<br/>', md_content)
 
         try:
             pdf = MarkdownPdf(toc_level=2, optimize=True, plugins={"mermaid": {}})

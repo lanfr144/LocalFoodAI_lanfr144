@@ -34,9 +34,24 @@ def main():
     }}
     body {{
         font-family: 'Roboto', sans-serif;
+        color: #1a1a1a;
+        background-color: #ffffff;
+    }}
+    h1, h2, h3, h4, h5, h6 {{
+        color: #000000;
     }}
     code, pre {{
         font-family: 'RobotoMono', monospace;
+        color: #b02a37;
+        background-color: #f8f9fa;
+    }}
+    a {{
+        color: #0d6efd;
+    }}
+    blockquote {{
+        color: #555555;
+        border-left: 4px solid #ccc;
+        padding-left: 10px;
     }}
     """
 

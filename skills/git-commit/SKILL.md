@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:DEVOP1:skills/git-commit/SKILL.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:SKILL.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 ---
 name: git-commit

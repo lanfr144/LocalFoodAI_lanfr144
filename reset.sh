@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:reset.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 cd /home/francois/food_project
 docker-compose stop mysql
 docker run -d --name mysql_temp_reset -v food_project_mysql_data:/var/lib/mysql mysql:8.0 --skip-grant-tables

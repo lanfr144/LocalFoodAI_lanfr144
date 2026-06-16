@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:manage_models.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:manage_models.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 # Load LLM_MODEL from .env
 ENV_FILE=".env"

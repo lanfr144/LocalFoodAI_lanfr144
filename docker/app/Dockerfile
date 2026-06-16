@@ -1,4 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:Dockerfile:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # Dockerfile for Streamlit UI
 FROM python:3.11-slim
 

@@ -1,7 +1,7 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:snmp_notifier.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import socket
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:snmp_notifier.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import socket
 
 class SNMPNotifier:

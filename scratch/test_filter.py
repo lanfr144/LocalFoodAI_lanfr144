@@ -1,6 +1,6 @@
 import subprocess
 
-test_input = '#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"\n'
+test_input = '#ident "@(#)$Format:LocalFoodAI_lanfr144:test_filter.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"\n'
 
 # Test smudge
 p = subprocess.Popen(

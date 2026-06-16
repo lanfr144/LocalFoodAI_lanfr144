@@ -31,6 +31,9 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 ### 6. [Sprint 8 Test Cases (Test_Cases_Sprint8.md)](Test_Cases_Sprint8.pdf)
 *Legacy acceptance test logs covering core NLP chat, portion converters, and initial search validations.*
 
+### 7. [Uninstallation Guide (Uninstall_Guide.md)](Uninstall_Guide.pdf)
+*Provides structured procedures to completely remove and tear down all system components from Windows and Linux/WSL environments.*
+
 ---
 
 > [!NOTE]

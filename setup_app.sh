@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:setup_app.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$""
+#ident "@(#)$Format:LocalFoodAI_lanfr144:setup_app.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$""
 # ==============================================================================
 # Local Food AI - WSL Application Setup Script
 # Run inside the WSL Ubuntu environment

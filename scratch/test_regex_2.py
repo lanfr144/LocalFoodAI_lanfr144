@@ -2,7 +2,7 @@ import re
 
 pattern = r'\$Format' + r':[^:]+:[^:]+:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N\$'
 repl = 'REPLACED'
-content = 'test $Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$ test'
+content = 'test $Format:LocalFoodAI_lanfr144:test_regex_2.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$ test'
 
 print("Pattern:", pattern)
 print("Content:", content)

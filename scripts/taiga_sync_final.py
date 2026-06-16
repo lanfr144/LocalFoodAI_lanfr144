@@ -1,6 +1,6 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:taiga_sync_final.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import requests
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:taiga_sync_final.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import urllib3
 import os
 import re

@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:master_trigger.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:master_trigger.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # Natively reload all database logic without interactive blocks
 echo "Executing autonomous WSL reload..."
 pip3 install --break-system-packages pymysql pandas sqlalchemy sqlalchemy-utils cryptography openpyxl

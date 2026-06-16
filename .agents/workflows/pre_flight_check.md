@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:pre_flight_check.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 ---
 description: Hardware limits pre-flight check before builds

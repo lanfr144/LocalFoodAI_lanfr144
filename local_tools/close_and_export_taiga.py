@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:close_and_export_taiga.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import requests
 import json

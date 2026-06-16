@@ -1,4 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:env.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config

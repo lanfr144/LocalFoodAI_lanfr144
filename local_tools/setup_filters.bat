@@ -1,4 +1,4 @@
-::ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+::ident "@(#)$Format:LocalFoodAI_lanfr144:setup_filters.bat:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 @echo off
 :: Configuration des filtres avec des chemins relatifs portables (Git s'execute toujours a la racine du depot)
 @git config filter.ident-dynamic.clean "python local_tools/git-ident-filter.py clean"

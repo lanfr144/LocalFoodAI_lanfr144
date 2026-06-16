@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:deploy_to_server.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import sys
 import paramiko

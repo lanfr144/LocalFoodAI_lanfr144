@@ -1,8 +1,8 @@
 import re
 
-pattern = r'\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$)?[^$]*?\$'
-repl = r'$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
-content = '#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"\n'
+pattern = r'\$Format:LocalFoodAI_lanfr144:test_regex.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$)?[^$]*?\$'
+repl = r'$Format:LocalFoodAI_lanfr144:test_regex.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
+content = '#ident "@(#)$Format:LocalFoodAI_lanfr144:test_regex.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"\n'
 
 print("Testing clean pattern...")
 try:
@@ -11,8 +11,8 @@ try:
 except Exception as e:
     print("Clean pattern failed:", e)
 
-smudge_pattern = r'\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
-replacement = "$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+smudge_pattern = r'\$Format:LocalFoodAI_lanfr144:test_regex.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
+replacement = "$Format:LocalFoodAI_lanfr144:test_regex.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 print("Testing smudge pattern...")
 try:
     res = re.sub(smudge_pattern, replacement, content)

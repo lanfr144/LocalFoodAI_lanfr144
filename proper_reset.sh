@@ -1,2 +1,2 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:proper_reset.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 mysql -e "SET GLOBAL log_bin_trust_function_creators = 1; DROP DATABASE IF EXISTS zabbix; CREATE DATABASE zabbix character set utf8mb4 collate utf8mb4_bin; GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'%'; FLUSH PRIVILEGES;"

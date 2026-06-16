@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:retro_planning.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 # Local Food AI: Retro Planning
 

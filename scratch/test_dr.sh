@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:test_dr.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # test_dr.sh - Automated Disaster Recovery validation script
 
 # 1. Find the latest backup

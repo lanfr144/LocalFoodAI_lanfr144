@@ -1,4 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:.gitattributes:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 * text=auto
 # # 1. Forcer le format de date requis YYYY/MM/DD HH:MM:SS
 # git config log.date "format:%Y/%m/%d %H:%M:%S"
@@ -7,14 +7,14 @@
 # git config filter.ident-dynamic.smudge '
 #   proj=$(basename "$(git rev-parse --show-toplevel)");
 #   file="%f";
-#   perl -pe "s|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$proj:\$file:\$1\\\$|g" | \
+#   perl -pe "s|\\\$Format:LocalFoodAI_lanfr144:.gitattributes:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$|\\\$Format:LocalFoodAI_lanfr144:.gitattributes:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$proj:\$file:\$1\\\$|g" | \
 #   git archive --subst-vars | cat
 # '
 # 
 # # 3. Configurer le filtre "Clean" (Nettoyage avant le commit pour éviter les conflits)
 # # The LEFT PART OF THE PIPE MUST BE "$Format:PROJECT_NAME:FILE_NAME"
 # git config filter.ident-dynamic.clean '
-#   perl -pe "s|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$|\\\$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$1\\\$|g"
+#   perl -pe "s|\\\$Format:LocalFoodAI_lanfr144:.gitattributes:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$|\\\$Format:LocalFoodAI_lanfr144:.gitattributes:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$1\\\$|g"
 # '
 # 
 # 1. Protection du script de filtre pour Unix/WSL
@@ -37,3 +37,10 @@ local_tools/git-ident-filter.py filter=ident-dynamic eol=lf
 *.sql filter=ident-dynamic
 .gitignore filter=ident-dynamic
 Dockerfile filter=ident-dynamic
+
+# Binary files definition (prevents line ending normalization and text corruption)
+*.pdf binary
+*.zip binary
+*.png binary
+*.docx binary
+*.ttf binary

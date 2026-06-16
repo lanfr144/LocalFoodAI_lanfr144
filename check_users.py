@@ -1,4 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:check_users.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import myloginpath
 import pymysql
 import bcrypt

@@ -1,5 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:start_batch_ingest.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:start_batch_ingest.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # Local Food AI - Disconnected Ingestion Wrapper
 # This script uses nohup to run the python ingestion script in the background.
 # You can exit your SSH session safely after starting this script.

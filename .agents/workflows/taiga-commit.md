@@ -1,4 +1,4 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:taiga-commit.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
 # Taiga Commit Workflow
 Description: Garantit que chaque commit contient l'ID Taiga pour la mise à jour automatique.

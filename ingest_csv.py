@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#ident "@(#)$Format:LocalFoodAI:ingest_csv.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:ingest_csv.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import pandas as pd
 import myloginpath
 import urllib.parse

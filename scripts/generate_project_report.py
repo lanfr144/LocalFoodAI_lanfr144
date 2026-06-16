@@ -114,7 +114,7 @@ FILE_DETAILS = {
     },
     ".gitattributes": {
         "location": "./.gitattributes",
-        "purpose": "Git clean/smudge layout mapping enabling automatic tracking of dynamic $Id$ metadata expansion within version files."
+        "purpose": "Git clean/smudge layout mapping enabling automatic tracking of dynamic #ident \"@(#)$Format:LocalFoodAI_lanfr144:generate_project_report.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$\" metadata expansion within version files."
     },
     "requirements.txt": {
         "location": "./requirements.txt",

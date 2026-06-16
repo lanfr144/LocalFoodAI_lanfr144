@@ -56,7 +56,7 @@ This runbook catalogs the specific network formats and port endpoints required t
 2. **Database Optimization**: Successfully loaded OpenFoodFacts records and utilized advanced vertical partitioning and FULLTEXT indices.
 3. **Clinical Subquery Strategy**: Refactored the core Pandas/SQL query pipeline to use subquery limiting, resolving Cartesian join explosions and reducing query latency to ~0.04s.
 4. **Monitoring & Security**: Nginx securely proxies traffic on Port 80. Zabbix actively monitors proxy and server health, dynamically handling SNMP/alert loops in local/offline fallback mode.
-5. **Git Versioning**: Implemented Git `.gitattributes` to push `$Id$` tracking directly into the Python Application UI.
+5. **Git Versioning**: Implemented Git `.gitattributes` to push `#ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"` tracking directly into the Python Application UI.
 
 ## What Needs To Be Done (Day 2 Operations)
 1. **SSL/TLS Certificates**: The Nginx proxy is functional on HTTP port 80. Port 443 (HTTPS) must be configured with a Let's Encrypt certificate for true production encryption.

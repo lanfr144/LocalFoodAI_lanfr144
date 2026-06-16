@@ -55,17 +55,17 @@ graph TD
 To optimize massive dataset ingestion (~24GB OpenFoodFacts dataset) and completely bypass InnoDB row size limits while maintaining sub-second RAG response times, the database utilizes a vertically partitioned structure:
 
 ```
-             ┌─────────────────────────┐
-             │    Unified SQL View     │
-             │       "products"        │
-             └────────────┬────────────┘
-                          │
-       ┌──────────────────┼──────────────────┐
-       ▼                  ▼                  ▼
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│products_core │   │  allergens   │   │    macros    │
-│(Base/FULLTEXT│   │(Ingredients) │   │ (Precision)  │
-└──────────────┘   └──────────────┘   └──────────────┘
+             +-------------------------+
+             |    Unified SQL View     |
+             |       "products"        |
+             +------------+------------+
+                          |
+       +------------------+------------------+
+       v                  v                  v
++--------------+   +--------------+   +--------------+
+|products_core |   |  allergens   |   |    macros    |
+|(Base/FULLTEXT|   |(Ingredients) |   | (Precision)  |
++--------------+   +--------------+   +--------------+
 ```
 
 1. **`products_core`**: Contains product base information (barcode, name, brand, primary category) optimized with `FULLTEXT` indexing.
@@ -79,7 +79,7 @@ To optimize massive dataset ingestion (~24GB OpenFoodFacts dataset) and complete
 
 ---
 
-## 🌐 Dual-Mode Deployment Topology
+## Dual-Mode Deployment Topology
 
 To ensure 100% resilience under network restrictions, the Local Food AI system is architected to operate under two distinct networking modes:
 

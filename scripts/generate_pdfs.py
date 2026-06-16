@@ -45,6 +45,8 @@ def main():
         font-family: 'RobotoMono', monospace !important;
         color: #b02a37 !important;
         background-color: #f8f9fa !important;
+        white-space: pre-wrap !important;
+        word-break: break-all !important;
     }
     a, a * {
         color: #0d6efd !important;
@@ -60,6 +62,9 @@ def main():
     }
     th {
         background-color: #f2f2f2 !important;
+    }
+    ul, li {
+        list-style-type: disc !important;
     }
     """
 

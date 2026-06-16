@@ -1,7 +1,9 @@
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:project_report.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
 # Capstone Project Report & File Documentation
 
 > [!NOTE]
-> **Dynamic Version Control**: This document is versioned under the master Git ID: `$Id$`.
+> **Dynamic Version Control**: This document is versioned under the master Git ID: `The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:project_report.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"`.
 > All file versions and commit histories below are extracted directly from the live Git metadata logs.
 
 ---
@@ -55,9 +57,9 @@ Below is an exhaustive catalog of every critical file in the repository, detaili
 | **.env**<br>`./.env` | Secret storage container holding encrypted MySQL user passwords and active environment flags. | `ca3877d` | lanfr144 | 2026/05/13 11:15:42 | *Stop save the .env file* |
 | **.gitattributes**<br>`./.gitattributes` | Git clean/smudge layout mapping enabling automatic tracking of dynamic $Id$ metadata expansion within version files. | `60823f3` | Lange François | 2026/06/12 09:28:53 | *[#1] docs: update README.md grading criteria, add Technical Document and User Manual, fix app.py version parsing* |
 | **requirements.txt**<br>`./requirements.txt` | Python runtime dependency catalog storing strict library versioning constraints. | `1701828` | Lange François | 2026/06/11 08:26:59 | *[TG-131] Purge database passwords from tracked files and format application versioning* |
-| **INSTALL_WSL.md**<br>`./INSTALL_WSL.md` | WSL2 deployment guide. Provides step-by-step instructions for installing and deploying the application inside WSL2 with port shifts. | `ef4111d` | Lange François | 2026/06/14 20:56:15 | *[#1] Configure mirror repositories and dynamic git filter sanitization* |
+| **INSTALL_WSL.md**<br>`./INSTALL_WSL.md` | WSL2 deployment guide. Provides step-by-step instructions for installing and deploying the application inside WSL2 with port shifts. | `129180a` | Lange François | 2026/06/15 12:49:05 | *[#1] Add Developer and Agent Productivity Guidelines to guides and agent workflows* |
 | **taiga/local-food-ai-1-36f35ff9-da1b-4eb5-9309-058448c998ad.json**<br>`./taiga/local-food-ai-1-36f35ff9-da1b-4eb5-9309-058448c998ad.json` | Historical Taiga Agile export. Contains the complete project history, including all closed user stories, tasks, and sprint configurations. | `d768ead` | Lange François | 2026/06/01 07:44:40 | *TG-221 #closed - Last commit to sync all the file to ship to the teacher.* |
-| **scripts/generate_pdfs.py**<br>`./scripts/generate_pdfs.py` | PDF document builder. Converts all markdown documentation manuals under `/docs` into high-fidelity PDF format with expanded Git version headers. | `c14e618` | Lange François | 2026/06/15 08:37:49 | *[#1] Embed Roboto and RobotoMono fonts into compiled PDFs* |
+| **scripts/generate_pdfs.py**<br>`./scripts/generate_pdfs.py` | PDF document builder. Converts all markdown documentation manuals under `/docs` into high-fidelity PDF format with expanded Git version headers. | `5001e1d` | Lange François | 2026/06/16 05:48:13 | *[#1] Force global dark text colors and optimize PDF structures to resolve Acrobat save prompts* |
 | **scripts/generate_project_report.py**<br>`./scripts/generate_project_report.py` | Technical project report generator. Automatically gathers codebase structure, Git commit metadata, and purpose records to construct the Project.pdf report. | `1701828` | Lange François | 2026/06/11 08:26:59 | *[TG-131] Purge database passwords from tracked files and format application versioning* |
 | **scripts/setup_deploy.py**<br>`./scripts/setup_deploy.py` | DevOps deployment script. Orchestrates local and VM container sets, verifying network connectivity and system parameters. | `1701828` | Lange François | 2026/06/11 08:26:59 | *[TG-131] Purge database passwords from tracked files and format application versioning* |
 | **scripts/taiga_sync_final.py**<br>`./scripts/taiga_sync_final.py` | Taiga automated synchronization helper. Pushes bug tickets, fills wiki pages, and assigns unassigned user stories. | `744ffe8` | Lange François | 2026/06/11 10:34:49 | *[#1] chore: resolve security leak, configure dynamic versioning filters, update Streamlit and Flask applications to read version from %cd, update unit converter, ingestion, and search features, and export Taiga scrum data* |
@@ -67,12 +69,12 @@ Below is an exhaustive catalog of every critical file in the repository, detaili
 ## 3. Directory Structure Map
 An overview of the folder hierarchy organizing our microservice infrastructure:
 
-- [**`alembic/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/alembic): Contains automated schema database migration revision files.
-- [**`docker/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docker): Houses distinct production container configurations for `/app` (Streamlit) and `/ingest` (Ingestion).
-- [**`docs/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs): Living Capstone document manuals (Markdown & high-fidelity compiled PDFs).
-- [**`nginx/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/nginx): Houses the reverse proxy configuration (`nginx.conf`) forwarding local port 80 traffic.
-- [**`scripts/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/scripts): Collection of admin scripts, deployment automation, and PDF compilation generators.
-- [**`searxng/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/searxng): Core configuration files (`settings.yml`) securing private, localized search operations.
+- [**`alembic/`**](../alembic): Contains automated schema database migration revision files.
+- [**`docker/`**](../docker): Houses distinct production container configurations for `/app` (Streamlit) and `/ingest` (Ingestion).
+- [**`docs/`**](.): Living Capstone document manuals (Markdown & high-fidelity compiled PDFs).
+- [**`nginx/`**](../nginx): Houses the reverse proxy configuration (`nginx.conf`) forwarding local port 80 traffic.
+- [**`scripts/`**](../scripts): Collection of admin scripts, deployment automation, and PDF compilation generators.
+- [**`searxng/`**](../searxng): Core configuration files (`settings.yml`) securing private, localized search operations.
 
 ---
 

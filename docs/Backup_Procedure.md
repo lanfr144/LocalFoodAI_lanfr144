@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:Backup_Procedure.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Database Backup and Restore Procedure
 
 ## 1. Overview & Policy

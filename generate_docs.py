@@ -1,16 +1,15 @@
 #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-# $Id$
-# $Author$
-# $log$
 import os
-#ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import subprocess
+import re
 
 docs_dir = "docs"
 os.makedirs(docs_dir, exist_ok=True)
 
 docs = {
-    "URL_Formats.md": """# $Id$
+    "URL_Formats.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - Network Connection URL Directory
 
 This runbook catalogs the specific network formats and port endpoints required to access the application and monitoring servers across different loopback, hostname, and address protocols.
@@ -47,7 +46,9 @@ This runbook catalogs the specific network formats and port endpoints required t
 - **SearXNG Meta-Search API**: `http://[::1]:8105`
 - **MySQL Database Server**: `[::1]:3326`
 """,
-    "Final_Report.md": """# $Id$
+    "Final_Report.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Final Project Report (Living Document)
 
 ## What Has Been Done
@@ -67,7 +68,9 @@ This runbook catalogs the specific network formats and port endpoints required t
 - Maintain the automated `backup_db.sh` 7-day retention cycle.
 - Begin the hand-off to the operational team for Phase 2 feature requests.
 """,
-    "Backup_Procedure.md": """# $Id$
+    "Backup_Procedure.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Database Backup and Restore Procedure
 
 ## 1. Overview & Policy
@@ -146,7 +149,9 @@ Operators must verify the backup archive integrity weekly:
 2. Run `gzip -t backups/filename.sql.gz` to ensure the archive is not corrupted.
 3. Test restoring to a local fallback container instance to verify data accessibility.
 """,
-    "Data_Ingestion.md": """# $Id$
+    "Data_Ingestion.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Data Ingestion Pipeline
 
 ## Overview
@@ -158,7 +163,9 @@ Run `bash data_sync.sh --online`. The script will download the latest CSV direct
 ## Offline Mode
 Drop a `en.openfoodfacts.org.products.csv` file into the `/data` folder and run `bash data_sync.sh`. The script detects the file and triggers the Docker ingestion container.
 """,
-    "Installation_Guide.md": """# $Id$
+    "Installation_Guide.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - Detailed Installation and Deployment Guide
 
 This guide describes how to provision the host hypervisor, install Docker on Ubuntu, clone the repository, check out the correct branch, and launch the application.
@@ -324,8 +331,10 @@ Follow the standard runbook to initialize credentials and launch services:
 ```
 """,
 
-    "User_Guide.md": """# $Id$
-Local Food AI - Clinician User Manual
+    "User_Guide.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
+# Local Food AI - Clinician User Manual
 
 Welcome to the **Local Food AI** clinical dietitian explorer. This guide explains how to use the platform to search for products, build custom recipe plates, calculate cumulative nutritional statistics, and consult the privacy-safe AI assistant.
 
@@ -396,8 +405,10 @@ Because patient privacy is critical:
 
 
 
-        "Technical_Document.md": """# $Id$
-Local Food AI - Capstone Technical Document
+        "Technical_Document.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
+# Local Food AI - Capstone Technical Document
 
 This document provides a comprehensive technical overview of the **Local Food AI** system. It details the installation and configuration procedures, technologies used, Antigravity agent usage/permissions, agent engineering reflections, local LLM design decisions, local microservice component communication, and data privacy verification.
 
@@ -481,7 +492,7 @@ The notebook workstation must have at least 16 GB of RAM, Docker, and Docker Com
    ```
 
 2. **Compose Topology Mappings**:
-   The `app` container maps the host's `.env` config file dynamically using environment bindings and volume mounts inside [docker-compose.yml](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docker-compose.yml):
+   The `app` container maps the host's `.env` config file dynamically using environment bindings and volume mounts inside [docker-compose.yml](../docker-compose.yml):
    ```yaml
      app:
        build:
@@ -585,11 +596,15 @@ To prove and guarantee that no clinical user details or dietary profiles leave t
 """,
 
 
-    "Wiki_Home.md": """# $Id$
+    "Wiki_Home.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Documentation Home
 Welcome to the static documentation mirror. Please navigate the markdown files in this directory for architectural diagrams and guides.
 """,
-    "Scrum_Wiki.md": """# $Id$
+    "Scrum_Wiki.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Scrum Wiki Master List & Index Portal
 
 Welcome to the static Scrum documentation portal. This master wiki aggregates and organizes all daily stand-up logs, planning reports, retrospectives, reviews, and velocity charts recorded during the agile development of the **Local Food AI** clinical dietetics engine.
@@ -598,26 +613,26 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 
 ## 📅 Sprint Ceremonies & Logs
 
-### 1. [Sprint Plans (Scrum_Plan.md)](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/Scrum_Plan.md)
+### 1. [Sprint Plans (Scrum_Plan.md)](Scrum_Plan.pdf)
 *Contains Sprint Plan formulations, active user stories selection, scope statements, and team capacity bounds for each milestone loop.*
 
-### 2. [Daily Scrums (Scrum_Daily.md)](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/Scrum_Daily.md)
+### 2. [Daily Scrums (Scrum_Daily.md)](Scrum_Daily.pdf)
 *Continuous daily stand-up summaries tracking individual task completion, blocker mitigations, and immediate day-to-day coordination.*
 
-### 3. [Sprint Reviews (Scrum_Review.md)](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/Scrum_Review.md)
+### 3. [Sprint Reviews (Scrum_Review.md)](Scrum_Review.pdf)
 *Contains sprint review logs, clinician demonstration summaries, feature validation checklists, and stakeholder feedback logs.*
 
-### 4. [Sprint Retrospectives (Scrum_Retro.md)](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/Scrum_Retro.md)
+### 4. [Sprint Retrospectives (Scrum_Retro.md)](Scrum_Retro.pdf)
 *Reviews process improvements, continuous integration learnings, and action items aimed at optimizing team operations and environment tuning.*
 
 ---
 
 ## 📊 Deliverables & Quality Assurance
 
-### 5. [Scrum Artifacts (Scrum_Artifacts.md)](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/Scrum_Artifacts.md)
+### 5. [Scrum Artifacts (Scrum_Artifacts.md)](Scrum_Artifacts.pdf)
 *Indexes sprint velocity metrics, completed story points distributions, burndown coordinates, and final Taiga delivery milestones.*
 
-### 6. [Sprint 8 Test Cases (Test_Cases_Sprint8.md)](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs/Test_Cases_Sprint8.md)
+### 6. [Sprint 8 Test Cases (Test_Cases_Sprint8.md)](Test_Cases_Sprint8.pdf)
 *Legacy acceptance test logs covering core NLP chat, portion converters, and initial search validations.*
 
 ---
@@ -625,38 +640,54 @@ Welcome to the static Scrum documentation portal. This master wiki aggregates an
 > [!NOTE]
 > **Operational Compliance**: All Scrum files above are synchronized with their respective Taiga milestone identifiers (`Sprint 13` and `Sprint 7`). All physical activities recorded in these markdown logs have corresponding closed tasks inside Taiga.
 """,
-    "Scrum_Daily.md": """# $Id$
+    "Scrum_Daily.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Daily Scrums
 - **26.05.07 DAILY**: Fixed time scope bug, added Nginx proxy, built sync scripts.
 """,
-    "Scrum_Plan.md": """# $Id$
+    "Scrum_Plan.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Sprint Plans
 - **Sprint 10 PLAN**: Fix LLM Tool Calling, optimize Cartesian SQL explosion, build Teams webhooks.
 """,
-    "Scrum_Retro.md": """# $Id$
+    "Scrum_Retro.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Sprint Retrospectives
 - **Sprint 10 RETROSPECTIVE**: Mitigated dirty data duplicates using SQL `GROUP BY`. Need to maintain strict Git commit tagging (`TG-XXX`).
 """,
-    "Scrum_Review.md": """# $Id$
+    "Scrum_Review.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Sprint Reviews
 - **Sprint 10 REVIEW**: App executes sub-second searches. Nginx fully operational on Port 80.
 """,
-    "Scrum_Artifacts.md": """# $Id$
+    "Scrum_Artifacts.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Scrum Artifacts
 Contains User Stories, velocity tracking, and burndown charts from Taiga.
 """,
-    "Test_Cases_Sprint8.md": """# $Id$
+    "Test_Cases_Sprint8.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Sprint 8 Legacy Test Cases
 - Tested RAG AI tool integration.
 - Tested user authentication flows.
 """,
-    "WSL_Deployment.md": """# $Id$
+    "WSL_Deployment.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # WSL Deployment Runbook
 To deploy on Windows Subsystem for Linux:
 1. Ensure WSL2 backend is enabled in Docker Desktop.
 2. Follow standard Installation Guide inside the WSL Ubuntu terminal.
 """,
-    "User_Description.md": """# $Id$
+    "User_Description.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - User Description & Functional Guide
 
 ## 1. System Vision
@@ -698,7 +729,9 @@ An automated clinical diet planner.
 - **Illnesses**: Diabetes, Hypertension, Kidney Disease, Scurvy, Anemia.
 - **Diets**: Vegan, Vegetarian, Kosher, Halal, Keto, Paleo, Christian (Lent/Good Friday).
 """,
-    "Start_Stop_Procedures.md": """# $Id$
+    "Start_Stop_Procedures.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Infrastructure Stop & Start Operational Procedures
 
 This runbook outlines the exact sequence and commands to start, stop, and verify each microservice in the Local Food AI environment.
@@ -789,7 +822,9 @@ docker compose logs --tail=100
 netstat -tulpn | grep -E "80|3307|8081|11434"
 ```
 """,
-    "Operator_Installation_Guide.md": """# $Id$
+    "Operator_Installation_Guide.md": """The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - Detailed Operator Installation Guide
 
 This document is a step-by-step installation, mapping, configuration, and verification manual for deploying the **Local Food AI** system in an enterprise environment. It covers hybrid hypervisor infrastructure (WSL2, Hyper-V, and VirtualBox), cross-node networking, SNMPv3 monitoring, alert channels, and acceptance testing.
@@ -977,24 +1012,54 @@ Run these test cases to verify the installation:
 }
 
 import subprocess
-try:
-    log_info = subprocess.check_output(['git', 'log', '-1', '--format=%H %an %ae %ad %cn %ce %cd %N  %s', '--date=format:%Y/%m/%d %H:%M:%S'], encoding='utf-8').strip()
-    try:
-        tag_info = subprocess.check_output(['git', 'describe', '--tags', '--always'], stderr=subprocess.DEVNULL, encoding='utf-8').strip()
-    except Exception:
-        tag_info = ""
-    
-    if tag_info:
-        git_id = f"$Id$"
-    else:
-        git_id = f"$Id$"
-except Exception:
-    git_id = "$Id$"
+def sanitize_name(name):
+    if not name:
+        return "Francois Lange"
+    name_lower = name.lower()
+    if "fran" in name_lower or "lange" in name_lower or "lanfr" in name_lower:
+        return "Francois Lange"
+    return name
 
-for filename, content in docs.items():
+def get_git_info_for_file(file_path):
+    try:
+        cmd = [
+            "git", "log", "-1",
+            "--date=format:%Y/%m/%d %H:%M:%S",
+            "--format=%an|%ae|%ad|%cn|%ce|%cd|%H|%D|%N",
+            "--", file_path
+        ]
+        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').strip()
+        if out:
+            parts = out.split('|')
+            if len(parts) == 9:
+                parts[0] = sanitize_name(parts[0])
+                parts[3] = sanitize_name(parts[3])
+                return parts
+    except Exception:
+        pass
+    
+    author_name = "Francois Lange"
+    try:
+        author_email = subprocess.check_output(["git", "config", "user.email"], stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').strip() or "lanfr144@school.lu"
+    except Exception:
+        author_email = "lanfr144@school.lu"
+    from datetime import datetime
+    now_str = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+    return [author_name, author_email, now_str, author_name, author_email, now_str, "Not Committed Yet", "local", "none"]
+
+for filename, doc_content in docs.items():
     filepath = os.path.join(docs_dir, filename)
+    
+    # Dynamic smudging of the Format placeholder for this specific file
+    info = get_git_info_for_file(filepath)
+    replacement = f"$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+    
+    # We replace the raw template string in the content
+    pattern = r'\$Format:LocalFoodAI_lanfr144:generate_docs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
+    doc_content_smudged = re.sub(pattern, replacement, doc_content)
+    
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write(content.replace('$Id$', git_id))
-    print(f"Generated {filepath}")
+        f.write(doc_content_smudged)
+    print(f"Generated and smudged {filepath}")
 
 print("\nDocs directory perfectly mirrored with operator level runbooks.")

@@ -1,9 +1,5 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-# $Id$
-# $Author$
-# $log$
-#ident "@(#)LocalFoodAI:backup_db.sh:$Format:%D:%ci:%cN:%h$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:backup_db.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # backup_db.sh - Automated Disaster Recovery Backup Script
 
 BACKUP_DIR="./backups"

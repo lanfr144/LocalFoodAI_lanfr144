@@ -1,5 +1,7 @@
-# $Id$
-Local Food AI - Capstone Technical Document
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:Technical_Document.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
+# Local Food AI - Capstone Technical Document
 
 This document provides a comprehensive technical overview of the **Local Food AI** system. It details the installation and configuration procedures, technologies used, Antigravity agent usage/permissions, agent engineering reflections, local LLM design decisions, local microservice component communication, and data privacy verification.
 
@@ -90,7 +92,7 @@ The notebook workstation must have at least 16 GB of RAM, Docker, and Docker Com
    ```
 
 2. **Compose Topology Mappings**:
-   The `app` container maps the host's `.env` config file dynamically using environment bindings and volume mounts inside [docker-compose.yml](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docker-compose.yml):
+   The `app` container maps the host's `.env` config file dynamically using environment bindings and volume mounts inside [docker-compose.yml](../docker-compose.yml):
    ```yaml
      app:
        build:

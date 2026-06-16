@@ -1,6 +1,7 @@
 #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_pdfs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import glob
+import re
 from markdown_pdf import MarkdownPdf
 from markdown_pdf import Section
 
@@ -73,25 +74,55 @@ def main():
             md_content = f.read()
             
         import subprocess
-        try:
-            log_info = subprocess.check_output(['git', 'log', '-1', '--format=%H %an %ae %ad %cn %ce %cd %N  %s', '--date=format:%Y/%m/%d %H:%M:%S'], encoding='utf-8').strip()
+        def sanitize_name(name):
+            if not name:
+                return "Francois Lange"
+            name_lower = name.lower()
+            if "fran" in name_lower or "lange" in name_lower or "lanfr" in name_lower:
+                return "Francois Lange"
+            return name
+
+        def get_git_info_for_file(file_path):
             try:
-                tag_info = subprocess.check_output(['git', 'describe', '--tags', '--always'], stderr=subprocess.DEVNULL, encoding='utf-8').strip()
+                cmd = [
+                    "git", "log", "-1",
+                    "--date=format:%Y/%m/%d %H:%M:%S",
+                    "--format=%an|%ae|%ad|%cn|%ce|%cd|%H|%D|%N",
+                    "--", file_path
+                ]
+                out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').strip()
+                if out:
+                    parts = out.split('|')
+                    if len(parts) == 9:
+                        parts[0] = sanitize_name(parts[0])
+                        parts[3] = sanitize_name(parts[3])
+                        return parts
             except Exception:
-                tag_info = ""
-            
-            if tag_info:
-                git_id = f"$Id$"
-            else:
-                git_id = f"$Id$"
-        except Exception:
-            git_id = "$Id$"
-            
-        md_content = md_content.replace('$Id$', git_id)
+                pass
+            author_name = "Francois Lange"
+            try:
+                author_email = subprocess.check_output(["git", "config", "user.email"], stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').strip() or "lanfr144@school.lu"
+            except Exception:
+                author_email = "lanfr144@school.lu"
+            from datetime import datetime
+            now_str = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            return [author_name, author_email, now_str, author_name, author_email, now_str, "Not Committed Yet", "local", "none"]
+
+        # Dynamic smudging of the Format placeholder for this specific file
+        base_name = os.path.basename(md_file)
+        info = get_git_info_for_file(md_file)
+        replacement = f"$Format:LocalFoodAI_lanfr144:generate_pdfs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
         
+        # Replace the raw format template if present
+        pattern = r'\$Format:LocalFoodAI_lanfr144:generate_pdfs.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$'
+        md_content = re.sub(pattern, replacement, md_content)
+        
+        # Clean up absolute file:/// paths to relative paths
+        md_content = re.sub(r'file:///.*?/docs/([a-zA-Z0-9_-]+)\.md', r'\1.pdf', md_content, flags=re.IGNORECASE)
+        md_content = re.sub(r'file:///.*?/Food/([a-zA-Z0-9_.-]+)', r'../\1', md_content, flags=re.IGNORECASE)
+
         try:
-            pdf = MarkdownPdf(toc_level=2, optimize=True)
-            base_name = os.path.basename(md_file)
+            pdf = MarkdownPdf(toc_level=2, optimize=True, plugins={"mermaid": {}})
             
             if base_name == 'project_report.md':
                 print("Splitting project_report.md into Portrait/Landscape/Portrait sections...")

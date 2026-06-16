@@ -1,6 +1,5 @@
-The current version is #ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:architecture.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 
-# $Id$
 # Local Food AI - Architecture Map
 
 This document describes the technical architecture, database schema design, AI RAG data flows, and dual-mode deployment topology for the Local Food AI clinical dietitian platform.
@@ -95,7 +94,7 @@ Services are distributed across specialized local hypervisors and Windows subsys
 When the remote VM host network or Taiga server is completely unreachable:
 - **Zero-Dependency Containers**: The entire platform runs entirely locally on the notebook host via **Docker Compose** (`docker-compose.yml`).
 - **Automatic IP Resolution**: Application configuration, Alembic, and SNMP notifications automatically adjust their endpoints to target local network interfaces (`localhost` / custom Docker networks) rather than unreachable remote IPs, avoiding timeout hangs or crashes.
-- **Dynamic Task Tracking**: Agile development logs are dynamically synced into the workspace [task.md](file:///C:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/task.md) and [walkthrough.md](file:///C:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/walkthrough.md) artifacts to track progress until connectivity is restored.
+- **Dynamic Task Tracking**: Agile development logs are dynamically synced into the workspace [task.md](../task.md) and [walkthrough.md](../walkthrough.md) artifacts to track progress until connectivity is restored.
 
 ---
 *Documented by Antigravity.*

@@ -1,5 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-# $Id$
+#ident "@(#)$Format:LocalFoodAI_lanfr144:generate_project_report.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import os
 import subprocess
 import sys
@@ -173,22 +172,52 @@ def get_git_info(filename):
 def main():
     print("Generating comprehensive Project Report...")
     
-    # Get master Git tag and details
-    try:
-        log_info = subprocess.check_output(['git', 'log', '-1', '--format=%H %an %ae %ad %cn %ce %cd %N  %s', '--date=format:%Y/%m/%d %H:%M:%S'], encoding='utf-8').strip()
-        try:
-            tag_info = subprocess.check_output(['git', 'describe', '--tags', '--always'], stderr=subprocess.DEVNULL, encoding='utf-8').strip()
-        except Exception:
-            tag_info = ""
-        
-        if tag_info:
-            git_id = f"$Id$"
-        else:
-            git_id = f"$Id$"
-    except Exception:
-        git_id = "$Id$"
+    def sanitize_name(name):
+        if not name:
+            return "Francois Lange"
+        name_lower = name.lower()
+        if "fran" in name_lower or "lange" in name_lower or "lanfr" in name_lower:
+            return "Francois Lange"
+        return name
 
-    report_content = f"""# Capstone Project Report & File Documentation
+    def get_git_info_for_file(file_path):
+        try:
+            cmd = [
+                "git", "log", "-1",
+                "--date=format:%Y/%m/%d %H:%M:%S",
+                "--format=%an|%ae|%ad|%cn|%ce|%cd|%H|%D|%N",
+                "--", file_path
+            ]
+            out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').strip()
+            if out:
+                parts = out.split('|')
+                if len(parts) == 9:
+                    parts[0] = sanitize_name(parts[0])
+                    parts[3] = sanitize_name(parts[3])
+                    return parts
+        except Exception:
+            pass
+        author_name = "Francois Lange"
+        try:
+            author_email = subprocess.check_output(["git", "config", "user.email"], stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').strip() or "lanfr144@school.lu"
+        except Exception:
+            author_email = "lanfr144@school.lu"
+        from datetime import datetime
+        now_str = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        return [author_name, author_email, now_str, author_name, author_email, now_str, "Not Committed Yet", "local", "none"]
+
+    git_id_placeholder = 'The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:generate_project_report.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"'
+    
+    # We smudge it dynamically
+    info = get_git_info_for_file("docs/project_report.md")
+    replacement = f"$Format:LocalFoodAI_lanfr144:generate_project_report.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+    
+    import re
+    git_id = re.sub(r'\$Format:LocalFoodAI_lanfr144:generate_project_report.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$', replacement, git_id_placeholder)
+
+    report_content = f"""{git_id}
+
+# Capstone Project Report & File Documentation
 
 > [!NOTE]
 > **Dynamic Version Control**: This document is versioned under the master Git ID: `{git_id}`.
@@ -230,12 +259,12 @@ Below is an exhaustive catalog of every critical file in the repository, detaili
 ## 3. Directory Structure Map
 An overview of the folder hierarchy organizing our microservice infrastructure:
 
-- [**`alembic/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/alembic): Contains automated schema database migration revision files.
-- [**`docker/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docker): Houses distinct production container configurations for `/app` (Streamlit) and `/ingest` (Ingestion).
-- [**`docs/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/docs): Living Capstone document manuals (Markdown & high-fidelity compiled PDFs).
-- [**`nginx/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/nginx): Houses the reverse proxy configuration (`nginx.conf`) forwarding local port 80 traffic.
-- [**`scripts/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/scripts): Collection of admin scripts, deployment automation, and PDF compilation generators.
-- [**`searxng/`**](file:///c:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/searxng): Core configuration files (`settings.yml`) securing private, localized search operations.
+- [**`alembic/`**](../alembic): Contains automated schema database migration revision files.
+- [**`docker/`**](../docker): Houses distinct production container configurations for `/app` (Streamlit) and `/ingest` (Ingestion).
+- [**`docs/`**](.): Living Capstone document manuals (Markdown & high-fidelity compiled PDFs).
+- [**`nginx/`**](../nginx): Houses the reverse proxy configuration (`nginx.conf`) forwarding local port 80 traffic.
+- [**`scripts/`**](../scripts): Collection of admin scripts, deployment automation, and PDF compilation generators.
+- [**`searxng/`**](../searxng): Core configuration files (`settings.yml`) securing private, localized search operations.
 
 ---
 

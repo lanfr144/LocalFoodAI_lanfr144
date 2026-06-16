@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:Start_Stop_Procedures.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Infrastructure Stop & Start Operational Procedures
 
 This runbook outlines the exact sequence and commands to start, stop, and verify each microservice in the Local Food AI environment.

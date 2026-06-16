@@ -1,7 +1,6 @@
 #!/bin/bash
-#ident "@(#)$Format:LocalFoodAI:manage_services.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:manage_services.sh:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 # ==============================================================================
-# $Id$
 # File: manage_services.sh
 # Purpose: Comprehensive Service Manager for Local Food AI development.
 #          Allows operators and developers to cleanly start, stop, restart,

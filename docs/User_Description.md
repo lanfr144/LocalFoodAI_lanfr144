@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:User_Description.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - User Description & Functional Guide
 
 ## 1. System Vision

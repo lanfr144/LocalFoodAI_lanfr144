@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:Installation_Guide.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - Detailed Installation and Deployment Guide
 
 This guide describes how to provision the host hypervisor, install Docker on Ubuntu, clone the repository, check out the correct branch, and launch the application.

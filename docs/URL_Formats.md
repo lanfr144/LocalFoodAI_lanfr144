@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:URL_Formats.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - Network Connection URL Directory
 
 This runbook catalogs the specific network formats and port endpoints required to access the application and monitoring servers across different loopback, hostname, and address protocols.

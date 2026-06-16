@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:Data_Ingestion.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Data Ingestion Pipeline
 
 ## Overview

@@ -1,4 +1,6 @@
-# $Id$
+The current version is #ident "@(#)$Format:LocalFoodAI_lanfr144:Operator_Installation_Guide.md:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+
+
 # Local Food AI - Detailed Operator Installation Guide
 
 This document is a step-by-step installation, mapping, configuration, and verification manual for deploying the **Local Food AI** system in an enterprise environment. It covers hybrid hypervisor infrastructure (WSL2, Hyper-V, and VirtualBox), cross-node networking, SNMPv3 monitoring, alert channels, and acceptance testing.

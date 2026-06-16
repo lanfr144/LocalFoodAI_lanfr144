@@ -1,9 +1,4 @@
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-# $Id$
-# $Author$
-# $log$
-#ident "@(#)LocalFoodAI:app.py:$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
-#ident "@(#)$Format:LocalFoodAI:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
+#ident "@(#)$Format:LocalFoodAI_lanfr144:app.py:%an:%ae:%ad:%cn:%ce:%cd:%H:%D:%N$"
 import streamlit as st
 import extra_streamlit_components as stx
 import subprocess

@@ -155,17 +155,17 @@ def main():
                         landscape_part = '## 2. Project File Catalog & Documentation' + parts2[0]
                         portrait_part2 = '## 3. Directory Structure Map' + parts2[1]
                         
-                        pdf.add_section(Section(portrait_part1, paper_size="A4", root=root_dir), user_css=user_css)
-                        pdf.add_section(Section(landscape_part, paper_size="A4-L", root=root_dir), user_css=user_css)
-                        pdf.add_section(Section(portrait_part2, paper_size="A4", root=root_dir), user_css=user_css)
+                        pdf.add_section(Section(portrait_part1, paper_size="A4", root=root_dir, borders=(36, 60, -36, -36)), user_css=user_css)
+                        pdf.add_section(Section(landscape_part, paper_size="A4-L", root=root_dir, borders=(36, 60, -36, -36)), user_css=user_css)
+                        pdf.add_section(Section(portrait_part2, paper_size="A4", root=root_dir, borders=(36, 60, -36, -36)), user_css=user_css)
                     else:
                         print("WARNING: Could not find Directory Structure Map heading. Defaulting to full portrait.")
-                        pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
+                        pdf.add_section(Section(md_content, paper_size="A4", root=root_dir, borders=(36, 60, -36, -36)), user_css=user_css)
                 else:
                     print("WARNING: Could not find Project File Catalog heading. Defaulting to full portrait.")
-                    pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
+                    pdf.add_section(Section(md_content, paper_size="A4", root=root_dir, borders=(36, 60, -36, -36)), user_css=user_css)
             else:
-                pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
+                pdf.add_section(Section(md_content, paper_size="A4", root=root_dir, borders=(36, 60, -36, -36)), user_css=user_css)
                 
             # Post-process compiled PDF to insert header and footer
             import fitz
@@ -208,23 +208,27 @@ def main():
                 height = page.rect.height
                 
                 # Header layout
-                # Left: am.png picture (if exists) at 10% size
+                # Left: am.png picture (if exists) at 10% size, drawn in background
                 if os.path.exists(am_path):
                     image_rect = fitz.Rect(48, 12, 48 + width_am, 12 + height_am)
-                    page.insert_image(image_rect, filename=am_path)
+                    page.insert_image(image_rect, filename=am_path, overlay=False)
                 
-                # Right: Bts.png logo (if exists) at 10% size
+                # Right: Bts.png logo (if exists) at 10% size, drawn in background
                 if os.path.exists(bts_path):
                     bts_rect = fitz.Rect(width - 48 - width_bts, 8, width - 48, 8 + height_bts)
-                    page.insert_image(bts_rect, filename=bts_path)
+                    page.insert_image(bts_rect, filename=bts_path, overlay=False)
                 
-                # Middle: document title (centered)
+                # Middle: document title centered in the space between the two pictures
                 fontsize = 8
                 fontname = "helv"
                 m_width = fitz.get_text_length(doc_title, fontname=fontname, fontsize=fontsize)
                 
+                space_start = 48 + width_am
+                space_end = width - 48 - width_bts
+                title_x = space_start + (space_end - space_start - m_width) / 2
+                
                 page.insert_text(
-                    fitz.Point((width - m_width) / 2, 26),
+                    fitz.Point(title_x, 26),
                     doc_title,
                     fontname=fontname,
                     fontsize=fontsize,

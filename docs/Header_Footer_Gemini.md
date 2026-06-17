@@ -47,12 +47,13 @@ To implement the Gemini standard paged layout, include the following CSS rules i
 ```css
 @page {
     size: A4;
-    margin: 54pt 48pt 54pt 48pt;
+    margin: 60pt 48pt 54pt 48pt; /* Set top margin to 60pt to prevent collisions */
     
     @top-left {
         content: url("am.png");
         image-resolution: 300dpi;
         vertical-align: middle;
+        z-index: -1; /* Place in background */
     }
     
     @top-center {
@@ -61,6 +62,7 @@ To implement the Gemini standard paged layout, include the following CSS rules i
         font-size: 8pt;
         color: #808080;
         vertical-align: middle;
+        text-align: center; /* Center between left/right margin boxes */
     }
     
     @top-right {

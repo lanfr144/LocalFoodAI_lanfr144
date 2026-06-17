@@ -54,18 +54,16 @@ graph TD
 
 To optimize massive dataset ingestion (~24GB OpenFoodFacts dataset) and completely bypass InnoDB row size limits while maintaining sub-second RAG response times, the database utilizes a vertically partitioned structure:
 
-```
-             +-------------------------+
-             |    Unified SQL View     |
-             |       "products"        |
-             +------------+------------+
-                          |
-       +------------------+------------------+
-       v                  v                  v
-+--------------+   +--------------+   +--------------+
-|products_core |   |  allergens   |   |    macros    |
-|(Base/FULLTEXT|   |(Ingredients) |   | (Precision)  |
-+--------------+   +--------------+   +--------------+
+```mermaid
+flowchart TD
+    View["Unified SQL View\n'products'"]
+    Core["products_core\n(Base/FULLTEXT)"]
+    Allergens["allergens\n(Ingredients)"]
+    Macros["macros\n(Precision)"]
+    
+    View --> Core
+    View --> Allergens
+    View --> Macros
 ```
 
 1. **`products_core`**: Contains product base information (barcode, name, brand, primary category) optimized with `FULLTEXT` indexing.
@@ -94,7 +92,7 @@ Services are distributed across specialized local hypervisors and Windows subsys
 When the remote VM host network or Taiga server is completely unreachable:
 - **Zero-Dependency Containers**: The entire platform runs entirely locally on the notebook host via **Docker Compose** (`docker-compose.yml`).
 - **Automatic IP Resolution**: Application configuration, Alembic, and SNMP notifications automatically adjust their endpoints to target local network interfaces (`localhost` / custom Docker networks) rather than unreachable remote IPs, avoiding timeout hangs or crashes.
-- **Dynamic Task Tracking**: Agile development logs are dynamically synced into the workspace [task.md](../task.md) and [walkthrough.md](../walkthrough.md) artifacts to track progress until connectivity is restored.
+- **Dynamic Task Tracking**: Agile development logs are dynamically synced into the workspace [task.pdf](../task.md) and [walkthrough.pdf](../walkthrough.md) artifacts to track progress until connectivity is restored.
 
 ---
 *Documented by Antigravity.*

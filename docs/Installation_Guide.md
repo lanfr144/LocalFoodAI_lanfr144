@@ -41,10 +41,10 @@ sudo apt remove -y docker.io docker-compose docker-compose-v2 docker-doc podman-
 ```bash
 sudo apt update
 sudo apt install -y ca-certificates curl
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg   -o /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io   docker-buildx-plugin docker-compose-plugin
 ```
 
 ### Step 2.3: Start and Enable Docker Daemon
@@ -61,9 +61,21 @@ sudo usermod -aG docker $USER
 ```
 
 ### Step 2.5: Reboot the WSL Instance
-Execute the command below inside WSL to gracefully reboot the instance:
+To reboot the WSL instance, you must shutdown and restart WSL. You can choose one of the following methods:
+
+**Option A: Restart from Windows Host (Recommended & Safest)**
+1. Close your Ubuntu terminal.
+2. Open Windows PowerShell or Command Prompt.
+3. Run the shutdown command:
+   ```powershell
+   wsl --shutdown
+   ```
+4. Re-open your Ubuntu terminal.
+
+**Option B: Restart from inside WSL Terminal**
+If you prefer to trigger the reboot directly from the WSL terminal:
 ```bash
-cd /mnt/c/ && cmd.exe /c start "rebooting WSL" cmd /c "timeout 5 && wsl -d $WSL_DISTRO_NAME" && wsl.exe --terminate $WSL_DISTRO_NAME
+cd /mnt/c/ && cmd.exe /c start "rebooting WSL" cmd /c   "timeout 5 && wsl -d Ubuntu-22.04" &&   wsl.exe --terminate Ubuntu-22.04
 ```
 
 Upon reconnecting, verify Docker is running by starting the hello-world container:
@@ -85,20 +97,20 @@ sudo update-alternatives --config iptables
 ### Step 3.2: Configure DNS Settings
 To ensure reliable package downloads and LLM registry calls:
 ```bash
-echo "1,\$ s/^/#/
-\$ a
+echo '1,$ s/^/#/
+$ a
 nameserver 1.1.1.1
 .
 w
-q" | sudo ed /etc/resolv.conf
+q' | sudo ed /etc/resolv.conf
 
-echo "\$ a
+echo '$ a
 # Added these 2 lines:
 [network]
 generateResolvConf = false
 .
-W
-q" | sudo ed /etc/wsl.conf
+w
+q' | sudo ed /etc/wsl.conf
 ```
 
 ---
@@ -106,8 +118,8 @@ q" | sudo ed /etc/wsl.conf
 ## 4. Repository Clones & Branch Governance
 
 There are two repositories configured for this project:
-- Primary Git Repository: `https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git`
-- Alternative Git Repository (Worldwide Access - Clone): `https://github.com/lanfr144/LocalFoodAI_lanfr144.git`
+- Primary Git Repository: https://git.btshub.lu/lanfr/LocalFoodAI_lanfr144.git
+- Alternative Git Repository (Worldwide Access - Clone): https://github.com/lanfr144/LocalFoodAI_lanfr144.git
 
 Clone the primary repository inside your home directory:
 ```bash
@@ -142,12 +154,12 @@ git remote set-head origin main
 
 Ensure the runbooks and sync scripts have executable permissions:
 ```bash
-chmod +x data_sync.sh backup_db.sh manage_services.sh scripts/manage_models.sh
+chmod +x data_sync.sh backup_db.sh manage_services.sh   scripts/manage_models.sh
 ```
 
 Follow the standard runbook to initialize credentials and launch services:
 ```bash
-# 1. Create a local [.env file](file:///C:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/.env) based on [step 3 guidelines](#3-network-configuration--performance-tuning)
+# 1. Create a local [.env file](file:///C:/Users/lanfr144/Documents/DOPRO1/Antigravity/Food/.env) based on step 3 guidelines
 # 2. Run the service manager to spin up containers
 ./manage_services.sh start
 ```

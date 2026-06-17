@@ -27,11 +27,15 @@ def main():
     }
     h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {
         color: #000000 !important;
+        margin-top: 18px !important;
+        margin-bottom: 8px !important;
     }
     pre {
-        background-color: #212529 !important;
-        border: 1px solid #343a40 !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #e9ecef !important;
         padding: 2px !important;
+        margin-top: 8px !important;
+        margin-bottom: 16px !important;
         border-radius: 3px !important;
         font-family: 'Courier New', 'Courier', monospace !important;
         font-size: 10pt !important;
@@ -41,8 +45,8 @@ def main():
     pre code, pre * {
         font-family: 'Courier New', 'Courier', monospace !important;
         font-size: 10pt !important;
-        color: #f8f9fa !important;
-        background-color: #212529 !important;
+        color: #212529 !important;
+        background-color: #f8f9fa !important;
         white-space: pre-wrap !important;
         word-break: break-all !important;
     }
@@ -133,6 +137,9 @@ def main():
         
         # Add <br/> after code blocks to force copy-paste blank line
         md_content = re.sub(r'(```[a-zA-Z0-9_-]*\n[\s\S]*?\n```)', r'\1\n<br/>', md_content)
+        
+        # Convert any relative markdown links in standard format [text](filename.md) or [text](./filename.md) to point to .pdf
+        md_content = re.sub(r'\]\((?!http|https)([a-zA-Z0-9_./-]+)\.md(#[a-zA-Z0-9_-]+)?\)', r'](\1.pdf\2)', md_content, flags=re.IGNORECASE)
 
         try:
             pdf = MarkdownPdf(toc_level=2, optimize=True, plugins={"mermaid": {}})
@@ -160,7 +167,86 @@ def main():
             else:
                 pdf.add_section(Section(md_content, paper_size="A4", root=root_dir), user_css=user_css)
                 
-            pdf.save(pdf_file)
+            # Post-process compiled PDF to insert header and footer
+            import fitz
+            doc = pdf._make_doc()
+            total_pages = len(doc)
+            
+            # Parse title from md_content
+            title_match = re.search(r'^#\s+(.+)$', md_content, re.MULTILINE)
+            if title_match:
+                doc_title = title_match.group(1).strip()
+                doc_title = re.sub(r'[*_`#]', '', doc_title).strip()
+            else:
+                doc_title = os.path.basename(pdf_file).replace('.pdf', '').replace('_', ' ')
+            
+            image_path = os.path.join(docs_dir, 'am.png')
+            
+            for page_idx in range(total_pages):
+                page = doc[page_idx]
+                width = page.rect.width
+                height = page.rect.height
+                
+                # Header layout
+                # Left: am.png picture (if exists)
+                if os.path.exists(image_path):
+                    image_rect = fitz.Rect(48, 12, 48 + 16, 12 + 16)
+                    page.insert_image(image_rect, filename=image_path)
+                
+                # Middle: document title (centered)
+                # Right: "DOPRO1"
+                r_text = "DOPRO1"
+                fontsize = 8
+                fontname = "helv"
+                
+                m_width = fitz.get_text_length(doc_title, fontname=fontname, fontsize=fontsize)
+                r_width = fitz.get_text_length(r_text, fontname=fontname, fontsize=fontsize)
+                
+                page.insert_text(
+                    fitz.Point((width - m_width) / 2, 22),
+                    doc_title,
+                    fontname=fontname,
+                    fontsize=fontsize,
+                    color=(0.5, 0.5, 0.5)
+                )
+                
+                page.insert_text(
+                    fitz.Point(width - 48 - r_width, 22),
+                    r_text,
+                    fontname=fontname,
+                    fontsize=fontsize,
+                    color=(0.5, 0.5, 0.5)
+                )
+                
+                # Footer layout
+                # Left: "lanfr144"
+                # Middle: "Page X of Y"
+                l_footer = "lanfr144"
+                footer_text = f"Page {page_idx + 1} of {total_pages}"
+                f_width = fitz.get_text_length(footer_text, fontname=fontname, fontsize=fontsize)
+                
+                page.insert_text(
+                    fitz.Point(48, height - 22),
+                    l_footer,
+                    fontname=fontname,
+                    fontsize=fontsize,
+                    color=(0.5, 0.5, 0.5)
+                )
+                
+                page.insert_text(
+                    fitz.Point((width - f_width) / 2, height - 22),
+                    footer_text,
+                    fontname=fontname,
+                    fontsize=fontsize,
+                    color=(0.5, 0.5, 0.5)
+                )
+                
+            # Deflate, clean, garbage collect and linearize the document
+            # to fix Acrobat encoding and save prompts
+            doc.save(pdf_file, clean=True, garbage=3, deflate=True)
+            doc.close()
+            pdf.temp_files.clean()
+            
             print(f"Saved {os.path.basename(pdf_file)}")
             
             # Copy to workspace root if applicable

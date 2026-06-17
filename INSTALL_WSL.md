@@ -59,16 +59,17 @@ DB_APP_AUTH_PASS=your_secure_auth_password
 MYSQL_ZABBIX_PASSWORD=your_secure_zabbix_password
 
 # ZABBIX & SNMP CREDENTIALS
-ZABBIX_USER=Admin
-ZABBIX_PASS=zabbix
-ZABBIX_SNMP_USER=zabbix_snmp
-ZABBIX_SNMP_AUTHKEY=authkey123
-ZABBIX_SNMP_PRIVKEY=privkey123
-DISCORD_WEBHOOK=https://discord.com/api/webhooks/your_webhook_id
+ZABBIX_URL=your_zabbix_url
+ZABBIX_USER=your_zabbix_user
+ZABBIX_PASS=your_zabbix_pass
+ZABBIX_SNMP_USER=your_snmp_user
+ZABBIX_SNMP_AUTHKEY=your_snmp_authkey
+ZABBIX_SNMP_PRIVKEY=your_snmp_privkey
+DISCORD_WEBHOOK=your_discord_webhook
 
 # EMAIL ALERTS CONFIGURATION
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_app_password
+EMAIL_USER=your_email_user
+EMAIL_PASS=your_email_pass
 
 # TAIGA CREDENTIALS
 TAIGA_URL=https://192.168.130.161/taiga

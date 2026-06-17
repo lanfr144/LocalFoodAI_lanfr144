@@ -56,9 +56,10 @@ MYSQL_ZABBIX_PASSWORD=your_mysql_zabbix_pass
 # ------------------------------------------
 # 3. ZABBIX & SNMP CREDENTIALS
 # ------------------------------------------
-ZABBIX_USER=Admin
+ZABBIX_URL=your_zabbix_url
+ZABBIX_USER=your_zabbix_user
 ZABBIX_PASS=your_zabbix_pass
-ZABBIX_SNMP_USER=zabbix_snmp
+ZABBIX_SNMP_USER=your_snmp_user
 ZABBIX_SNMP_AUTHKEY=your_snmp_authkey
 ZABBIX_SNMP_PRIVKEY=your_snmp_privkey
 DISCORD_WEBHOOK=your_discord_webhook
@@ -66,8 +67,8 @@ DISCORD_WEBHOOK=your_discord_webhook
 # ------------------------------------------
 # 4. EMAIL ALERTS CONFIGURATION
 # ------------------------------------------
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_app_password
+EMAIL_USER=your_email_user
+EMAIL_PASS=your_email_pass
 
 # ------------------------------------------
 # 5. TAIGA PROJECT MANAGEMENT CREDENTIALS

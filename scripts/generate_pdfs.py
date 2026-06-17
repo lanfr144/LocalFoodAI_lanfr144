@@ -135,8 +135,8 @@ def main():
         md_content = re.sub(r'file:///.*?/docs/([a-zA-Z0-9_-]+)\.md', r'\1.pdf', md_content, flags=re.IGNORECASE)
         md_content = re.sub(r'file:///.*?/Food/([a-zA-Z0-9_.-]+)', r'../\1', md_content, flags=re.IGNORECASE)
         
-        # Add <br/> after code blocks to force copy-paste blank line
-        md_content = re.sub(r'(```[a-zA-Z0-9_-]*\n[\s\S]*?\n```)', r'\1\n<br/>', md_content)
+        # Add a blank line after code blocks to force copy-paste blank line
+        md_content = re.sub(r'(```[a-zA-Z0-9_-]*\n[\s\S]*?\n```)', r'\1\n\n', md_content)
         
         # Convert any relative markdown links in standard format [text](filename.md) or [text](./filename.md) to point to .pdf
         md_content = re.sub(r'\]\((?!http|https)([a-zA-Z0-9_./-]+)\.md(#[a-zA-Z0-9_-]+)?\)', r'](\1.pdf\2)', md_content, flags=re.IGNORECASE)
@@ -180,7 +180,27 @@ def main():
             else:
                 doc_title = os.path.basename(pdf_file).replace('.pdf', '').replace('_', ' ')
             
-            image_path = os.path.join(docs_dir, 'am.png')
+            am_path = os.path.join(docs_dir, 'am.png')
+            bts_path = os.path.join(docs_dir, 'Bts.png')
+            
+            # Read real sizes for scaling to 10%
+            width_am, height_am = 146.5, 24.5 # Fallback defaults
+            if os.path.exists(am_path):
+                try:
+                    pix_am = fitz.Pixmap(am_path)
+                    width_am = pix_am.width * 0.1
+                    height_am = pix_am.height * 0.1
+                except Exception:
+                    pass
+            
+            width_bts, height_bts = 67.1, 36.8 # Fallback defaults
+            if os.path.exists(bts_path):
+                try:
+                    pix_bts = fitz.Pixmap(bts_path)
+                    width_bts = pix_bts.width * 0.1
+                    height_bts = pix_bts.height * 0.1
+                except Exception:
+                    pass
             
             for page_idx in range(total_pages):
                 page = doc[page_idx]
@@ -188,31 +208,24 @@ def main():
                 height = page.rect.height
                 
                 # Header layout
-                # Left: am.png picture (if exists)
-                if os.path.exists(image_path):
-                    image_rect = fitz.Rect(48, 12, 48 + 16, 12 + 16)
-                    page.insert_image(image_rect, filename=image_path)
+                # Left: am.png picture (if exists) at 10% size
+                if os.path.exists(am_path):
+                    image_rect = fitz.Rect(48, 12, 48 + width_am, 12 + height_am)
+                    page.insert_image(image_rect, filename=am_path)
+                
+                # Right: Bts.png logo (if exists) at 10% size
+                if os.path.exists(bts_path):
+                    bts_rect = fitz.Rect(width - 48 - width_bts, 8, width - 48, 8 + height_bts)
+                    page.insert_image(bts_rect, filename=bts_path)
                 
                 # Middle: document title (centered)
-                # Right: "DOPRO1"
-                r_text = "DOPRO1"
                 fontsize = 8
                 fontname = "helv"
-                
                 m_width = fitz.get_text_length(doc_title, fontname=fontname, fontsize=fontsize)
-                r_width = fitz.get_text_length(r_text, fontname=fontname, fontsize=fontsize)
                 
                 page.insert_text(
-                    fitz.Point((width - m_width) / 2, 22),
+                    fitz.Point((width - m_width) / 2, 26),
                     doc_title,
-                    fontname=fontname,
-                    fontsize=fontsize,
-                    color=(0.5, 0.5, 0.5)
-                )
-                
-                page.insert_text(
-                    fitz.Point(width - 48 - r_width, 22),
-                    r_text,
                     fontname=fontname,
                     fontsize=fontsize,
                     color=(0.5, 0.5, 0.5)
@@ -221,6 +234,7 @@ def main():
                 # Footer layout
                 # Left: "lanfr144"
                 # Middle: "Page X of Y"
+                # Right: "DOPRO1"
                 l_footer = "lanfr144"
                 footer_text = f"Page {page_idx + 1} of {total_pages}"
                 f_width = fitz.get_text_length(footer_text, fontname=fontname, fontsize=fontsize)
@@ -236,6 +250,16 @@ def main():
                 page.insert_text(
                     fitz.Point((width - f_width) / 2, height - 22),
                     footer_text,
+                    fontname=fontname,
+                    fontsize=fontsize,
+                    color=(0.5, 0.5, 0.5)
+                )
+                
+                r_footer = "DOPRO1"
+                r_footer_width = fitz.get_text_length(r_footer, fontname=fontname, fontsize=fontsize)
+                page.insert_text(
+                    fitz.Point(width - 48 - r_footer_width, height - 22),
+                    r_footer,
                     fontname=fontname,
                     fontsize=fontsize,
                     color=(0.5, 0.5, 0.5)

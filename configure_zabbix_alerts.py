@@ -4,11 +4,11 @@ import json
 import urllib.request
 import os
 
-ZABBIX_URL = os.environ.get('ZABBIX_URL', 'http://192.168.130.170:8081/api_jsonrpc.php')
-ZABBIX_USER = os.environ.get('ZABBIX_USER', 'Admin')
+ZABBIX_URL = os.environ.get('ZABBIX_URL', '')
+ZABBIX_USER = os.environ.get('ZABBIX_USER', '')
 ZABBIX_PASS = os.environ.get('ZABBIX_PASS', '')
 DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK', '')
-EMAIL_USER = os.environ.get('EMAIL_USER', 'lanfr144@gmail.com')
+EMAIL_USER = os.environ.get('EMAIL_USER', '')
 EMAIL_PASS = os.environ.get('EMAIL_PASS', '')
 
 def zabbix_request(method, params, auth=None):

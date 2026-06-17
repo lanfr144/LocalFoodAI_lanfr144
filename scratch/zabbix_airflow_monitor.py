@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 load_dotenv()
 urllib3.disable_warnings()
 
-# Zabbix Server credentials
-ZABBIX_URL = 'http://192.168.130.170:8081/api_jsonrpc.php'
-ZABBIX_USER = 'Admin'
-ZABBIX_PASS = 'zabbix'
+# Zabbix Server credentials loaded from environment
+ZABBIX_URL = os.environ.get('ZABBIX_URL', '')
+ZABBIX_USER = os.environ.get('ZABBIX_USER', '')
+ZABBIX_PASS = os.environ.get('ZABBIX_PASS', '')
 
 def zabbix_rpc(method, params, auth=None):
     payload = {
